@@ -1,0 +1,22 @@
+{
+  "name": "toylee",
+  "version": "1.0.0",
+  "private": true,
+  "description": "교보생명 평생든든 서비스 고객 정보파악(Fact-Finding) 프로그램",
+  "main": "server/index.js",
+  "scripts": {
+    "start": "node server/index.js",
+    "dev": "node --watch server/index.js",
+    "template": "node scripts/make-template.js",
+    "seed": "node scripts/seed.js"
+  },
+  "dependencies": {
+    "better-sqlite3": "^13.0.3",
+    "exceljs": "^4.4.0",
+    "express": "^5.2.1",
+    "multer": "^2.0.2"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}
