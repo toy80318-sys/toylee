@@ -81,6 +81,12 @@ table.form td{border:1px solid var(--line);padding:5px 6px;vertical-align:middle
 table.form td.gk{background:var(--surf2);font-weight:700;text-align:center;color:var(--brand);width:96px;font-size:12px}
 table.form td.it{width:41%}
 table.form input,table.form select{padding:4px 6px;font-size:12.5px}
+/* 성별처럼 짧은 선택칸이 눌려서 글자가 안 보이지 않도록 최소 너비를 준다 */
+table.form select.sx{min-width:56px;padding-left:6px;padding-right:2px}
+table.form th.wsex{width:9%}
+/* 칸이 많은 표는 화면이 좁아지면 눌리는 대신 옆으로 밀어 볼 수 있게 한다 */
+.tscroll{overflow-x:auto;-webkit-overflow-scrolling:touch}
+.tscroll table.form{min-width:700px}
 .prep{font-size:11.5px;color:var(--red);text-align:center;line-height:1.45}
 .hint{font-size:11px;color:var(--sub)}
 .ox{text-align:center}
@@ -221,23 +227,25 @@ textarea#script{height:280px;font-size:12.8px;line-height:1.7;white-space:pre-wr
 <div class="card">
   <h2><span class="no">2</span>계약사항</h2>
   <p class="sub">계약자 · 주피보험자 · 수익자 정보입니다. 수익자가 비어 있으면 지정 안내 대상으로 자동 분류됩니다.</p>
+  <div class="tscroll">
   <table class="form">
     <tr><th colspan="5">계약자</th><th colspan="5">주피보험자</th><th colspan="2">수익자</th></tr>
-    <tr><th>성명</th><th>성별</th><th style="width:12%">생년월일</th><th>가입연령</th><th>현재연령</th>
-        <th>성명</th><th>성별</th><th style="width:12%">생년월일</th><th>가입연령</th><th>현재연령</th>
+    <tr><th>성명</th><th class="wsex">성별</th><th style="width:12%">생년월일</th><th>가입연령</th><th>현재연령</th>
+        <th>성명</th><th class="wsex">성별</th><th style="width:12%">생년월일</th><th>가입연령</th><th>현재연령</th>
         <th>입원시</th><th>사망시</th></tr>
     <tr>
       <td><input id="c_on"></td>
-      <td><select id="c_os"><option></option><option>남</option><option>여</option></select></td>
+      <td><select id="c_os" class="sx"><option></option><option>남</option><option>여</option></select></td>
       <td><input id="c_obirth" data-date></td>
       <td><input id="c_oja" type="number"></td><td><input id="c_ona" type="number"></td>
       <td><input id="c_in"></td>
-      <td><select id="c_is"><option></option><option>남</option><option>여</option></select></td>
+      <td><select id="c_is" class="sx"><option></option><option>남</option><option>여</option></select></td>
       <td><input id="c_ibirth" data-date></td>
       <td><input id="c_ija" type="number"></td><td><input id="c_ina" type="number"></td>
       <td><input id="c_bh" placeholder="예: 본인"></td><td><input id="c_bd" placeholder="예: 배우자"></td>
     </tr>
   </table>
+  </div>
   <div class="hint" id="c_ageMsg" style="margin-top:7px">생년월일을 넣으시면 회사 기준(계약일 − 생년월일 → 6개월 미만은 버리고, 6개월 이상이면 한 살 올림)으로 가입연령·현재연령이 자동 계산됩니다.</div>
 </div>
 
