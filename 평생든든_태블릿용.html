@@ -81,12 +81,21 @@ table.form td{border:1px solid var(--line);padding:5px 6px;vertical-align:middle
 table.form td.gk{background:var(--surf2);font-weight:700;text-align:center;color:var(--brand);width:96px;font-size:12px}
 table.form td.it{width:41%}
 table.form input,table.form select{padding:4px 6px;font-size:12.5px}
-/* 성별처럼 짧은 선택칸이 눌려서 글자가 안 보이지 않도록 최소 너비를 준다 */
-table.form select.sx{min-width:56px;padding-left:6px;padding-right:2px}
-table.form th.wsex{width:9%}
-/* 칸이 많은 표는 화면이 좁아지면 눌리는 대신 옆으로 밀어 볼 수 있게 한다 */
+/* 짧은 선택칸이 눌려서 글자가 안 보이지 않도록 최소 너비를 준다 */
+table.form select.sx{min-width:60px;padding-left:6px;padding-right:2px}
+/* 계약사항 표 : 칸마다 필요한 만큼 폭을 준다 (합계가 아래 min-width 와 맞물린다) */
+table.form th.wname{width:10.5%}  /* 10.5×2 */
+table.form th.wsex{width:7%}      /*    7×2 */
+table.form th.wbirth{width:14%}   /*   14×2 */
+table.form th.wage{width:6%}      /*    6×4 */
+table.form th.wben{width:6.5%}    /*  6.5×2  — 합계 100% */
+table.form .dtwrap input{min-width:80px}
+table.form .dtbtn{width:28px}
+/* 칸이 12개인 표는 화면이 좁아지면 눌리는 대신 옆으로 밀어 볼 수 있게 한다 */
 .tscroll{overflow-x:auto;-webkit-overflow-scrolling:touch}
-.tscroll table.form{min-width:700px}
+.tscroll table.form{min-width:920px}
+.tscroll-hint{display:none;margin-top:5px}
+@media(max-width:960px){.tscroll-hint{display:block}}
 .prep{font-size:11.5px;color:var(--red);text-align:center;line-height:1.45}
 .hint{font-size:11px;color:var(--sub)}
 .ox{text-align:center}
@@ -230,9 +239,9 @@ textarea#script{height:280px;font-size:12.8px;line-height:1.7;white-space:pre-wr
   <div class="tscroll">
   <table class="form">
     <tr><th colspan="5">계약자</th><th colspan="5">주피보험자</th><th colspan="2">수익자</th></tr>
-    <tr><th>성명</th><th class="wsex">성별</th><th style="width:12%">생년월일</th><th>가입연령</th><th>현재연령</th>
-        <th>성명</th><th class="wsex">성별</th><th style="width:12%">생년월일</th><th>가입연령</th><th>현재연령</th>
-        <th>입원시</th><th>사망시</th></tr>
+    <tr><th class="wname">성명</th><th class="wsex">성별</th><th class="wbirth">생년월일</th><th class="wage">가입연령</th><th class="wage">현재연령</th>
+        <th class="wname">성명</th><th class="wsex">성별</th><th class="wbirth">생년월일</th><th class="wage">가입연령</th><th class="wage">현재연령</th>
+        <th class="wben">입원시</th><th class="wben">사망시</th></tr>
     <tr>
       <td><input id="c_on"></td>
       <td><select id="c_os" class="sx"><option></option><option>남</option><option>여</option></select></td>
@@ -246,6 +255,7 @@ textarea#script{height:280px;font-size:12.8px;line-height:1.7;white-space:pre-wr
     </tr>
   </table>
   </div>
+  <div class="hint tscroll-hint">※ 화면이 좁으면 위 표를 <b>옆으로 밀어서</b> 나머지 칸을 보실 수 있습니다.</div>
   <div class="hint" id="c_ageMsg" style="margin-top:7px">생년월일을 넣으시면 회사 기준(계약일 − 생년월일 → 6개월 미만은 버리고, 6개월 이상이면 한 살 올림)으로 가입연령·현재연령이 자동 계산됩니다.</div>
 </div>
 

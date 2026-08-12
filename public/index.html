@@ -83,9 +83,9 @@
   <div class="tscroll">
   <table class="form">
     <tr><th colspan="5">계약자</th><th colspan="5">주피보험자</th><th colspan="2">수익자</th></tr>
-    <tr><th>성명</th><th class="wsex">성별</th><th style="width:12%">생년월일</th><th>가입연령</th><th>현재연령</th>
-        <th>성명</th><th class="wsex">성별</th><th style="width:12%">생년월일</th><th>가입연령</th><th>현재연령</th>
-        <th>입원시</th><th>사망시</th></tr>
+    <tr><th class="wname">성명</th><th class="wsex">성별</th><th class="wbirth">생년월일</th><th class="wage">가입연령</th><th class="wage">현재연령</th>
+        <th class="wname">성명</th><th class="wsex">성별</th><th class="wbirth">생년월일</th><th class="wage">가입연령</th><th class="wage">현재연령</th>
+        <th class="wben">입원시</th><th class="wben">사망시</th></tr>
     <tr>
       <td><input id="c_on"></td>
       <td><select id="c_os" class="sx"><option></option><option>남</option><option>여</option></select></td>
@@ -99,6 +99,7 @@
     </tr>
   </table>
   </div>
+  <div class="hint tscroll-hint">※ 화면이 좁으면 위 표를 <b>옆으로 밀어서</b> 나머지 칸을 보실 수 있습니다.</div>
   <div class="hint" id="c_ageMsg" style="margin-top:7px">생년월일을 넣으시면 회사 기준(계약일 − 생년월일 → 6개월 미만은 버리고, 6개월 이상이면 한 살 올림)으로 가입연령·현재연령이 자동 계산됩니다.</div>
 </div>
 
