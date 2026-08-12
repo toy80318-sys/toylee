@@ -2514,29 +2514,57 @@ function enhanceDates(root) {
   });
 }
 
-/* 금액 : 자리 쉼표를 넣어 읽기 쉽게 */
+/* 금액 : 치시는 동안 바로바로 자리 쉼표가 붙습니다 */
+function commafy(digits) {
+  digits = String(digits).replace(/[^0-9]/g, '').replace(/^0+(?=\d)/, '');
+  return digits.replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+}
+
+/* 값을 다시 꾸미고, 커서는 '앞에 있던 숫자 개수' 기준으로 제자리에 둔다 */
+function formatMoneyLive(el) {
+  const raw = el.value;
+  let caret = el.selectionEnd;
+  if (caret === null || caret === undefined) caret = raw.length;
+  const before = raw.slice(0, caret).replace(/[^0-9]/g, '').length;
+  const out = commafy(raw);
+  if (out === raw) return;
+  el.value = out;
+  let pos = 0, seen = 0;
+  while (pos < out.length && seen < before) {
+    if (out.charCodeAt(pos) >= 48 && out.charCodeAt(pos) <= 57) seen++;
+    pos++;
+  }
+  try { el.setSelectionRange(pos, pos); } catch (e) { /* 커서를 못 옮기는 칸은 그냥 둔다 */ }
+}
+
 function enhanceMoney(root) {
   (root || document).querySelectorAll('input[data-money]').forEach(function (el) {
     if (el.dataset.enhanced) return;
     el.dataset.enhanced = '1';
     el.setAttribute('inputmode', 'numeric');
     el.style.textAlign = 'right';
-    el.addEventListener('focus', function () {
-      const n = numOf(el.value);
-      el.value = n ? String(n) : '';
+
+    /* 쉼표 바로 뒤에서 지우기를 누르면, 쉼표가 아니라 그 앞의 숫자가 지워지게 한다 */
+    el.addEventListener('beforeinput', function (e) {
+      if (e.inputType !== 'deleteContentBackward') return;
+      const p = el.selectionStart;
+      if (p !== el.selectionEnd || p < 2 || el.value.charAt(p - 1) !== ',') return;
+      e.preventDefault();
+      el.value = el.value.slice(0, p - 2) + el.value.slice(p);
+      try { el.setSelectionRange(p - 2, p - 2); } catch (err) { /* 무시 */ }
+      formatMoneyLive(el);
+      el.dispatchEvent(new Event('input', { bubbles: true }));
     });
-    el.addEventListener('blur', function () {
-      const n = numOf(el.value);
-      el.value = n ? n.toLocaleString('ko-KR') : '';
-    });
+
+    el.addEventListener('input', function () { formatMoneyLive(el); });
+    el.addEventListener('blur', function () { formatMoneyLive(el); });
   });
 }
 
 function moneyRefresh() {
   document.querySelectorAll('input[data-money]').forEach(function (el) {
     if (document.activeElement === el) return;
-    const n = numOf(el.value);
-    el.value = n ? n.toLocaleString('ko-KR') : '';
+    el.value = commafy(el.value);
   });
 }
 
@@ -2672,7 +2700,7 @@ function addClaim(v) {
   if (v) {
     d.querySelector('.cl-d').value = v.d || '';
     d.querySelector('.cl-t').value = v.t || '';
-    d.querySelector('.cl-a').value = v.a ? numOf(v.a).toLocaleString('ko-KR') : '';
+    d.querySelector('.cl-a').value = commafy(v.a || '');
   }
   enhanceDates(d);
   enhanceMoney(d);
