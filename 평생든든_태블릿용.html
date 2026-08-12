@@ -1,0 +1,3201 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>평생든든 방문활동 사전준비 · 자동분석 프로그램</title>
+<style>
+/* 평생든든 고객 정보파악 프로그램 — 화면 서식 (밝은 화면 / 어두운 화면 모두 지원) */
+:root{
+  color-scheme:light dark;
+  /* 브랜드 */
+  --navy:#0b3a5d;--navy2:#155b8a;--gold:#c9922e;--ongold:#fff;
+  /* 지면 */
+  --bg:#f3f5f8;--card:#fff;--line:#d8dfe6;--line2:#e8edf2;
+  --surf1:#eef2f6;--surf2:#f7f9fb;--surf3:#fbfcfd;--hover:#f1f6fa;
+  --field:#fff;--ib:#ccd4dc;--btnline:#c3cfda;
+  /* 글자 */
+  --txt:#1f2a35;--sub:#6b7885;--brand:#0b3a5d;
+  /* 의미색 */
+  --red:#c0392b;--org:#d9822b;--grn:#2e8b57;--blue:#2f6fb0;
+  --redbg:#fdecea;--orgbg:#fdf3e6;--grnbg:#e9f5ee;--bluebg:#eef4fa;
+  /* 안내 블록 */
+  --mentbg:#eef4fa;--mentline:#a9c4de;--menttxt:#16304a;
+  --basisbg:#fbf8ee;--basisline:#e0cd9a;--basistxt:#96780a;
+  --warnbg:#fff7e6;--warnline:#e8cd96;--warntxt:#7a5a12;
+}
+@media(prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --gold:#d9a445;--ongold:#20170a;
+  --bg:#141b23;--card:#1b232d;--line:#2d3945;--line2:#293440;
+  --surf1:#222d39;--surf2:#1f2833;--surf3:#1e2731;--hover:#26333f;
+  --field:#202a35;--ib:#3a4753;--btnline:#3f4d5b;
+  --txt:#e4eaf0;--sub:#98a6b4;--brand:#8ec3e8;
+  --red:#f08a7d;--org:#e8a55c;--grn:#67c795;--blue:#7fb0e0;
+  --redbg:#3a2320;--orgbg:#38291a;--grnbg:#1d3329;--bluebg:#1e2c3a;
+  --mentbg:#1c2836;--mentline:#3b556e;--menttxt:#d3e2f1;
+  --basisbg:#2b271c;--basisline:#5a4d2c;--basistxt:#dcc073;
+  --warnbg:#2e2718;--warnline:#5a4d2c;--warntxt:#e2c579;
+}}
+:root[data-theme="dark"]{
+  --gold:#d9a445;--ongold:#20170a;
+  --bg:#141b23;--card:#1b232d;--line:#2d3945;--line2:#293440;
+  --surf1:#222d39;--surf2:#1f2833;--surf3:#1e2731;--hover:#26333f;
+  --field:#202a35;--ib:#3a4753;--btnline:#3f4d5b;
+  --txt:#e4eaf0;--sub:#98a6b4;--brand:#8ec3e8;
+  --red:#f08a7d;--org:#e8a55c;--grn:#67c795;--blue:#7fb0e0;
+  --redbg:#3a2320;--orgbg:#38291a;--grnbg:#1d3329;--bluebg:#1e2c3a;
+  --mentbg:#1c2836;--mentline:#3b556e;--menttxt:#d3e2f1;
+  --basisbg:#2b271c;--basisline:#5a4d2c;--basistxt:#dcc073;
+  --warnbg:#2e2718;--warnline:#5a4d2c;--warntxt:#e2c579;
+}
+
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--txt);
+  font-family:"Malgun Gothic","맑은 고딕",-apple-system,"Segoe UI",sans-serif;font-size:13.5px;line-height:1.6}
+.wrap{max-width:1240px;margin:0 auto;padding:0 14px 70px}
+header{background:linear-gradient(135deg,var(--navy),var(--navy2));color:#fff;padding:20px 0 0;border-bottom:4px solid var(--gold)}
+header .wrap{padding-bottom:0}
+header h1{margin:0;font-size:21px;letter-spacing:-.5px}
+header p{margin:5px 0 14px;opacity:.88;font-size:12.5px}
+.tabs{display:flex;gap:4px;flex-wrap:wrap}
+.tabs button{background:rgba(255,255,255,.12);color:#fff;border:0;border-radius:7px 7px 0 0;
+  padding:10px 18px;font-size:13.5px;font-weight:700;cursor:pointer;font-family:inherit}
+.tabs button.on{background:var(--bg);color:var(--brand)}
+.card{background:var(--card);border:1px solid var(--line);border-radius:9px;padding:16px 18px;margin:16px 0}
+h2{font-size:15.5px;margin:0 0 3px;color:var(--brand);display:flex;align-items:center;gap:8px}
+h2 .no{background:var(--navy);color:#fff;width:22px;height:22px;border-radius:50%;
+  display:inline-flex;align-items:center;justify-content:center;font-size:12px;flex:none}
+.sub{color:var(--sub);font-size:12px;margin:0 0 12px 30px}
+.gsub{color:var(--sub);font-size:11.5px;font-weight:400}
+label{display:block;font-size:11.5px;color:var(--sub);font-weight:700;margin-bottom:3px}
+input,select,textarea{width:100%;padding:6px 8px;border:1px solid var(--ib);border-radius:5px;
+  font-size:13px;font-family:inherit;background:var(--field);color:var(--txt)}
+input:focus,select:focus,textarea:focus{outline:0;border-color:var(--brand);box-shadow:0 0 0 3px rgba(21,91,138,.28)}
+textarea{resize:vertical}
+.grid{display:grid;gap:9px}
+.g2{grid-template-columns:repeat(2,1fr)}.g3{grid-template-columns:repeat(3,1fr)}
+.g4{grid-template-columns:repeat(4,1fr)}.g5{grid-template-columns:repeat(5,1fr)}.g6{grid-template-columns:repeat(6,1fr)}
+table.form{width:100%;border-collapse:collapse;font-size:12.5px}
+table.form th{background:var(--surf1);border:1px solid var(--line);padding:6px;font-weight:700;color:var(--brand);font-size:12px}
+table.form td{border:1px solid var(--line);padding:5px 6px;vertical-align:middle}
+table.form td.gk{background:var(--surf2);font-weight:700;text-align:center;color:var(--brand);width:96px;font-size:12px}
+table.form td.it{width:41%}
+table.form input,table.form select{padding:4px 6px;font-size:12.5px}
+.prep{font-size:11.5px;color:var(--red);text-align:center;line-height:1.45}
+.hint{font-size:11px;color:var(--sub)}
+.ox{text-align:center}
+.btns{display:flex;gap:8px;flex-wrap:wrap}
+button.b{font-family:inherit;font-size:13px;padding:9px 18px;border-radius:6px;border:1px solid transparent;cursor:pointer;font-weight:700}
+.b-main{background:var(--navy);color:#fff}.b-gold{background:var(--gold);color:var(--ongold)}
+.b-sub{background:var(--card);color:var(--brand);border-color:var(--btnline)}
+.b-red{background:var(--card);color:var(--red);border-color:var(--btnline)}
+button.b:hover{filter:brightness(.93)}
+button.b:disabled{opacity:.55;cursor:default}
+.sm{padding:5px 11px;font-size:12px}
+.chk{display:flex;gap:7px;align-items:flex-start;padding:7px 9px;border:1px solid var(--line2);
+  border-radius:6px;background:var(--surf3);cursor:pointer;font-size:12.5px}
+.chk:hover{background:var(--hover)}
+.chk input{width:16px;height:16px;flex:none;margin-top:1px;cursor:pointer}
+.chk.auto{background:var(--warnbg);border-color:var(--warnline)}
+.item{border:1px solid var(--line);border-left:5px solid var(--line);border-radius:8px;padding:12px 15px;margin-bottom:10px;background:var(--card)}
+.item.m{border-left-color:var(--grn)}.item.a{border-left-color:var(--red)}
+.item.b{border-left-color:var(--org)}.item.i{border-left-color:var(--blue)}
+.item .hd{display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;align-items:center;margin-bottom:7px}
+.item .ttl{font-size:14px;font-weight:800;color:var(--brand)}
+.item .ttl .rk{background:var(--gold);color:var(--ongold);font-size:10.5px;padding:2px 7px;border-radius:10px;margin-right:6px;vertical-align:middle}
+.tag{display:inline-block;padding:2px 9px;border-radius:11px;font-size:11px;font-weight:700;white-space:nowrap}
+.t-m{background:var(--grnbg);color:var(--grn)}.t-a{background:var(--redbg);color:var(--red)}
+.t-b{background:var(--orgbg);color:var(--org)}.t-i{background:var(--bluebg);color:var(--blue)}
+.blk{border-radius:6px;padding:9px 12px;margin-top:7px;font-size:12.8px}
+.b-ment{background:var(--mentbg);border:1px dashed var(--mentline);color:var(--menttxt)}
+.b-basis{background:var(--basisbg);border:1px dashed var(--basisline)}
+.blk .bt{font-size:11px;font-weight:800;letter-spacing:.3px;display:block;margin-bottom:4px}
+.b-ment .bt{color:var(--blue)}.b-basis .bt{color:var(--basistxt)}
+.blk ul{margin:0;padding-left:16px}.blk li{margin:2px 0}
+.blk p{margin:0}
+.kpi{display:grid;grid-template-columns:repeat(5,1fr);gap:9px}
+.kpi div{background:var(--surf2);border:1px solid var(--line);border-radius:8px;padding:10px;text-align:center}
+.kpi .n{font-size:20px;font-weight:800;line-height:1.2}.kpi .t{font-size:11px;color:var(--sub)}
+table.dt{width:100%;border-collapse:collapse;font-size:12.5px}
+table.dt th{background:var(--navy);color:#fff;padding:8px 6px;font-size:11.5px;font-weight:600}
+table.dt td{padding:7px 6px;border-bottom:1px solid var(--line2);text-align:center}
+table.dt td.l{text-align:left}
+table.dt tr:hover td{background:var(--hover)}
+.note{background:var(--surf2);border:1px solid var(--line);border-radius:7px;padding:11px 14px;font-size:12px;color:var(--sub)}
+.warn{background:var(--warnbg);border:1px solid var(--warnline);border-radius:7px;padding:11px 14px;font-size:12.3px;color:var(--warntxt)}
+.err{background:var(--redbg);border:1px solid var(--red);border-radius:7px;padding:11px 14px;font-size:12.3px;color:var(--red)}
+textarea#script{height:280px;font-size:12.8px;line-height:1.7;white-space:pre-wrap}
+.pane{display:none}.pane.on{display:block}
+.dtwrap{display:flex;gap:4px}
+.dtwrap input{flex:1;min-width:0}
+.dtbtn{flex:none;width:32px;padding:0;border:1px solid var(--ib);background:var(--surf1);
+  border-radius:5px;cursor:pointer;font-size:14px;line-height:1;color:var(--txt)}
+.dtbtn:hover{background:var(--hover);border-color:var(--brand)}
+.bar{height:9px;background:var(--line2);border-radius:5px;overflow:hidden;min-width:60px}
+.bar i{display:block;height:100%}
+.toast{position:fixed;left:50%;bottom:26px;transform:translateX(-50%);z-index:9999;
+  background:var(--navy);color:#fff;padding:11px 22px;border-radius:8px;font-size:13px;font-weight:700;
+  box-shadow:0 8px 26px rgba(8,22,38,.35);opacity:0;pointer-events:none;transition:opacity .18s}
+.toast.on{opacity:1}
+.toast.bad{background:var(--red)}
+.custhd{display:flex;justify-content:space-between;align-items:center;background:var(--surf1);
+  border:1px solid var(--line);border-radius:7px 7px 0 0;padding:8px 12px;flex-wrap:wrap;gap:6px}
+@media(max-width:980px){.g6,.g5,.g4,.g3{grid-template-columns:repeat(2,1fr)}.kpi{grid-template-columns:repeat(2,1fr)}}
+@media print{:root{color-scheme:light}body{background:#fff;color:#000}.noprint{display:none!important}
+  .pane{display:block!important}.card{break-inside:avoid}
+  *{-webkit-print-color-adjust:exact;print-color-adjust:exact}}
+
+</style>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='6' fill='%230b3a5d'/%3E%3Ctext x='16' y='23' font-size='19' text-anchor='middle' fill='%23c9922e' font-family='sans-serif' font-weight='bold'%3E든%3C/text%3E%3C/svg%3E">
+</head>
+<body>
+
+<header><div class="wrap">
+  <h1>평생든든 방문활동 사전준비 · 자동분석 프로그램</h1>
+  <p>회사 양식(앞면·뒷면)을 그대로 입력하면 → 숨은보험금·할인 대상 자동 판정 → 고객 안내 멘트와 제안 근거 → 준비물 자동 체크 → <b>이 기기에 고객별 누적 저장</b>까지 한 번에 처리합니다. (태블릿용 · 인터넷 연결 없이도 동작)</p>
+  <div class="tabs noprint">
+    <button id="tb1" class="on" data-tab="1">① 계약 입력</button>
+    <button id="tb2" data-tab="2">② 진단 결과</button>
+    <button id="tb3" data-tab="3">③ 방문준비 · 상담메모</button>
+    <button id="tb4" data-tab="4">④ 고객 누적 DB</button>
+    <button id="tb5" data-tab="5">⑤ 누적 통계</button>
+  </div>
+</div></header>
+
+<div class="wrap">
+
+<!-- ================= TAB 1 : 입력 ================= -->
+<div class="pane on" id="p1">
+
+<div id="netWarn" class="err noprint" style="display:none;margin-top:16px"></div>
+<div id="restoreBar" class="warn noprint" style="display:none;margin-top:16px"></div>
+
+<div class="card">
+  <div class="grid g3">
+    <div><label>고객(계약자) 성명</label><input id="h_cust" placeholder="홍길동"></div>
+    <div><label>F P</label><input id="h_fp" placeholder="평촌지점 추진이">
+      <div class="hint">자동으로 채워집니다. 고쳐 넣으시면 다음부터 그 이름으로 기억합니다.</div></div>
+    <div><label>방문예정일</label><input id="h_vdate" data-date></div>
+  </div>
+  <div class="btns noprint" style="margin-top:11px">
+    <button class="b b-main sm" id="btnSave">💾 이 계약 저장</button>
+    <button class="b b-gold sm" data-tab="4">📂 저장된 고객 불러오기</button>
+    <button class="b b-sub sm" id="btnNew">🆕 새 고객 시작</button>
+    <button class="b b-sub sm" id="btnDemo">예시 입력</button>
+    <span class="hint" id="saveState" style="align-self:center"></span>
+  </div>
+  <div class="hint" style="margin-top:7px">
+    ※ 본 양식은 1인 1계약 분석용입니다. 계약이 여러 건이면 계약 건수만큼 저장하세요.
+    입력하시는 내용은 <b>자동으로 임시 보관</b>되고, [저장]을 누르면 이 기기에 기록됩니다. 주 1회 ④ 탭에서 <b>백업 파일</b>을 남겨 주세요.
+  </div>
+</div>
+
+<div class="card">
+  <h2><span class="no">1</span>인적사항</h2>
+  <p class="sub">계약 기본 정보입니다. 가입일은 <b>2006년 2월 이전 여부</b>를 자동 판정하는 데 쓰이므로 꼭 입력하세요.</p>
+  <div class="grid g6">
+    <div style="grid-column:span 2"><label>가입일 <span class="gsub">(20030514 처럼 숫자만 넣으셔도 됩니다)</span></label>
+      <input id="i_join" data-date>
+      <div class="hint" id="i_joinMsg">숫자로 직접 치시거나, 오른쪽 📅 단추를 눌러 달력에서 고르세요.</div></div>
+    <div style="grid-column:span 2"><label>상품명</label><input id="i_prod"></div>
+    <div><label>보험료 <span class="gsub">(원/월)</span></label><input id="i_prem" data-money placeholder="50000"></div>
+    <div><label>인수조건</label><select id="i_uw">
+      <option value="">해당없음(표준)</option><option>부담보</option><option>할증</option><option>삭감</option></select></div>
+  </div>
+  <div class="grid g6" style="margin-top:9px">
+    <div><label>가입연령 <span class="gsub">(피보험자 · 세)</span></label>
+      <input id="i_age" type="number" min="0" max="100" placeholder="32">
+      <div class="hint">「○○세 만기」 계산에 쓰입니다.</div></div>
+    <div><label>납입기간 <span class="gsub">(예: 20년)</span></label>
+      <input id="i_payterm" placeholder="20년 · 120개월 · 전기납"></div>
+    <div><label>납입 만료일 <span class="gsub">(자동 계산)</span></label><input id="i_payend" data-date>
+      <div class="hint" id="i_payendMsg">가입일과 납입기간을 넣으시면 자동으로 채워집니다.</div></div>
+    <div><label>보험기간 <span class="gsub">(예: 종신/80세)</span></label>
+      <input id="i_insterm" placeholder="종신 · 80세 · 20년만기"></div>
+    <div><label>보험 만기일 <span class="gsub">(자동 계산)</span></label><input id="i_insend" data-date>
+      <div class="hint" id="i_insendMsg">가입일과 보험기간을 넣으시면 자동으로 채워집니다.</div></div>
+    <div><label>예정이율 <span class="gsub">(%)</span></label><input id="i_rate" type="number" step="0.01" placeholder="6.5"></div>
+  </div>
+</div>
+
+<div class="card">
+  <h2><span class="no">2</span>계약사항</h2>
+  <p class="sub">계약자 · 주피보험자 · 수익자 정보입니다. 수익자가 비어 있으면 지정 안내 대상으로 자동 분류됩니다.</p>
+  <table class="form">
+    <tr><th colspan="5">계약자</th><th colspan="5">주피보험자</th><th colspan="2">수익자</th></tr>
+    <tr><th>성명</th><th>성별</th><th style="width:12%">생년월일</th><th>가입연령</th><th>현재연령</th>
+        <th>성명</th><th>성별</th><th style="width:12%">생년월일</th><th>가입연령</th><th>현재연령</th>
+        <th>입원시</th><th>사망시</th></tr>
+    <tr>
+      <td><input id="c_on"></td>
+      <td><select id="c_os"><option></option><option>남</option><option>여</option></select></td>
+      <td><input id="c_obirth" data-date></td>
+      <td><input id="c_oja" type="number"></td><td><input id="c_ona" type="number"></td>
+      <td><input id="c_in"></td>
+      <td><select id="c_is"><option></option><option>남</option><option>여</option></select></td>
+      <td><input id="c_ibirth" data-date></td>
+      <td><input id="c_ija" type="number"></td><td><input id="c_ina" type="number"></td>
+      <td><input id="c_bh" placeholder="예: 본인"></td><td><input id="c_bd" placeholder="예: 배우자"></td>
+    </tr>
+  </table>
+  <div class="hint" id="c_ageMsg" style="margin-top:7px">생년월일을 넣으시면 회사 기준(계약일 − 생년월일 → 6개월 미만은 버리고, 6개월 이상이면 한 살 올림)으로 가입연령·현재연령이 자동 계산됩니다.</div>
+</div>
+
+<div class="card">
+  <h2><span class="no">3</span>계약 DB분석 <span class="gsub">— 앞면 : 할인 · 숨은보험금 찾아주기 · 헬스케어</span></h2>
+  <p class="sub">O / X 를 고르시면 아래 ② 진단 결과에서 <b>청구 가능한 숨은보험금과 할인 대상</b>이 자동으로 걸러집니다.</p>
+  <table class="form">
+    <tr><th style="width:96px">구분</th><th class="it">항목</th><th style="width:26%">내용</th><th style="width:22%">사전 자료준비</th></tr>
+
+    <tr><td class="gk" rowspan="3">건강체<br>할인</td>
+      <td>주계약 표준체 / 정상인수 여부</td>
+      <td><select id="f_std" class="ox"><option value=""></option><option>O</option><option>X</option></select></td>
+      <td class="prep" rowspan="3">변경후 보험료, 환급금<br>지원담당 문의 / FP.COM<br>BMI 예시표 지참</td></tr>
+    <tr><td>키 / 몸무게 / BMI / 흡연여부 확인 <span class="gsub">(고객)</span></td>
+      <td><div class="grid g4" style="gap:4px">
+        <input id="f_ht" type="number" placeholder="키cm"><input id="f_wt" type="number" placeholder="kg">
+        <input id="f_bmi" placeholder="BMI" readonly style="background:var(--surf2)">
+        <select id="f_smoke"><option value=""></option><option>비흡연</option><option>흡연</option></select></div></td></tr>
+    <tr><td>건강체 변경시 보험료 / 환급금액 <span class="gsub">(총무, FP.com)</span></td>
+      <td><div class="grid g2" style="gap:4px"><input id="f_hprem" data-money placeholder="변경후 보험료">
+        <input id="f_href" data-money placeholder="환급금액"></div></td></tr>
+
+    <tr><td class="gk" rowspan="2">직장할인</td>
+      <td>현재 할인적용 여부</td>
+      <td><select id="f_disc" class="ox"><option value=""></option><option>O</option><option>X</option></select></td>
+      <td class="prep" rowspan="2">직장 계약 할인표</td></tr>
+    <tr><td>직장명 / 단체명 확인 <span class="gsub">(고객)</span></td><td><input id="f_comp"></td></tr>
+
+    <tr><td class="gk" rowspan="2">수술급여금<br>찾아주기</td>
+      <td>수술특약 가입여부 <span class="gsub">(가입일 2006.02 이전)</span></td>
+      <td><select id="f_surg" class="ox"><option value=""></option><option>O</option><option>X</option></select></td>
+      <td class="prep" rowspan="2">수술특약 2종 50만원<br>(초진차트, 진단서)</td></tr>
+    <tr><td>임플란트 치조골이식수술 여부 확인</td>
+      <td><select id="f_impl" class="ox"><option value=""></option><option>O</option><option>X</option></select></td></tr>
+
+    <tr><td class="gk" rowspan="2">치아파절<br>보험금<br>찾아주기</td>
+      <td>재해치료비특약 또는 골절치료특약 가입여부 <span class="gsub">(가입일 2006.02 이전)</span></td>
+      <td><select id="f_acc" class="ox"><option value=""></option><option>O</option><option>X</option></select></td>
+      <td class="prep" rowspan="2">치아파절도<br>골절로 보험금 지급<br>(초진차트, 진단서)</td></tr>
+    <tr><td>치아파절 여부 확인 <span class="gsub">(고객)</span></td>
+      <td><select id="f_tooth" class="ox"><option value=""></option><option>O</option><option>X</option></select></td></tr>
+
+    <tr><td class="gk" rowspan="3">대장용종<br>보험금<br>찾아주기</td>
+      <td>21C 넘버원 암치료보험 가입여부 <span class="gsub">(가입시기 체크)</span></td>
+      <td><select id="f_c21" class="ox"><option value=""></option><option>O</option><option>X</option></select></td>
+      <td class="prep">주계약에서 200만 지급</td></tr>
+    <tr><td>베스트라이프암보험, 굿라이프암치료보험,<br>폰나이스암보험에 양성종양특약 가입여부</td>
+      <td><select id="f_ben" class="ox"><option value=""></option><option>O</option><option>X</option></select></td>
+      <td class="prep">특약에서 100만 지급</td></tr>
+    <tr><td>대장용종 수술여부 확인 <span class="gsub">(고객)</span></td>
+      <td><select id="f_polyp" class="ox"><option value=""></option><option>O</option><option>X</option></select></td>
+      <td class="prep">수술특약도 보험금 지급</td></tr>
+
+    <tr><td class="gk" rowspan="4">헬스케어<br>서비스</td>
+      <td>헬스케어서비스 회원 가입 여부</td>
+      <td><select id="f_hc" class="ox"><option value=""></option><option>O</option><option>X</option></select></td>
+      <td class="prep" rowspan="4">신청서 스캔누락 확인<br>헬스케어바인딩, 업셀링 전단<br>가입설계 출력<br>업셀링 금액확인</td></tr>
+    <tr><td>종신 / CI 주계약 합산 가입금액 <span class="gsub">(02.2 이후 가입, 만원)</span></td>
+      <td><div class="grid g2" style="gap:4px"><input id="f_ci" data-money placeholder="CI"><input id="f_life" data-money placeholder="종신"></div></td></tr>
+    <tr><td>헬스케어 업셀링시 필요 주계약 / 보험료 / 총환산 <span class="gsub">(CI/실속종신)</span></td>
+      <td><div class="grid g3" style="gap:4px"><input id="f_hcamt" data-money placeholder="만원">
+        <input id="f_hcprem" data-money placeholder="보험료"><input id="f_hcconv" data-money placeholder="총환산"></div></td></tr>
+    <tr><td>건강검진 업셀링시 필요 주계약 / 보험료 / 총환산 <span class="gsub">(종신/CI)</span></td>
+      <td><div class="grid g3" style="gap:4px"><input id="f_ckamt" data-money placeholder="만원">
+        <input id="f_ckprem" data-money placeholder="보험료"><input id="f_ckconv" data-money placeholder="총환산"></div></td></tr>
+  </table>
+</div>
+
+<div class="card">
+  <h2><span class="no">3</span>계약 DB분석 <span class="gsub">— 뒷면 : 납입 · 대출 · 보험금 · 계약관리</span></h2>
+  <p class="sub">금액은 원 단위로 입력하세요. 날짜가 들어가면 만기·수령 시점 도래 여부를 자동으로 계산합니다.</p>
+  <table class="form">
+    <tr><th style="width:96px">구분</th><th class="it">항목</th><th style="width:26%">내용</th><th style="width:22%">사전 자료준비</th></tr>
+
+    <tr><td class="gk">납입관련</td><td>기납입보험료 / 해약환급금</td>
+      <td><div class="grid g2" style="gap:4px"><input id="b_paid" data-money placeholder="기납입">
+        <input id="b_surr" data-money placeholder="해약환급금"></div></td><td class="prep">-</td></tr>
+
+    <tr><td class="gk" rowspan="2">대출</td>
+      <td>종류 / 기대출금 / 대출가능금액</td>
+      <td><div class="grid g3" style="gap:4px"><select id="b_ltype"><option value=""></option><option>신용</option><option>약대</option></select>
+        <input id="b_lbal" data-money placeholder="기대출금"><input id="b_lavl" data-money placeholder="가능금액"></div></td>
+      <td class="prep" rowspan="2">-</td></tr>
+    <tr><td>대출이율 / 월 납입이자 / 총납입이자</td>
+      <td><div class="grid g3" style="gap:4px"><input id="b_lrate" type="number" step="0.01" placeholder="%">
+        <input id="b_lmi" data-money placeholder="월이자"><input id="b_lti" data-money placeholder="총이자"></div></td></tr>
+
+    <tr><td class="gk">중도인출</td><td>기인출금액 / 인출가능금액</td>
+      <td><div class="grid g2" style="gap:4px"><input id="b_wd" data-money placeholder="기인출">
+        <input id="b_wdavl" data-money placeholder="인출가능"></div></td><td class="prep">-</td></tr>
+
+    <tr><td class="gk">사고보험금</td>
+      <td>병명 / 수령일 / 수령액
+        <div class="btns noprint" style="margin-top:5px"><button class="b b-sub sm" id="btnAddClaim">＋ 줄 추가</button></div></td>
+      <td><div id="claimBox"></div></td>
+      <td class="prep">보험금 청구서 지참</td></tr>
+
+    <tr><td class="gk" rowspan="2">생존보험금</td>
+      <td>중도보험금 : 수령예정일 / 금액</td>
+      <td><div class="grid g2" style="gap:4px"><input id="b_middt" data-date><input id="b_midamt" data-money placeholder="금액"></div></td>
+      <td class="prep" rowspan="2">생존보험금 신청서<br>지참</td></tr>
+    <tr><td>만기보험금 : 만기일 / 금액</td>
+      <td><div class="grid g2" style="gap:4px"><input id="b_matdt" data-date><input id="b_matamt" data-money placeholder="금액"></div></td></tr>
+
+    <tr><td class="gk">자동송금</td><td>자동송금 등록여부 (분할 / 만기)</td>
+      <td><div class="grid g2" style="gap:4px">
+        <select id="b_as"><option value="">분할</option><option>분할 O</option><option>분할 X</option></select>
+        <select id="b_am"><option value="">만기</option><option>만기 O</option><option>만기 X</option></select></div></td>
+      <td class="prep">자동송금신청서 지참</td></tr>
+
+    <tr><td class="gk">계약변경</td><td>수금자 변경이력 / 계약사항 변경이력</td>
+      <td><div class="grid g2" style="gap:4px"><input id="b_pch" placeholder="수금자 변경"><input id="b_cch" placeholder="계약사항 변경"></div></td>
+      <td class="prep">-</td></tr>
+
+    <tr><td class="gk">실손보험</td><td>실손보험 가입여부 / 타사가입여부 확인</td>
+      <td><div class="grid g2" style="gap:4px">
+        <select id="b_ro"><option value="">당사</option><option>당사 O</option><option>당사 X</option></select>
+        <select id="b_rt"><option value="">타사</option><option>타사 O</option><option>타사 X</option></select></div></td>
+      <td class="prep">실손 손해율표 지참</td></tr>
+
+    <tr><td class="gk">변액안내</td><td>펀드가입내역 / 적립비율</td>
+      <td><div class="grid g2" style="gap:4px"><input id="b_fund" placeholder="펀드명"><input id="b_fratio" type="number" step="0.1" placeholder="적립률 %"></div></td>
+      <td class="prep">펀드수익률표<br>(FP.COM 출력)</td></tr>
+
+    <tr><td class="gk">보장 만기</td><td>주요보장급부 만기시점 (주계약 / 특약)</td>
+      <td><div class="grid g2" style="gap:4px"><input id="b_cmain" data-date title="주계약 만기">
+        <input id="b_crider" data-date title="특약 만기"></div>
+        <div class="hint">왼쪽 주계약 / 오른쪽 특약</div></td>
+      <td class="prep">보장분석으로 대체가능</td></tr>
+  </table>
+
+  <div class="btns noprint" style="margin-top:14px;justify-content:center">
+    <button class="b b-main" id="btnAnalyze" style="padding:12px 40px;font-size:15px">📊 분석 실행 → 진단 결과 보기</button>
+  </div>
+</div>
+</div><!-- /p1 -->
+
+
+<!-- ================= TAB 2 : 진단 결과 ================= -->
+<div class="pane" id="p2">
+  <div class="card">
+    <h2><span class="no">4</span>진단 요약</h2>
+    <p class="sub" id="r_head"></p>
+    <div class="kpi" id="r_kpi"></div>
+    <div style="margin-top:13px" id="r_sum"></div>
+  </div>
+
+  <div class="card">
+    <h2><span class="no">5</span>발견 항목 · 고객 안내 멘트 · 제안 근거</h2>
+    <p class="sub">급한 순서로 정렬했습니다. <b>파란 상자</b>는 고객님께 그대로 읽어드리는 문장, <b>노란 상자</b>는 왜 그런지에 대한 근거입니다.</p>
+    <div id="r_items"></div>
+  </div>
+
+  <div class="card">
+    <h2><span class="no">6</span>확인이 안 된 항목 <span class="gsub">— 방문 전에 채워야 할 빈칸</span></h2>
+    <p class="sub">비워두신 항목입니다. 이 부분이 채워져야 숨은보험금 판정이 정확해집니다.</p>
+    <div id="r_blank"></div>
+  </div>
+
+  <div class="btns noprint card" style="justify-content:center">
+    <button class="b b-gold" data-tab="3">③ 방문준비 · 상담메모로 이동 →</button>
+    <button class="b b-sub" id="btnPrint2">🖨 인쇄 / PDF 저장</button>
+  </div>
+</div>
+
+
+<!-- ================= TAB 3 : 준비물 · 메모 ================= -->
+<div class="pane" id="p3">
+  <div class="card">
+    <h2><span class="no">4</span>방문 전 준비물 체크</h2>
+    <p class="sub">진단 결과에 따라 <b style="color:var(--gold)">노란색으로 자동 체크</b>된 항목은 이번 방문에 반드시 챙기셔야 할 자료입니다.</p>
+    <div class="grid g4" id="prepBox"></div>
+    <div style="margin-top:9px"><label>기타 준비물</label><input id="pr_etc"></div>
+  </div>
+
+  <div class="card">
+    <h2><span class="no">5</span>상담 메모 및 후속조치</h2>
+    <table class="form">
+      <tr><td class="gk">고객 요청사항</td><td colspan="3"><textarea id="m_req" rows="2"></textarea></td></tr>
+      <tr><td class="gk">상담 내용</td><td colspan="3"><textarea id="m_note" rows="3"></textarea></td></tr>
+      <tr><td class="gk">숨은보험금 발견</td><td colspan="3">
+        <textarea id="m_hidden" rows="2"></textarea>
+        <div class="btns noprint" style="margin-top:5px"><button class="b b-sub sm" id="btnFillHidden">진단 결과에서 자동으로 채우기</button>
+        <span class="hint" style="align-self:center">발견 예상액 합계 : <b id="m_hidamt">0</b> 원</span></div></td></tr>
+      <tr><td class="gk">업셀링 제안</td><td colspan="3"><textarea id="m_upsell" rows="2"></textarea></td></tr>
+      <tr><td class="gk">후속조치 / 처리기한</td>
+        <td><input id="m_follow" placeholder="후속조치 내용"></td>
+        <td class="gk" style="width:80px">처리기한</td><td style="width:170px"><input id="m_deadline" data-date></td></tr>
+      <tr><td class="gk">방문결과 등급</td>
+        <td><select id="m_grade">
+          <option value="">선택</option>
+          <option value="A">A (즉시 제안 가능)</option>
+          <option value="B">B (추후 재접촉)</option>
+          <option value="C">C (유지관리)</option></select>
+          <div class="hint" id="m_gradeHint"></div></td>
+        <td class="gk" style="width:80px">재접촉 사유</td><td><input id="m_reason"></td></tr>
+      <tr><td class="gk">방문일 / 차기방문</td>
+        <td><input id="m_vdate" data-date title="방문일"></td>
+        <td class="gk" style="width:80px">차기 방문<br>예정일</td><td><input id="m_next" data-date></td></tr>
+    </table>
+  </div>
+
+  <div class="card">
+    <h2><span class="no">6</span>추가 점검사항 <span class="gsub">— 고객관리 · 놓치기 쉬운 항목</span></h2>
+    <div class="grid g2" id="extraBox"></div>
+    <div class="grid g4" style="margin-top:9px">
+      <div><label>고객 생일 (월)</label><input id="e_bm" type="number" min="1" max="12"></div>
+      <div><label>고객 생일 (일)</label><input id="e_bd" type="number" min="1" max="31"></div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2><span class="no">7</span>상담 스크립트 <span class="gsub">— 복사해서 사용</span></h2>
+    <p class="sub">인사부터 마무리까지 순서대로 정리된 대본입니다. 전문용어는 괄호 안에 쉬운 말로 함께 넣었습니다.</p>
+    <textarea id="script" readonly></textarea>
+    <div class="btns noprint" style="margin-top:9px">
+      <button class="b b-gold" id="btnCopy">📋 스크립트 복사</button>
+      <button class="b b-sub" id="btnRebuild">🔄 스크립트 다시 만들기</button>
+    </div>
+  </div>
+
+  <div class="card noprint" style="text-align:center">
+    <div class="btns" style="justify-content:center">
+      <button class="b b-main" id="btnSave2" style="padding:12px 36px;font-size:15px">💾 이 계약 저장</button>
+      <button class="b b-sub" id="btnPrint3">🖨 인쇄 / PDF</button>
+    </div>
+    <div class="hint" style="margin-top:8px">저장하면 ④ 고객 누적 DB에 쌓입니다. 같은 고객의 다른 계약도 이어서 저장하세요.</div>
+  </div>
+</div>
+
+
+<!-- ================= TAB 4 : 고객 DB ================= -->
+<div class="pane" id="p4">
+  <div class="card">
+    <h2><span class="no">8</span>고객 누적 DB <span class="gsub">— 이 기기에 저장</span></h2>
+    <p class="sub">저장한 계약이 고객별로 이 기기에 쌓입니다.</p>
+    <div class="btns noprint" style="margin-bottom:11px">
+      <input id="q" placeholder="고객명 · 상품명 검색" style="max-width:240px">
+      <button class="b b-sub sm" id="btnReload">🔄 새로고침</button>
+      <button class="b b-gold sm" id="btnBackup">📦 전체 백업 파일 저장</button>
+      <button class="b b-sub sm" id="btnRestorePick">📂 백업 파일 복원</button>
+      <input type="file" id="rf" accept=".json" style="display:none">
+      <button class="b b-sub sm" id="btnCsv">📑 CSV 내보내기</button>
+      <button class="b b-red sm" id="btnWipe">전체 삭제</button>
+    </div>
+
+    <div class="card" style="margin:0 0 12px;background:var(--surf2)">
+      <b style="color:var(--brand)">엑셀 서식</b>
+      <div class="btns noprint" style="margin-top:8px">
+        <button class="b b-gold sm" id="btnTemplate">📄 빈 서식 내려받기 (.xlsx)</button>
+        <button class="b b-sub sm" id="btnImportPick">📤 작성한 서식 올리기</button>
+        <input type="file" id="xf" accept=".xlsx" style="display:none">
+        <button class="b b-sub sm" id="btnLedger">📊 누적 관리대장 내려받기 (.xlsx)</button>
+      </div>
+      <div class="hint" style="margin-top:7px">
+        컴퓨터가 없는 자리에서는 <b>빈 서식</b>을 인쇄해 손으로 적어 오신 뒤, 사무실에서 엑셀에 옮겨 <b>[작성한 서식 올리기]</b>로 한 번에 등록하실 수 있습니다.
+        각 계약의 <b>[엑셀]</b> 단추를 누르면 진단 결과와 상담 스크립트까지 담긴 파일이 만들어집니다.
+      </div>
+    </div>
+
+    <div class="warn noprint" style="margin-bottom:12px">
+      <b>보관 안내</b> · 자료는 서버 DB(<span id="dbPathHint">data/kyobo.db</span>)에 저장됩니다.
+      고객 개인정보가 담기므로 <b>주 1회 정도 [전체 백업 파일 저장]</b>으로 파일을 따로 남겨 두시고, 회사 보안 규정에 따라 관리해 주세요.
+    </div>
+    <div id="dbBox"></div>
+  </div>
+</div>
+
+
+<!-- ================= TAB 5 : 통계 ================= -->
+<div class="pane" id="p5">
+  <div class="card">
+    <h2><span class="no">9</span>누적 활동 통계</h2>
+    <p class="sub">저장된 전체 계약을 기준으로 집계합니다.</p>
+    <div class="kpi" id="s_kpi"></div>
+  </div>
+  <div class="card">
+    <h2><span class="no">10</span>방문결과 등급 분포 · 숨은보험금 발견 현황</h2>
+    <div id="s_dist"></div>
+  </div>
+  <div class="card">
+    <h2><span class="no">11</span>후속조치 관리 <span class="gsub">— 처리기한 · 차기방문</span></h2>
+    <p class="sub">기한이 지났거나 임박한 건을 먼저 보여드립니다.</p>
+    <div id="s_follow"></div>
+  </div>
+  <div class="card">
+    <h2><span class="no">12</span>월별 방문 추이</h2>
+    <div id="s_month"></div>
+  </div>
+</div>
+
+<div class="card note">
+  <b>안내</b> · 본 프로그램의 판정 기준(2006.02 이전 가입 여부, 수술특약 2종 50만원, 대장용종 주계약 200만·특약 100만 등)은
+  회사 양식 「평생든든 방문활동 사전준비」에 기재된 내용을 그대로 옮긴 것입니다.
+  실제 지급 여부와 금액은 <b>반드시 약관(보험 계약 내용을 적어둔 문서)과 회사 시스템에서 최종 확인</b>하신 뒤 안내해 주세요.
+  고객 개인정보가 담기므로 백업 파일은 회사 보안 규정에 따라 관리하시고, 공용 PC에서는 사용 후 브라우저를 닫아 주세요.
+</div>
+
+</div><!-- /wrap -->
+
+<div class="toast" id="toast"></div>
+<input type="date" id="pickHelper" style="position:fixed;left:-9999px;top:0;width:1px;height:1px;opacity:0">
+
+<script>
+/* ===== shared/calc.js ===== */
+/*
+ * 공통 계산 모듈 — 서버(Node)와 브라우저에서 같은 코드를 씁니다.
+ * 날짜 정규화 · 보험나이 · 납입/보험기간 해석 · 금액 표기
+ */
+(function (global) {
+  'use strict';
+
+  /* 숫자만 뽑아낸다. "50,000원" → 50000 */
+  function numOf(v) {
+    const n = parseFloat(String(v == null ? '' : v).replace(/[^0-9.\-]/g, ''));
+    return isNaN(n) ? 0 : n;
+  }
+
+  /* 원 단위 한국식 표기 */
+  function won(n) {
+    return Math.round(numOf(n)).toLocaleString('ko-KR');
+  }
+
+  /* 20030514 · 2003.5.14 · 2003-05-14 → 2003-05-14 */
+  function normDate(s) {
+    s = String(s == null ? '' : s).trim();
+    if (!s) return '';
+    let y, m, dd;
+    const parts = s.split(/[^0-9]+/).filter(Boolean);
+    if (parts.length >= 2 && parts[0].length === 4) {
+      y = parts[0];
+      m = parts[1].padStart(2, '0');
+      dd = (parts[2] || '1').padStart(2, '0');
+    } else {
+      const d = s.replace(/[^0-9]/g, '');
+      if (d.length === 8) { y = d.slice(0, 4); m = d.slice(4, 6); dd = d.slice(6, 8); }
+      else if (d.length === 6) { y = d.slice(0, 4); m = d.slice(4, 6); dd = '01'; }
+      else return '';
+    }
+    const ny = +y, nm = +m, nd = +dd;
+    if (ny < 1900 || ny > 2100 || nm < 1 || nm > 12 || nd < 1 || nd > 31) return '';
+    const t = new Date(ny, nm - 1, nd);
+    if (t.getFullYear() !== ny || t.getMonth() !== nm - 1 || t.getDate() !== nd) return '';
+    return y + '-' + m + '-' + dd;
+  }
+
+  function ymd(s) { return s ? String(s).replace(/-/g, '.') : ''; }
+
+  function todayStr(now) {
+    const d = now ? new Date(now) : new Date();
+    return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+  }
+
+  /* 기준일(today) 대비 남은 일수. 지난 날짜는 음수 */
+  function dday(s, baseStr) {
+    if (!s) return null;
+    const v = normDate(s) || s;
+    const d = new Date(v);
+    if (isNaN(d)) return null;
+    const base = new Date(baseStr || todayStr());
+    d.setHours(0, 0, 0, 0);
+    base.setHours(0, 0, 0, 0);
+    return Math.round((d - base) / 86400000);
+  }
+
+  /* 납입기간 해석 : "20년" "20년납" "120개월" "전기납" "일시납" */
+  function parseTerm(s) {
+    const t = String(s || '').replace(/\s/g, '');
+    if (!t) return null;
+    if (/일시/.test(t)) return { type: 'once', label: '일시납' };
+    if (/전기|종신/.test(t)) return { type: 'whole', label: '전기납' };
+    let m = t.match(/(\d+)(년|개월|월)납/);
+    if (!m) m = t.match(/(\d+)(개월|월|년)?/);
+    if (!m) return null;
+    const n = +m[1];
+    if (!n) return null;
+    const u = m[2] || '년';
+    return (u === '개월' || u === '월')
+      ? { type: 'm', n: n, label: n + '개월' }
+      : { type: 'y', n: n, label: n + '년' };
+  }
+
+  /* 보험기간 해석 : "종신" "80세" "20년만기" "240개월" */
+  function parseInsTerm(s) {
+    const t = String(s || '').replace(/\s/g, '');
+    if (!t) return null;
+    if (/종신|평생/.test(t)) return { type: 'whole', label: '종신' };
+    let m = t.match(/(\d+)세/);
+    if (m) return { type: 'age', n: +m[1], label: m[1] + '세 만기' };
+    m = t.match(/(\d+)(년|개월|월)?만기/) || t.match(/(\d+)(개월|월|년)?/);
+    if (!m) return null;
+    const n = +m[1];
+    if (!n) return null;
+    const u = m[2] || '년';
+    return (u === '개월' || u === '월')
+      ? { type: 'm', n: n, label: n + '개월 만기' }
+      : { type: 'y', n: n, label: n + '년 만기' };
+  }
+
+  /* 기준일 + 기간 (말일 넘침은 그 달 마지막 날로) */
+  function addTerm(base, term) {
+    if (!base || !term) return '';
+    const y = +base.slice(0, 4), m = +base.slice(5, 7), d = +base.slice(8, 10);
+    let ny, nm;
+    if (term.type === 'y') { ny = y + term.n; nm = m; }
+    else if (term.type === 'm') { const tot = y * 12 + (m - 1) + term.n; ny = Math.floor(tot / 12); nm = tot % 12 + 1; }
+    else return '';
+    const last = new Date(ny, nm, 0).getDate();
+    return ny + '-' + String(nm).padStart(2, '0') + '-' + String(Math.min(d, last)).padStart(2, '0');
+  }
+
+  /*
+   * 보험나이 (회사 기준)
+   * 기준일 − 생년월일 → 남은 개월이 6개월 미만이면 버리고, 6개월 이상이면 한 살 올림
+   */
+  function insAge(birth, base) {
+    const b = normDate(birth), t = normDate(base);
+    if (!b || !t) return null;
+    let y = +t.slice(0, 4) - +b.slice(0, 4);
+    let m = +t.slice(5, 7) - +b.slice(5, 7);
+    const d = +t.slice(8, 10) - +b.slice(8, 10);
+    if (d < 0) m--;
+    if (m < 0) { y--; m += 12; }
+    if (y < 0) return null;
+    return { age: m >= 6 ? y + 1 : y, y: y, m: m, up: m >= 6 };
+  }
+
+  /* 납입 만료일 자동 계산 (전기납은 보험 만기일과 동일) */
+  function calcPayEnd(join, payterm, insEnd) {
+    const j = normDate(join), term = parseTerm(payterm);
+    if (!j || !term) return { value: '', how: '' };
+    if (term.type === 'once') return { value: j, how: '일시납 — 가입일에 납입이 끝납니다' };
+    if (term.type === 'whole') {
+      const ins = normDate(insEnd);
+      return ins
+        ? { value: ins, how: '전기납 — 보험 만기일과 같습니다' }
+        : { value: '', how: '전기납입니다. 보험 만기일을 넣으시면 만료일이 같이 채워집니다.' };
+    }
+    const v = addTerm(j, term);
+    return { value: v, how: '가입일 + ' + term.label + ' = ' + v };
+  }
+
+  /* 보험 만기일 자동 계산 */
+  function calcInsEnd(join, insterm, joinAge) {
+    const j = normDate(join), term = parseInsTerm(insterm);
+    if (!j || !term) return { value: '', how: '' };
+    if (term.type === 'whole') return { value: '', how: '종신 — 만기가 따로 없어 평생 보장됩니다.', whole: true };
+    if (term.type === 'age') {
+      const age = numOf(joinAge);
+      if (!age) return { value: '', how: term.label + ' 입니다. 가입연령을 넣으시면 만기일이 계산됩니다.' };
+      const yrs = term.n - age;
+      if (yrs <= 0) return { value: '', how: '가입연령(' + age + '세)이 만기나이(' + term.n + '세)보다 크거나 같습니다.' };
+      const v = addTerm(j, { type: 'y', n: yrs });
+      return { value: v, how: '가입일 + (' + term.n + '세 − 가입연령 ' + age + '세 = ' + yrs + '년) = ' + v };
+    }
+    const v = addTerm(j, term);
+    return { value: v, how: '가입일 + ' + term.label + ' = ' + v };
+  }
+
+  /* BMI = 몸무게(kg) / 키(m)² */
+  function bmi(ht, wt) {
+    const h = numOf(ht) / 100, w = numOf(wt);
+    if (!h || !w) return '';
+    return (w / (h * h)).toFixed(1);
+  }
+
+  const Calc = {
+    numOf: numOf, won: won, normDate: normDate, ymd: ymd, todayStr: todayStr, dday: dday,
+    parseTerm: parseTerm, parseInsTerm: parseInsTerm, addTerm: addTerm, insAge: insAge,
+    calcPayEnd: calcPayEnd, calcInsEnd: calcInsEnd, bmi: bmi
+  };
+
+  if (typeof module !== 'undefined' && module.exports) module.exports = Calc;
+  else (global.KB = global.KB || {}).Calc = Calc;
+})(typeof globalThis !== 'undefined' ? globalThis : this);
+
+</script>
+<script>
+/* ===== shared/schema.js ===== */
+/*
+ * 항목 정의 — 이 파일 하나가 기준입니다.
+ * 여기에 항목을 추가하면 서버 DB 컬럼 · 엑셀 서식 · CSV 내보내기가 함께 따라옵니다.
+ * (웹 입력화면은 회사 양식 배치를 그대로 살리기 위해 public/index.html 에서 직접 그리며,
+ *  입력칸 id 는 아래 k 값과 1:1 로 맞춰져 있습니다. 서버가 기동할 때 누락 여부를 검사합니다.)
+ */
+(function (global) {
+  'use strict';
+
+  const OX = ['O', 'X'];
+
+  const SECTIONS = [
+    {
+      key: 'head', no: '', title: '방문 기본정보',
+      desc: '누구를, 언제 방문하는지에 대한 기본 정보입니다.',
+      fields: [
+        { k: 'h_cust', label: '고객(계약자) 성명', type: 'text', required: true },
+        { k: 'h_fp', label: 'FP', type: 'text' },
+        { k: 'h_vdate', label: '방문예정일', type: 'date' }
+      ]
+    },
+    {
+      key: 'person', no: 1, title: '인적사항',
+      desc: '계약 기본 정보입니다. 가입일은 2006년 2월 이전 여부를 판정하는 데 쓰입니다.',
+      fields: [
+        { k: 'i_join', label: '가입일', type: 'date' },
+        { k: 'i_prod', label: '상품명', type: 'text' },
+        { k: 'i_prem', label: '보험료', type: 'number', unit: '원/월' },
+        { k: 'i_uw', label: '인수조건', type: 'select', options: ['부담보', '할증', '삭감'], blank: '해당없음(표준)' },
+        { k: 'i_age', label: '가입연령', type: 'number', unit: '세' },
+        { k: 'i_payterm', label: '납입기간', type: 'text', ph: '20년 · 120개월 · 전기납' },
+        { k: 'i_payend', label: '납입 만료일', type: 'date', auto: true },
+        { k: 'i_insterm', label: '보험기간', type: 'text', ph: '종신 · 80세 · 20년만기' },
+        { k: 'i_insend', label: '보험 만기일', type: 'date', auto: true },
+        { k: 'i_rate', label: '예정이율', type: 'number', unit: '%' }
+      ]
+    },
+    {
+      key: 'contract', no: 2, title: '계약사항',
+      desc: '계약자 · 주피보험자 · 수익자 정보입니다.',
+      fields: [
+        { k: 'c_on', label: '계약자 성명', type: 'text' },
+        { k: 'c_os', label: '계약자 성별', type: 'select', options: ['남', '여'] },
+        { k: 'c_obirth', label: '계약자 생년월일', type: 'date' },
+        { k: 'c_oja', label: '계약자 가입연령', type: 'number', auto: true },
+        { k: 'c_ona', label: '계약자 현재연령', type: 'number', auto: true },
+        { k: 'c_in', label: '주피보험자 성명', type: 'text' },
+        { k: 'c_is', label: '주피보험자 성별', type: 'select', options: ['남', '여'] },
+        { k: 'c_ibirth', label: '주피보험자 생년월일', type: 'date' },
+        { k: 'c_ija', label: '주피보험자 가입연령', type: 'number', auto: true },
+        { k: 'c_ina', label: '주피보험자 현재연령', type: 'number', auto: true },
+        { k: 'c_bh', label: '수익자(입원시)', type: 'text', ph: '예: 본인' },
+        { k: 'c_bd', label: '수익자(사망시)', type: 'text', ph: '예: 배우자' }
+      ]
+    },
+    {
+      key: 'front', no: 3, title: '계약 DB분석 — 앞면',
+      desc: '할인 · 숨은보험금 찾아주기 · 헬스케어',
+      fields: [
+        { k: 'f_std', label: '주계약 표준체 / 정상인수 여부', type: 'select', options: OX, group: '건강체 할인' },
+        { k: 'f_ht', label: '키', type: 'number', unit: 'cm', group: '건강체 할인' },
+        { k: 'f_wt', label: '몸무게', type: 'number', unit: 'kg', group: '건강체 할인' },
+        { k: 'f_bmi', label: 'BMI', type: 'number', auto: true, group: '건강체 할인' },
+        { k: 'f_smoke', label: '흡연여부', type: 'select', options: ['비흡연', '흡연'], group: '건강체 할인' },
+        { k: 'f_hprem', label: '건강체 변경후 보험료', type: 'number', unit: '원', group: '건강체 할인' },
+        { k: 'f_href', label: '건강체 환급금액', type: 'number', unit: '원', group: '건강체 할인' },
+        { k: 'f_disc', label: '직장할인 현재 적용여부', type: 'select', options: OX, group: '직장할인' },
+        { k: 'f_comp', label: '직장명 / 단체명', type: 'text', group: '직장할인' },
+        { k: 'f_surg', label: '수술특약 가입여부', type: 'select', options: OX, group: '수술급여금', hint: '가입일 2006.02 이전' },
+        { k: 'f_impl', label: '임플란트 치조골이식수술 여부', type: 'select', options: OX, group: '수술급여금' },
+        { k: 'f_acc', label: '재해치료비/골절치료특약 가입여부', type: 'select', options: OX, group: '치아파절', hint: '가입일 2006.02 이전' },
+        { k: 'f_tooth', label: '치아파절 여부', type: 'select', options: OX, group: '치아파절' },
+        { k: 'f_c21', label: '21C 넘버원 암치료보험 가입여부', type: 'select', options: OX, group: '대장용종' },
+        { k: 'f_ben', label: '양성종양특약 가입여부', type: 'select', options: OX, group: '대장용종' },
+        { k: 'f_polyp', label: '대장용종 수술여부', type: 'select', options: OX, group: '대장용종' },
+        { k: 'f_hc', label: '헬스케어서비스 회원 가입여부', type: 'select', options: OX, group: '헬스케어' },
+        { k: 'f_ci', label: 'CI 주계약 가입금액', type: 'number', unit: '만원', group: '헬스케어' },
+        { k: 'f_life', label: '종신 주계약 가입금액', type: 'number', unit: '만원', group: '헬스케어' },
+        { k: 'f_hcamt', label: '헬스케어 업셀링 필요 주계약', type: 'number', unit: '만원', group: '헬스케어' },
+        { k: 'f_hcprem', label: '헬스케어 업셀링 보험료', type: 'number', unit: '원', group: '헬스케어' },
+        { k: 'f_hcconv', label: '헬스케어 업셀링 총환산', type: 'number', group: '헬스케어' },
+        { k: 'f_ckamt', label: '건강검진 업셀링 필요 주계약', type: 'number', unit: '만원', group: '헬스케어' },
+        { k: 'f_ckprem', label: '건강검진 업셀링 보험료', type: 'number', unit: '원', group: '헬스케어' },
+        { k: 'f_ckconv', label: '건강검진 업셀링 총환산', type: 'number', group: '헬스케어' }
+      ]
+    },
+    {
+      key: 'back', no: 3, title: '계약 DB분석 — 뒷면',
+      desc: '납입 · 대출 · 보험금 · 계약관리 (금액은 원 단위)',
+      fields: [
+        { k: 'b_paid', label: '기납입보험료', type: 'number', unit: '원', group: '납입관련' },
+        { k: 'b_surr', label: '해약환급금', type: 'number', unit: '원', group: '납입관련' },
+        { k: 'b_ltype', label: '대출종류', type: 'select', options: ['신용', '약대'], group: '대출' },
+        { k: 'b_lbal', label: '기대출금', type: 'number', unit: '원', group: '대출' },
+        { k: 'b_lavl', label: '대출가능금액', type: 'number', unit: '원', group: '대출' },
+        { k: 'b_lrate', label: '대출이율', type: 'number', unit: '%', group: '대출' },
+        { k: 'b_lmi', label: '월 납입이자', type: 'number', unit: '원', group: '대출' },
+        { k: 'b_lti', label: '총 납입이자', type: 'number', unit: '원', group: '대출' },
+        { k: 'b_wd', label: '기인출금액', type: 'number', unit: '원', group: '중도인출' },
+        { k: 'b_wdavl', label: '인출가능금액', type: 'number', unit: '원', group: '중도인출' },
+        { k: 'b_middt', label: '중도보험금 수령예정일', type: 'date', group: '생존보험금' },
+        { k: 'b_midamt', label: '중도보험금액', type: 'number', unit: '원', group: '생존보험금' },
+        { k: 'b_matdt', label: '만기보험금 만기일', type: 'date', group: '생존보험금' },
+        { k: 'b_matamt', label: '만기보험금액', type: 'number', unit: '원', group: '생존보험금' },
+        { k: 'b_as', label: '자동송금(분할) 등록여부', type: 'select', options: ['분할 O', '분할 X'], group: '자동송금' },
+        { k: 'b_am', label: '자동송금(만기) 등록여부', type: 'select', options: ['만기 O', '만기 X'], group: '자동송금' },
+        { k: 'b_pch', label: '수금자 변경이력', type: 'text', group: '계약변경' },
+        { k: 'b_cch', label: '계약사항 변경이력', type: 'text', group: '계약변경' },
+        { k: 'b_ro', label: '실손보험 당사 가입여부', type: 'select', options: ['당사 O', '당사 X'], group: '실손보험' },
+        { k: 'b_rt', label: '실손보험 타사 가입여부', type: 'select', options: ['타사 O', '타사 X'], group: '실손보험' },
+        { k: 'b_fund', label: '펀드가입내역', type: 'text', group: '변액안내' },
+        { k: 'b_fratio', label: '적립비율', type: 'number', unit: '%', group: '변액안내' },
+        { k: 'b_cmain', label: '주계약 보장 만기시점', type: 'date', group: '보장 만기' },
+        { k: 'b_crider', label: '특약 보장 만기시점', type: 'date', group: '보장 만기' }
+      ]
+    },
+    {
+      key: 'memo', no: 5, title: '상담 메모 및 후속조치',
+      desc: '방문 결과와 다음에 할 일을 남깁니다.',
+      fields: [
+        { k: 'pr_etc', label: '기타 준비물', type: 'text' },
+        { k: 'm_req', label: '고객 요청사항', type: 'textarea' },
+        { k: 'm_note', label: '상담 내용', type: 'textarea' },
+        { k: 'm_hidden', label: '숨은보험금 발견', type: 'textarea' },
+        { k: 'm_upsell', label: '업셀링 제안', type: 'textarea' },
+        { k: 'm_follow', label: '후속조치', type: 'text' },
+        { k: 'm_deadline', label: '처리기한', type: 'date' },
+        { k: 'm_grade', label: '방문결과 등급', type: 'select', options: ['A', 'B', 'C'] },
+        { k: 'm_reason', label: '재접촉 사유', type: 'text' },
+        { k: 'm_vdate', label: '방문일', type: 'date' },
+        { k: 'm_next', label: '차기 방문예정일', type: 'date' },
+        { k: 'e_bm', label: '고객 생일 (월)', type: 'number' },
+        { k: 'e_bd', label: '고객 생일 (일)', type: 'number' }
+      ]
+    }
+  ];
+
+  /* 방문 전 준비물 체크리스트 */
+  const PREPS = [
+    { id: 'p1', t: '보장분석서' }, { id: 'p2', t: '가입설계서(업셀링)' },
+    { id: 'p3', t: '보험금 청구서' }, { id: 'p4', t: '생존보험금 신청서' },
+    { id: 'p5', t: '자동송금 신청서' }, { id: 'p6', t: '실손 손해율표' },
+    { id: 'p7', t: '펀드수익률표' }, { id: 'p8', t: 'BMI 예시표' },
+    { id: 'p9', t: '직장 계약 할인표' }, { id: 'p10', t: '헬스케어 안내전단' },
+    { id: 'p11', t: '계약사항 변경신청서' }, { id: 'p12', t: '초진차트 · 진단서' }
+  ];
+
+  /* 놓치기 쉬운 추가 점검사항 */
+  const EXTRAS = [
+    { id: 'e1', t: '연락처 / 주소 / 이메일 최신화' },
+    { id: 'e2', t: '보험료 납입방법(계좌·카드) 및 이체일 확인' },
+    { id: 'e3', t: '미납 / 실효 · 부활 대상 여부' },
+    { id: 'e4', t: '숨은보험금 · 휴면보험금 조회 결과' },
+    { id: 'e5', t: '보장성보험료 세액공제 증명서 안내' },
+    { id: 'e6', t: '수익자 지정 적정성 (상속·유족 청구 편의)' },
+    { id: 'e7', t: '교보생명 앱 · 알림톡 가입 안내' },
+    { id: 'e8', t: '가족 보장현황 확인 및 소개 요청' },
+    { id: 'e9', t: '계약 전 알릴의무 / 고지 관련 유의사항 안내' },
+    { id: 'e10', t: '개인정보 활용 동의 여부 확인' },
+    { id: 'e11', t: '고객 생일 · 기념일 확인' },
+    { id: 'e12', t: '직업 · 취미 변경 여부 (위험직군 통지의무)' },
+    { id: 'e13', t: '연금전환 · 중도인출 등 자금활용 니즈 파악' },
+    { id: 'e14', t: '만기 · 갱신 도래 계약 사전 안내' }
+  ];
+
+  /* 사고보험금 지급이력 (여러 줄) */
+  const CLAIM_FIELDS = [
+    { k: 'd', label: '병명', type: 'text' },
+    { k: 't', label: '수령일', type: 'date' },
+    { k: 'a', label: '수령액', type: 'number', unit: '원' }
+  ];
+
+  /* 고객 마스터에 올라가는 항목 (계약이 여러 건이어도 한 번만 관리) */
+  const CUSTOMER_FIELDS = [
+    { k: 'name', label: '고객명', type: 'text', required: true },
+    { k: 'fp', label: '담당 FP', type: 'text' },
+    { k: 'phone', label: '연락처', type: 'text' },
+    { k: 'birth', label: '생년월일', type: 'date' },
+    { k: 'memo', label: '고객 메모', type: 'textarea' }
+  ];
+
+  function allFields() {
+    const out = [];
+    SECTIONS.forEach(function (s) {
+      s.fields.forEach(function (f) { out.push(Object.assign({ section: s.key, sectionTitle: s.title }, f)); });
+    });
+    return out;
+  }
+
+  function fieldMap() {
+    const m = {};
+    allFields().forEach(function (f) { m[f.k] = f; });
+    return m;
+  }
+
+  /* 계약 테이블에 저장되는 항목 (고객명은 고객 마스터로 분리) */
+  function contractFields() {
+    return allFields().filter(function (f) { return f.k !== 'h_cust'; });
+  }
+
+  /* CSV / 누적대장 열 순서 */
+  const LEDGER_COLS = [
+    { k: '_savedAt', label: '저장일시' },
+    { k: 'h_cust', label: '고객명' },
+    { k: 'h_fp', label: 'FP' },
+    { k: 'h_vdate', label: '방문예정일' },
+    { k: 'i_join', label: '가입일' }, { k: 'i_prod', label: '상품명' },
+    { k: 'i_prem', label: '보험료' }, { k: 'i_payterm', label: '납입기간' },
+    { k: 'i_insterm', label: '보험기간' }, { k: 'i_rate', label: '예정이율' },
+    { k: 'i_uw', label: '인수조건' },
+    { k: 'c_ona', label: '계약자현재연령' }, { k: 'c_in', label: '주피보험자' },
+    { k: 'c_ina', label: '피보험자현재연령' },
+    { k: 'c_bh', label: '수익자(입원)' }, { k: 'c_bd', label: '수익자(사망)' },
+    { k: 'f_std', label: '표준체' }, { k: 'f_bmi', label: 'BMI' }, { k: 'f_smoke', label: '흡연' },
+    { k: 'f_disc', label: '직장할인' }, { k: 'f_comp', label: '직장명' },
+    { k: 'f_surg', label: '수술특약' }, { k: 'f_impl', label: '임플란트' },
+    { k: 'f_acc', label: '재해치료비특약' }, { k: 'f_tooth', label: '치아파절' },
+    { k: 'f_c21', label: '21C넘버원' }, { k: 'f_ben', label: '양성종양특약' },
+    { k: 'f_polyp', label: '대장용종' }, { k: 'f_hc', label: '헬스케어회원' },
+    { k: 'b_paid', label: '기납입' }, { k: 'b_surr', label: '해약환급금' },
+    { k: 'b_lbal', label: '대출잔액' }, { k: 'b_wdavl', label: '인출가능' },
+    { k: 'b_middt', label: '중도보험금일' }, { k: 'b_midamt', label: '중도보험금액' },
+    { k: 'b_matdt', label: '만기일' }, { k: 'b_matamt', label: '만기보험금' },
+    { k: 'b_as', label: '자동송금분할' }, { k: 'b_am', label: '자동송금만기' },
+    { k: 'b_ro', label: '실손당사' }, { k: 'b_rt', label: '실손타사' },
+    { k: 'b_cmain', label: '주계약만기' }, { k: 'b_crider', label: '특약만기' },
+    { k: 'm_grade', label: '방문등급' }, { k: 'm_reason', label: '재접촉사유' },
+    { k: 'm_hidden', label: '숨은보험금발견' }, { k: 'm_upsell', label: '업셀링제안' },
+    { k: 'm_follow', label: '후속조치' }, { k: 'm_deadline', label: '처리기한' },
+    { k: 'm_vdate', label: '방문일' }, { k: 'm_next', label: '차기방문' },
+    { k: '_money', label: '발견예상액' }, { k: '_hidCnt', label: '숨은보험금건수' }
+  ];
+
+  const Schema = {
+    SECTIONS: SECTIONS, PREPS: PREPS, EXTRAS: EXTRAS,
+    CLAIM_FIELDS: CLAIM_FIELDS, CUSTOMER_FIELDS: CUSTOMER_FIELDS,
+    LEDGER_COLS: LEDGER_COLS,
+    allFields: allFields, fieldMap: fieldMap, contractFields: contractFields
+  };
+
+  if (typeof module !== 'undefined' && module.exports) module.exports = Schema;
+  else (global.KB = global.KB || {}).Schema = Schema;
+})(typeof globalThis !== 'undefined' ? globalThis : this);
+
+</script>
+<script>
+/* ===== shared/analysis.js ===== */
+/*
+ * 진단 엔진 — 입력값을 받아 숨은보험금 · 즉시조치 · 제안 항목을 판정합니다.
+ * 서버와 브라우저가 같은 코드를 쓰므로 화면과 엑셀 결과가 항상 일치합니다.
+ *
+ * 판정 기준은 회사 양식 「평생든든 방문활동 사전준비」에 적힌 내용을 옮긴 것이며,
+ * 실제 지급 여부와 금액은 약관과 회사 시스템에서 최종 확인해야 합니다.
+ *
+ * lv : 'm' 숨은보험금·환급(돈) / 'a' 즉시조치 / 'b' 보완·제안 / 'i' 참고
+ */
+(function (global) {
+  'use strict';
+
+  const isNode = (typeof module !== 'undefined' && module.exports);
+  const Calc = isNode ? require('./calc.js') : global.KB.Calc;
+
+  const numOf = Calc.numOf, won = Calc.won, normDate = Calc.normDate, ymd = Calc.ymd;
+
+  function analyze(record, opts) {
+    opts = opts || {};
+    const today = opts.today || Calc.todayStr();
+    const f = (record && record.f) || {};
+    const claims = ((record && record.claims) || []).filter(function (c) {
+      return c && (c.d || c.t || c.a);
+    });
+    const V = function (k) { return String(f[k] == null ? '' : f[k]).trim(); };
+    const N = function (k) { return numOf(V(k)); };
+    const dd = function (v) { return Calc.dday(v, today); };
+
+    const cust = V('h_cust') || '고객';
+    const joinDate = normDate(V('i_join'));
+    const old2006 = joinDate ? (joinDate < '2006-02-01') : null;
+
+    const F2 = [];
+    const prep = [];
+    const blanks = [];
+    let money = 0, moneyUnknown = 0;
+
+    const add = function (o) { F2.push(o); };
+    const bl = function (t) { blanks.push(t); };
+    const need = function (id) { if (prep.indexOf(id) < 0) prep.push(id); };
+
+    /* ---------- 1. 건강체 할인 ---------- */
+    const bmi = N('f_bmi');
+    if (V('f_std') === '') bl('주계약 표준체 / 정상인수 여부 (O/X)');
+    if (!V('f_smoke') || !V('f_bmi')) bl('키 / 몸무게 / BMI / 흡연여부 (고객 확인)');
+    if (V('f_std') === 'O' && V('f_smoke') === '비흡연' && bmi >= 18.5 && bmi <= 25) {
+      need('p8');
+      const ref = N('f_href'), hp = N('f_hprem'), cp = N('i_prem');
+      if (ref > 0) money += ref; else moneyUnknown++;
+      add({
+        lv: 'm', pri: 95, cat: '건강체 할인', t: '건강체 할인 전환 대상입니다',
+        ment: cust + ' 님, 지금 담배를 안 피우시고 키·몸무게(BMI ' + V('f_bmi') + ')도 기준 안에 들어오십니다. ' +
+          '이런 분들은 \'건강체 할인\'(건강 상태가 좋은 분께 보험료를 깎아드리는 제도)을 받으실 수 있습니다. ' +
+          '제가 신청해 드리면 앞으로 낼 보험료가 줄어들고, 그동안 더 내신 부분은 돌려받으실 수 있습니다.' +
+          (hp > 0 && cp > 0 ? ' 지금 ' + won(cp) + '원에서 ' + won(hp) + '원으로 매달 ' + won(cp - hp) + '원이 줄어듭니다.' : '') +
+          (ref > 0 ? ' 그리고 지금까지 더 내신 ' + won(ref) + '원이 환급됩니다.' : ' 환급금은 제가 확인해서 알려드리겠습니다.'),
+        basis: [
+          '건강체 할인은 신청하지 않으면 자동으로 적용되지 않습니다. 조건이 되어도 모르고 계신 고객이 많습니다.',
+          '판정 기준 : 주계약 표준체(건강상 별도 조건 없이 정상 가입) + 비흡연 + BMI 18.5~25.',
+          '소급 적용되어 이미 납입한 보험료 중 차액을 환급받을 수 있습니다.',
+          '신청 전 지원담당 문의 또는 FP.COM에서 변경 후 보험료·환급금을 먼저 확인하세요.'
+        ],
+        prep: ['BMI 예시표'], est: ref
+      });
+    } else if (V('f_std') === 'O' && V('f_smoke') === '흡연') {
+      add({
+        lv: 'i', pri: 30, cat: '건강체 할인', t: '현재는 건강체 할인 대상이 아닙니다 (흡연)',
+        ment: cust + ' 님, 지금은 흡연 때문에 건강체 할인 대상이 아니십니다. 다만 금연하신 지 1년이 지나면 다시 신청하실 수 있으니, 그때 꼭 저에게 말씀해 주세요.',
+        basis: ['금연 후 일정 기간이 지나면 건강체 재심사를 신청할 수 있습니다.', '재심사 시점을 미리 안내해 두면 고객이 스스로 챙기실 수 있습니다.'],
+        prep: []
+      });
+    }
+    if (V('i_uw')) {
+      add({
+        lv: 'b', pri: 70, cat: '인수조건', t: '인수조건 \'' + V('i_uw') + '\' 해제 가능 여부 검토 대상',
+        ment: cust + ' 님, 이 계약은 가입하실 때 건강상 이유로 ' + V('i_uw') + ' 조건이 붙어 있습니다. ' +
+          (V('i_uw') === '부담보' ? '부담보(특정 부위나 질병은 일정 기간 보장하지 않는 조건)' : '조건부 인수') +
+          '는 정해진 기간이 지나면 풀리는 경우가 있어, 지금 상태를 확인해 보겠습니다. 조건이 풀렸다면 보장 범위가 그만큼 넓어집니다.',
+        basis: [
+          '부담보는 통상 정해진 기간(예: 1~5년)이 지나면 자동으로 해제되어 보장이 시작됩니다.',
+          '할증(보험료를 더 내는 조건)은 건강 상태가 좋아지면 재심사로 낮출 수 있는 경우가 있습니다.',
+          '고객이 조건 해제 사실을 모르면, 보장이 되는데도 청구하지 않고 넘어가게 됩니다.'
+        ],
+        prep: []
+      });
+    }
+
+    /* ---------- 2. 직장 할인 ---------- */
+    if (V('f_disc') === '') bl('직장할인 현재 할인적용 여부 (O/X)');
+    if (V('f_disc') === 'X') {
+      need('p9'); moneyUnknown++;
+      add({
+        lv: 'm', pri: 88, cat: '직장 할인', t: '직장(단체) 할인 미적용 상태입니다',
+        ment: cust + ' 님, 다니시는 직장이 저희와 단체 할인 협약이 되어 있으면 보험료를 깎아드릴 수 있는데, 지금은 그 할인이 안 들어가 있습니다. ' +
+          (V('f_comp') ? V('f_comp') + ' 로 확인해 보고' : '직장명만 알려주시면 확인해서') + ' 해당되면 바로 신청해 드리겠습니다.',
+        basis: [
+          '직장(단체)할인은 협약된 직장에 근무 중이면 적용되지만, 신청해야만 반영됩니다.',
+          '이직하신 경우에도 새 직장이 협약 대상이면 다시 신청할 수 있습니다.',
+          '방문 전 직장 계약 할인표에서 해당 여부를 미리 확인하세요.'
+        ],
+        prep: ['직장 계약 할인표']
+      });
+    }
+    if (V('f_disc') === 'X' && !V('f_comp')) bl('직장명 / 단체명 (고객 확인)');
+
+    /* ---------- 3. 수술급여금 찾아주기 ---------- */
+    if (old2006 === null) bl('가입일 (2006.02 이전 여부 판정에 필요)');
+    if (V('f_surg') === '') bl('수술특약 가입여부 (O/X)');
+    if (V('f_impl') === '') bl('임플란트 치조골이식수술 여부 (고객 확인)');
+    if (old2006 && V('f_surg') === 'O' && V('f_impl') === 'O') {
+      need('p3'); need('p12'); money += 500000;
+      add({
+        lv: 'm', pri: 100, cat: '수술급여금', t: '임플란트 치조골이식수술 — 수술급여금 청구 가능 (50만원)',
+        ment: cust + ' 님, 임플란트 하실 때 잇몸뼈를 채워 넣는 수술(치조골이식술)을 받으셨다고 하셨죠. ' +
+          '이 계약은 2006년 2월 이전에 가입하신 것이라 그 수술도 보험금이 나옵니다. 수술특약 2종으로 50만원이 지급됩니다. ' +
+          '치과에서 처음 진료받은 기록(초진차트)과 진단서만 떼어 주시면 제가 청구까지 다 해드리겠습니다.',
+        basis: [
+          '가입일 2006년 2월 이전 계약의 수술특약은 치조골이식술을 수술 2종으로 인정하여 50만원을 지급합니다.',
+          '대부분의 고객이 "치과 치료는 보험이 안 된다"고 알고 계셔서 청구하지 않고 넘어갑니다.',
+          '보험금 청구권의 소멸시효(청구할 수 있는 기한)는 3년입니다. 3년이 지난 건은 청구할 수 없습니다.',
+          '필요 서류 : 초진차트, 진단서, 보험금 청구서.'
+        ],
+        prep: ['보험금 청구서', '초진차트·진단서'], est: 500000
+      });
+    } else if (old2006 && V('f_surg') === 'O' && V('f_impl') === '') {
+      add({
+        lv: 'a', pri: 80, cat: '수술급여금', t: '임플란트 수술 여부를 고객께 꼭 여쭤보세요',
+        ment: cust + ' 님, 혹시 임플란트 하신 적 있으신가요? 잇몸뼈가 부족해서 뼈를 채우는 수술을 함께 받으셨다면 보험금이 나올 수 있습니다. 오래된 계약이라 이런 부분이 보장되거든요.',
+        basis: [
+          '이 계약은 2006년 2월 이전 가입 + 수술특약 가입 상태라, 치조골이식술 시 50만원 지급 대상입니다.',
+          '고객이 먼저 말씀하시는 경우가 거의 없으므로 FP가 직접 질문해야 발견됩니다.'
+        ],
+        prep: ['보험금 청구서']
+      });
+    }
+
+    /* ---------- 4. 치아파절 ---------- */
+    if (V('f_acc') === '') bl('재해치료비특약 또는 골절치료특약 가입여부 (O/X)');
+    if (V('f_tooth') === '') bl('치아파절 여부 (고객 확인)');
+    if (old2006 && V('f_acc') === 'O' && V('f_tooth') === 'O') {
+      need('p3'); need('p12'); moneyUnknown++;
+      add({
+        lv: 'm', pri: 98, cat: '치아파절 보험금', t: '치아파절 — 골절 보험금 청구 가능',
+        ment: cust + ' 님, 넘어지시거나 부딪혀서 이가 부러진 적이 있으시죠. 이가 부러진 것도 \'골절\'(뼈가 부러진 것)로 봅니다. ' +
+          '이 계약에 재해치료비특약이 들어 있어서 보험금이 나옵니다. 치과 초진차트와 진단서만 준비해 주시면 제가 청구해 드리겠습니다.',
+        basis: [
+          '치아파절은 재해치료비특약·골절치료특약에서 골절로 인정되어 보험금이 지급됩니다.',
+          '가입일 2006년 2월 이전 계약이 대상입니다.',
+          '"치과는 보험이 안 된다"는 오해 때문에 가장 많이 놓치는 항목 중 하나입니다.',
+          '청구 기한(소멸시효)은 3년이므로 지난 사고부터 빠르게 확인해야 합니다.'
+        ],
+        prep: ['보험금 청구서', '초진차트·진단서']
+      });
+    } else if (old2006 && V('f_acc') === 'O' && V('f_tooth') === '') {
+      add({
+        lv: 'a', pri: 78, cat: '치아파절 보험금', t: '치아가 부러진 적 있는지 꼭 여쭤보세요',
+        ment: cust + ' 님, 혹시 넘어지시거나 무엇을 씹다가 이가 부러진 적 있으신가요? 이가 부러진 것도 골절로 보고 보험금이 나옵니다.',
+        basis: [
+          '이 계약은 2006년 2월 이전 가입 + 재해치료비/골절치료특약 가입 상태입니다.',
+          '치아파절은 고객이 보험 대상이라고 전혀 생각하지 못하는 항목입니다.'
+        ],
+        prep: ['보험금 청구서']
+      });
+    }
+
+    /* ---------- 5. 대장용종 ---------- */
+    if (V('f_polyp') === '') bl('대장용종 수술여부 (고객 확인)');
+    if (V('f_polyp') === 'O') {
+      let sum = 0; const lines = [];
+      if (V('f_c21') === 'O') { sum += 2000000; lines.push('21C 넘버원 암치료보험 주계약에서 200만원'); }
+      if (V('f_ben') === 'O') { sum += 1000000; lines.push('양성종양특약에서 100만원'); }
+      if (V('f_surg') === 'O') { lines.push('수술특약에서 수술급여금'); moneyUnknown++; }
+      if (lines.length) {
+        need('p3'); need('p12'); money += sum;
+        add({
+          lv: 'm', pri: 99, cat: '대장용종 보험금',
+          t: '대장용종 절제 — 보험금 청구 가능' + (sum ? ' (약 ' + won(sum) + '원)' : ''),
+          ment: cust + ' 님, 대장 내시경 하시면서 용종(대장 안쪽에 생긴 작은 혹)을 떼어내셨죠. ' +
+            '그것도 보험금이 나오는 수술입니다. ' + lines.join(', ') + '이 나옵니다. ' +
+            '건강검진이라 안 될 거라고 생각하셨을 텐데, 떼어냈다면 청구 대상입니다. 서류만 주시면 제가 다 처리해 드리겠습니다.',
+          basis: [
+            '대장용종 절제술은 양성종양 또는 수술급여금 대상으로 보험금이 지급됩니다.',
+            '21C 넘버원 암치료보험 : 주계약에서 200만원 지급.',
+            '베스트라이프암보험 · 굿라이프암치료보험 · 폰나이스암보험의 양성종양특약 : 100만원 지급.',
+            '수술특약이 함께 있으면 수술급여금도 별도로 지급됩니다.',
+            '"건강검진 중에 뗀 것이라 안 된다"고 오해하여 청구하지 않는 대표적인 항목입니다.'
+          ],
+          prep: ['보험금 청구서', '초진차트·진단서'], est: sum
+        });
+      }
+    } else if (V('f_polyp') === '' && (V('f_c21') === 'O' || V('f_ben') === 'O')) {
+      add({
+        lv: 'a', pri: 85, cat: '대장용종 보험금', t: '대장 내시경에서 용종 떼신 적 있는지 꼭 여쭤보세요',
+        ment: cust + ' 님, 대장 내시경 받으시면서 용종(대장에 생긴 작은 혹) 떼어내신 적 있으신가요? 있으시면 보험금이 나옵니다. 검진 중에 뗀 것도 해당됩니다.',
+        basis: [
+          '이 계약은 대장용종 보험금 지급 대상 상품에 해당합니다.',
+          '용종 절제는 매우 흔하지만 청구율이 낮아, 질문만 해도 발견되는 경우가 많습니다.',
+          '청구 기한(소멸시효) 3년 이내 건을 우선 확인하세요.'
+        ],
+        prep: ['보험금 청구서']
+      });
+    }
+
+    /* ---------- 6. 헬스케어 ---------- */
+    if (V('f_hc') === '') bl('헬스케어서비스 회원 가입 여부 (O/X)');
+    if (V('f_hc') === 'X') {
+      need('p10'); need('p2');
+      const cur = N('f_ci') + N('f_life');
+      const needAmt = N('f_hcamt'), np = N('f_hcprem');
+      add({
+        lv: 'b', pri: 72, cat: '헬스케어 서비스', t: '헬스케어서비스 미가입 — 안내 및 업셀링 대상',
+        ment: cust + ' 님, 저희 헬스케어서비스는 아직 가입이 안 되어 있으십니다. ' +
+          '이건 아프신 다음에 보험금만 드리는 게 아니라, 아프기 전에 건강검진이나 병원 연계 같은 도움을 받으실 수 있는 서비스입니다. ' +
+          (cur > 0 ? '지금 종신·CI 합산 가입금액이 ' + won(cur) + '만원이신데, ' : '') +
+          (needAmt > 0
+            ? won(needAmt) + '만원까지 채우시면 서비스 대상이 되십니다. 매달 ' + won(np) + '원 정도 추가되는 부분인데, 어떤 혜택이 있는지 먼저 보여드릴게요.'
+            : '대상이 되시는지 제가 확인해서 안내해 드리겠습니다.'),
+        basis: [
+          '헬스케어서비스는 종신·CI 주계약 합산 가입금액이 기준 이상일 때 제공됩니다 (02.2 이후 가입 계약 기준).',
+          '기준에 조금 못 미치는 고객은 소액 증액만으로 대상이 되므로 제안 성공률이 높습니다.',
+          '보험금 지급이 아닌 "건강관리 혜택"으로 접근하면 고객 거부감이 낮습니다.',
+          '방문 전 확인 : 신청서 스캔 누락 여부, 헬스케어 바인딩, 업셀링 전단, 가입설계 출력.'
+        ],
+        prep: ['헬스케어 안내전단', '가입설계서(업셀링)']
+      });
+    }
+    if (V('f_hc') === 'O') {
+      add({
+        lv: 'i', pri: 25, cat: '헬스케어 서비스', t: '헬스케어서비스 가입 상태 — 활용 안내 대상',
+        ment: cust + ' 님은 헬스케어서비스에 이미 가입되어 계십니다. 그런데 실제로 써보신 적은 없으시죠? 건강검진 예약이나 상담을 무료로 받으실 수 있으니, 오늘 이용 방법을 알려드리겠습니다.',
+        basis: [
+          '가입만 되어 있고 이용하지 않는 고객이 많아, 활용 안내만으로도 만족도가 크게 올라갑니다.',
+          '이용 경험이 있는 고객은 계약 유지율이 높습니다.'
+        ],
+        prep: ['헬스케어 안내전단']
+      });
+    }
+
+    /* ---------- 7. 납입 · 예정이율 ---------- */
+    const paid = N('b_paid'), surr = N('b_surr'), rate = N('i_rate');
+    if (rate >= 4.5) {
+      add({
+        lv: 'a', pri: 90, cat: '계약 유지', t: '예정이율 ' + rate + '% — 반드시 지켜야 할 고금리 계약',
+        ment: cust + ' 님, 이 계약은 예정이율(가입할 때 정해진 이자율)이 ' + rate + '%입니다. 요즘 새로 가입하는 상품에서는 나올 수 없는 조건입니다. ' +
+          '혹시라도 보험료가 부담되셔서 해지를 생각하시게 되면, 절대 그냥 해지하지 마시고 저에게 먼저 말씀해 주세요. 해지하지 않고 유지하는 방법이 여러 가지 있습니다.',
+        basis: [
+          '예정이율이 높은 계약은 해지하면 같은 조건으로 다시 가입할 수 없습니다.',
+          '해지 대신 감액완납(보장금액을 줄이는 대신 앞으로 보험료를 내지 않는 방법), 납입 일시중지, 중도인출, 보험계약대출 등으로 유지할 수 있습니다.',
+          '고금리 계약 유지는 고객 이익이자 회사 신뢰로 직결되는 항목입니다.'
+        ],
+        prep: []
+      });
+    }
+    if (paid > 0 && surr > 0) {
+      const r = surr / paid * 100;
+      add({
+        lv: 'i', pri: 20, cat: '납입관련',
+        t: '기납입 ' + won(paid) + '원 / 해약환급금 ' + won(surr) + '원 (환급률 ' + r.toFixed(0) + '%)',
+        ment: cust + ' 님이 지금까지 내신 보험료는 ' + won(paid) + '원이고, 지금 해지하시면 ' + won(surr) + '원을 받으십니다. ' +
+          (r < 100
+            ? '아직 내신 돈보다 적습니다. 계약은 오래 유지하실수록 유리해지니 조금만 더 지켜보시는 게 좋겠습니다.'
+            : '내신 돈보다 많아진 상태입니다. 잘 유지해 오셨습니다.'),
+        basis: [
+          '해약환급금이 기납입보험료보다 적은 시기에 해지하면 손실이 확정됩니다.',
+          '환급률 수치를 직접 보여드리면 충동적인 해지를 막는 데 효과적입니다.'
+        ],
+        prep: []
+      });
+    }
+    if (!V('b_paid') || !V('b_surr')) bl('기납입보험료 / 해약환급금');
+
+    /* ---------- 8. 대출 · 중도인출 ---------- */
+    const lbal = N('b_lbal'), lrate = N('b_lrate'), lti = N('b_lti');
+    if (lbal > 0) {
+      add({
+        lv: 'a', pri: 76, cat: '대출',
+        t: '보험계약대출 ' + won(lbal) + '원 이용 중' + (lrate ? ' (이율 ' + lrate + '%)' : ''),
+        ment: cust + ' 님, 지금 보험에서 ' + won(lbal) + '원을 대출받아 쓰고 계십니다. 이율은 ' + lrate + '% 이고, 지금까지 낸 이자가 ' + won(lti) + '원입니다. ' +
+          '이자가 계속 쌓이면 나중에 받으실 보험금이나 환급금에서 그만큼 빠집니다. 여유가 생기실 때 조금씩이라도 갚아나가시는 게 좋고, 필요하시면 중도인출 같은 다른 방법도 비교해 드리겠습니다.',
+        basis: [
+          '보험계약대출 이자는 자동으로 원금에 더해져 복리로 늘어납니다.',
+          '대출 원리금은 보험금·해약환급금 지급 시 먼저 차감되므로, 정작 필요할 때 받는 금액이 줄어듭니다.',
+          '중도인출은 이자가 붙지 않는 대신 적립금이 줄어드는 방식이라, 어느 쪽이 유리한지 비교해 드려야 합니다.'
+        ],
+        prep: []
+      });
+    }
+    const wdavl = N('b_wdavl');
+    if (wdavl > 0 && lbal === 0) {
+      add({
+        lv: 'i', pri: 35, cat: '중도인출', t: '중도인출 가능금액 ' + won(wdavl) + '원',
+        ment: cust + ' 님, 급하게 돈이 필요하실 때 이 계약에서 ' + won(wdavl) + '원까지는 이자 없이 꺼내 쓰실 수 있습니다. 은행 대출 알아보시기 전에 저에게 먼저 물어보세요.',
+        basis: [
+          '중도인출은 이자 부담이 없어 급전이 필요한 고객에게 유용합니다.',
+          '다만 인출한 만큼 적립금과 향후 환급금이 줄어들므로 금액과 시점 안내가 필요합니다.',
+          '자금 니즈를 파악하는 자연스러운 대화 소재가 됩니다.'
+        ],
+        prep: []
+      });
+    }
+
+    /* ---------- 9. 사고보험금 ---------- */
+    if (claims.length) {
+      need('p3');
+      add({
+        lv: 'a', pri: 82, cat: '사고보험금', t: '과거 지급 이력 ' + claims.length + '건 — 추가 청구 가능 여부 확인',
+        ment: cust + ' 님, 예전에 ' + claims.map(function (c) { return c.d; }).filter(Boolean).join(', ') + ' (으)로 보험금을 받으신 기록이 있습니다. ' +
+          '같은 병으로 그 뒤에도 병원에 다니셨다면 추가로 청구할 수 있는 부분이 있는지 확인해 보겠습니다. ' +
+          '그리고 치료가 끝난 뒤 몸에 불편함이 남으셨다면 후유장해(치료 후에도 계속 남는 몸의 손상)로 따로 청구되는 경우도 있습니다.',
+        basis: [
+          '진단비는 한 번 받았어도, 입원·수술·통원은 건별로 반복 청구가 가능합니다.',
+          '치료 종결 후 남은 장해는 후유장해로 별도 청구 대상이 될 수 있습니다.',
+          '기존 지급 이력은 고객이 청구에 익숙하다는 뜻이므로, 미청구 건 발굴 성공률이 높습니다.'
+        ],
+        prep: ['보험금 청구서']
+      });
+    } else {
+      need('p3');
+      add({
+        lv: 'a', pri: 86, cat: '사고보험금', t: '최근 3년 내 병원 이력 — 반드시 질문하세요',
+        ment: cust + ' 님, 최근 3년 안에 입원하시거나 수술받으신 적, 아니면 다치셔서 병원에 다니신 적 있으신가요? ' +
+          '작은 것이라도 말씀해 주세요. 청구가 되는지 안 되는지는 제가 판단해 드리겠습니다. 안 되는 건 어쩔 수 없지만, 되는 걸 모르고 넘어가면 그건 너무 아깝습니다.',
+        basis: [
+          '보험금 청구권의 소멸시효는 3년입니다. 그 기간이 지나면 권리가 사라집니다.',
+          '미청구 보험금 확인·청구 대행은 평생든든서비스의 핵심 기능입니다.',
+          '통원·골절·치과·안과처럼 고객이 "안 될 것 같다"고 넘긴 건에서 실제 지급 사례가 많습니다.'
+        ],
+        prep: ['보험금 청구서']
+      });
+    }
+
+    /* ---------- 10. 생존보험금 ---------- */
+    const midD = dd(V('b_middt')), matD = dd(V('b_matdt'));
+    const midA = N('b_midamt'), matA = N('b_matamt');
+    if (V('b_middt') && midD !== null && midD <= 180) {
+      need('p4');
+      if (midD < 0) money += midA;
+      add({
+        lv: 'm', pri: midD < 0 ? 97 : 74, cat: '생존보험금',
+        t: midD < 0
+          ? '중도보험금 미수령 의심 (' + ymd(normDate(V('b_middt'))) + ' · ' + won(midA) + '원)'
+          : '중도보험금 수령 예정 (D-' + midD + ')',
+        ment: midD < 0
+          ? cust + ' 님, ' + ymd(normDate(V('b_middt'))) + '에 받으실 수 있는 중도보험금 ' + won(midA) + '원이 있는데 아직 찾아가지 않으신 것 같습니다. 이건 이미 ' + cust + ' 님 돈입니다. 신청만 하시면 바로 나가니까 오늘 같이 처리해 드리겠습니다.'
+          : cust + ' 님, ' + ymd(normDate(V('b_middt'))) + '에 중도보험금 ' + won(midA) + '원이 나옵니다. 잊지 않으시도록 미리 말씀드리고, 자동으로 통장에 들어오게 등록해 드리겠습니다.',
+        basis: [
+          '중도보험금은 신청하지 않으면 지급되지 않고 그대로 남아 있게 됩니다 (숨은보험금의 대표 유형).',
+          '자동송금을 등록해 두면 이후에는 신청 없이 지정 계좌로 자동 입금됩니다.',
+          '필요 서류 : 생존보험금 신청서.'
+        ],
+        prep: ['생존보험금 신청서'], est: midD < 0 ? midA : 0
+      });
+    }
+    if (V('b_matdt') && matD !== null && matD <= 365) {
+      need('p4'); need('p1');
+      if (matD < 0) money += matA;
+      add({
+        lv: 'm', pri: matD < 0 ? 96 : 75, cat: '생존보험금',
+        t: matD < 0
+          ? '만기보험금 미수령 의심 (' + ymd(normDate(V('b_matdt'))) + ' · ' + won(matA) + '원)'
+          : '만기보험금 수령 예정 (D-' + matD + ')',
+        ment: matD < 0
+          ? cust + ' 님, ' + ymd(normDate(V('b_matdt'))) + '에 만기가 되어 ' + won(matA) + '원을 받으실 수 있는데 아직 신청이 안 되어 있습니다. 오늘 신청서 써 드리겠습니다.'
+          : cust + ' 님, ' + ymd(normDate(V('b_matdt'))) + '에 이 계약이 만기가 되어 ' + won(matA) + '원을 받으십니다. 다만 그날부터는 이 계약의 보장이 끝나니, 그 전에 보장을 어떻게 이어갈지 함께 정리해 두시면 좋겠습니다.',
+        basis: [
+          '만기보험금 역시 청구해야 지급되며, 미청구 상태로 남는 경우가 많습니다.',
+          '만기일 이후에는 보장이 즉시 종료되어 무보험 기간이 생깁니다. 만기 전 보장 연결 설계가 필요합니다.',
+          '만기 시점은 재설계·업셀링을 자연스럽게 제안할 수 있는 최적 시점입니다.'
+        ],
+        prep: ['생존보험금 신청서', '보장분석서'], est: matD < 0 ? matA : 0
+      });
+    }
+    if (V('b_as') === '분할 X' || V('b_am') === '만기 X') {
+      need('p5');
+      add({
+        lv: 'a', pri: 68, cat: '자동송금', t: '자동송금 미등록 — 등록 권유 대상',
+        ment: cust + ' 님, 보험금이 나올 때 자동으로 통장에 들어오게 등록해 드릴까요? 지금은 등록이 안 되어 있어서, 나오는 돈이 있어도 신청하셔야 받으실 수 있습니다. 한 번만 등록해 두시면 그다음부터는 신경 안 쓰셔도 됩니다.',
+        basis: [
+          '자동송금 미등록이 숨은보험금이 생기는 가장 흔한 원인입니다.',
+          '한 번 등록하면 이후 중도·만기보험금이 지정 계좌로 자동 입금됩니다.',
+          '필요 서류 : 자동송금 신청서.'
+        ],
+        prep: ['자동송금 신청서']
+      });
+    }
+
+    /* ---------- 11. 실손 ---------- */
+    if (!V('b_ro') || !V('b_rt')) bl('실손보험 당사 / 타사 가입여부');
+    if (V('b_ro') === '당사 X' && V('b_rt') === '타사 X') {
+      need('p6'); need('p1');
+      add({
+        lv: 'b', pri: 94, cat: '실손보험', t: '실손의료비 미가입 — 최우선 보완 대상',
+        ment: cust + ' 님, 실손의료비(병원에 실제로 낸 돈을 돌려받는 보험)가 지금 하나도 없으십니다. ' +
+          '이건 다른 어떤 보장보다 먼저 준비하셔야 하는 기본입니다. 진단비나 수술비가 아무리 많아도, 병원비를 그때그때 돌려받는 건 실손밖에 없습니다.',
+        basis: [
+          '실손의료비는 실제 지출한 병원비를 보상하는 유일한 담보로, 다른 보장으로 대체할 수 없습니다.',
+          '건강 상태가 나빠지면 가입 자체가 어려워지므로 가능한 빨리 준비해야 합니다.',
+          '방문 시 실손 손해율표를 지참해 보험료 인상 구조를 함께 설명하세요.'
+        ],
+        prep: ['실손 손해율표', '보장분석서']
+      });
+    } else if (V('b_ro') === '당사 O' && V('b_rt') === '타사 O') {
+      need('p6');
+      add({
+        lv: 'a', pri: 80, cat: '실손보험', t: '실손 중복 가입 — 보험료가 새고 있습니다',
+        ment: cust + ' 님, 실손의료비가 저희 회사와 다른 회사 두 군데에 들어 있습니다. ' +
+          '그런데 실손은 두 개를 넣어도 실제 낸 병원비보다 더 받을 수는 없습니다. 즉 보험료만 두 번 내고 계신 겁니다. ' +
+          '어느 쪽을 남기는 게 유리한지 비교해 드릴 테니, 하나를 정리하고 그 돈을 비어 있는 보장으로 옮기시는 게 좋겠습니다.',
+        basis: [
+          '실손의료비는 여러 건 가입해도 실제 손해액을 초과해 지급되지 않는 비례보상 방식입니다.',
+          '중복 가입 시 보험료만 이중으로 부담하게 됩니다.',
+          '정리 시에는 보장 범위·자기부담금·갱신주기를 비교해 유리한 쪽을 남겨야 합니다.',
+          '절감된 보험료를 부족한 보장으로 이전하면 고객 만족과 실적을 동시에 얻을 수 있습니다.'
+        ],
+        prep: ['실손 손해율표']
+      });
+    }
+
+    /* ---------- 12. 변액 ---------- */
+    if (V('b_fund')) {
+      need('p7');
+      add({
+        lv: 'i', pri: 40, cat: '변액안내',
+        t: '펀드 점검 대상 (' + V('b_fund') + (V('b_fratio') ? ' · 적립률 ' + V('b_fratio') + '%' : '') + ')',
+        ment: cust + ' 님, 이 계약은 펀드로 운용되는 상품이라 어디에 투자되고 있는지 가끔 확인해 보셔야 합니다. ' +
+          '지금은 ' + V('b_fund') + '에 들어가 있는데, 수익률을 함께 보시고 필요하면 다른 펀드로 옮기는 것(펀드 변경)도 무료로 해드릴 수 있습니다.',
+        basis: [
+          '변액상품은 펀드 변경이 연 일정 횟수까지 무료이나, 활용하지 않는 고객이 대부분입니다.',
+          '정기적인 펀드 점검은 계약 유지율을 높이고 민원을 예방합니다.',
+          '방문 전 FP.COM에서 펀드수익률표를 출력해 지참하세요.'
+        ],
+        prep: ['펀드수익률표']
+      });
+    }
+
+    /* ---------- 13. 보장 만기 · 납입 만료 ---------- */
+    [['b_cmain', '주계약'], ['b_crider', '특약']].forEach(function (pair) {
+      const k = pair[0], nm = pair[1];
+      const d = dd(V(k));
+      if (V(k) && d !== null && d <= 730) {
+        need('p1');
+        add({
+          lv: d < 0 ? 'a' : 'b', pri: d < 0 ? 92 : 66, cat: '보장 만기',
+          t: d < 0
+            ? nm + ' 보장 이미 종료됨 (' + ymd(normDate(V(k))) + ')'
+            : nm + ' 보장 만기 임박 (' + ymd(normDate(V(k))) + ' · D-' + d + ')',
+          ment: d < 0
+            ? cust + ' 님, ' + nm + ' 보장이 ' + ymd(normDate(V(k))) + '로 이미 끝났습니다. 지금은 그 부분이 비어 있는 상태입니다. 어떤 보장이 없어졌는지 정리해서 보여드리고, 어떻게 채울지 함께 보시겠습니다.'
+            : cust + ' 님, ' + nm + ' 보장이 ' + ymd(normDate(V(k))) + '에 끝납니다. 만기가 되면 그날부터 보장이 없어집니다. 미리 알고 계셔야 공백 없이 이어갈 수 있어서 오늘 말씀드립니다.',
+          basis: [
+            '만기 이후에는 보장이 즉시 종료되어 무보험 상태가 됩니다.',
+            '만기 도래 안내는 평생든든서비스의 정규 안내 항목입니다.',
+            '나이가 오른 뒤 새로 가입하면 보험료가 크게 오르므로, 만기 전 대비가 유리합니다.',
+            '보장분석서를 지참해 없어지는 보장을 눈으로 보여드리면 설득력이 높아집니다.'
+          ],
+          prep: ['보장분석서']
+        });
+      }
+    });
+    const payD = dd(V('i_payend'));
+    if (V('i_payend') && payD !== null && payD <= 365 && payD >= 0) {
+      add({
+        lv: 'i', pri: 45, cat: '납입만료',
+        t: '보험료 납입 만료 임박 (' + ymd(normDate(V('i_payend'))) + ' · D-' + payD + ')',
+        ment: cust + ' 님, ' + ymd(normDate(V('i_payend'))) + '이면 이 계약의 보험료 납입이 끝납니다. 그 뒤로는 돈은 안 내시는데 보장은 계속됩니다. ' +
+          '그때 여유가 생기시니, 지금 비어 있는 보장을 그 시점에 맞춰 채우시는 것도 좋은 방법입니다.',
+        basis: [
+          '납입 만료 시점은 고객의 가처분 소득이 늘어나는 시점으로, 추가 제안 성공률이 높습니다.',
+          '납입이 끝나도 보장은 유지된다는 점을 명확히 안내해야 불필요한 해지를 막을 수 있습니다.'
+        ],
+        prep: []
+      });
+    }
+
+    /* ---------- 14. 수익자 ---------- */
+    if (!V('c_bh') || !V('c_bd')) {
+      need('p11');
+      add({
+        lv: 'a', pri: 64, cat: '수익자', t: '수익자 지정 확인 필요',
+        ment: cust + ' 님, 보험금을 받으실 분(수익자)이 누구로 되어 있는지 함께 확인해 보시겠습니다. ' +
+          '결혼이나 출산처럼 가족관계에 변화가 있으셨다면 지금 바로잡아 두시는 게 좋습니다. 나중에 가족끼리 곤란해지는 일을 미리 막을 수 있습니다.',
+        basis: [
+          '수익자가 실제 의도와 다르게 지정되어 있으면 지급 지연이나 가족 간 분쟁이 발생합니다.',
+          '수익자 변경은 계약자가 생존해 계실 때만 자유롭게 가능합니다.',
+          '상속·증여세 문제와도 직접 연결되는 항목입니다.',
+          '필요 서류 : 계약사항 변경신청서.'
+        ],
+        prep: ['계약사항 변경신청서']
+      });
+    }
+    if (!V('c_bh')) bl('수익자 (입원시)');
+    if (!V('c_bd')) bl('수익자 (사망시)');
+    if (!joinDate) bl(V('i_join') ? '가입일 (형식을 알아볼 수 없음 — 20030514 처럼 입력)' : '가입일');
+    if (!V('i_prod')) bl('상품명');
+
+    /* ---------- 정렬 · 등급 ---------- */
+    F2.sort(function (a, b) { return b.pri - a.pri; });
+    const grade =
+      (F2.some(function (x) { return x.lv === 'b' && x.pri >= 70; }) ||
+        F2.some(function (x) { return x.cat === '헬스케어 서비스' && x.lv === 'b'; })) ? 'A'
+        : F2.some(function (x) { return x.lv === 'm'; }) ? 'A'
+          : F2.some(function (x) { return x.lv === 'a'; }) ? 'B' : 'C';
+
+    return {
+      cust: cust, findings: F2, prep: prep, blanks: blanks,
+      money: money, moneyUnknown: moneyUnknown, grade: grade,
+      hidCnt: F2.filter(function (x) { return x.lv === 'm'; }).length,
+      today: today
+    };
+  }
+
+  /* 상담 스크립트 생성 */
+  function buildScript(record, res) {
+    const f = (record && record.f) || {};
+    const V = function (k) { return String(f[k] == null ? '' : f[k]).trim(); };
+    const strip = function (s) { return String(s).replace(/<[^>]+>/g, ''); };
+    const cust = res.cust;
+    let s = '';
+    s += '━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n';
+    s += ' 평생든든 방문 상담 스크립트\n';
+    s += ' ' + cust + ' 님 · ' + (V('i_prod') || '') + ' · 방문예정 ' + (ymd(normDate(V('h_vdate'))) || '') + '\n';
+    s += ' FP ' + (V('h_fp') || '') + '\n';
+    s += '━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n\n';
+
+    s += '【1. 인사 · 방문 목적】\n';
+    s += cust + ' 님, 안녕하세요. 오늘은 새 보험을 권해드리려고 온 게 아니라,\n';
+    s += '이미 가입해 두신 계약을 하나하나 확인해 드리려고 찾아뵈었습니다.\n';
+    s += '저희가 하는 평생든든서비스인데, 보장 내용을 다시 짚어드리고,\n';
+    s += '혹시 못 받으신 보험금이 있으면 제가 대신 청구해 드리고,\n';
+    s += '만기나 갱신처럼 놓치기 쉬운 시점을 미리 알려드리는 것까지가 제 일입니다.\n\n';
+
+    if (res.money > 0) {
+      s += '【2. 첫 마디 — 찾아드릴 돈 이야기】\n';
+      s += cust + ' 님, 오시기 전에 계약을 미리 다 살펴봤는데요.\n';
+      s += '지금 바로 찾아드릴 수 있는 보험금이 약 ' + won(res.money) + '원 있습니다.\n';
+      if (res.moneyUnknown) s += '여기에 금액을 더 확인해봐야 하는 것도 ' + res.moneyUnknown + '건 있습니다.\n';
+      s += '오늘 그것부터 처리해 드리겠습니다.\n\n';
+    }
+
+    const sec = function (k, title) {
+      const arr = res.findings.filter(function (x) { return x.lv === k; });
+      if (!arr.length) return;
+      s += '【' + title + '】\n\n';
+      arr.forEach(function (x, i) {
+        s += '▶ ' + (i + 1) + '. ' + x.t + '  [' + x.cat + ']\n';
+        s += '[고객 안내]\n' + strip(x.ment) + '\n';
+        s += '[제안 근거]\n';
+        x.basis.forEach(function (b) { s += '  · ' + strip(b) + '\n'; });
+        if (x.prep && x.prep.length) s += '  ※ 지참 : ' + x.prep.join(' / ') + '\n';
+        s += '\n';
+      });
+    };
+    sec('m', '3. 숨은보험금 · 환급 — 오늘 바로 처리');
+    sec('a', '4. 즉시 조치가 필요한 항목');
+    sec('b', '5. 보완 · 제안 항목');
+    sec('i', '6. 참고로 함께 안내할 내용');
+
+    if (res.blanks.length) {
+      s += '【7. 고객께 직접 여쭤볼 것 (미확인 항목)】\n';
+      res.blanks.forEach(function (b) { s += '  □ ' + b + '\n'; });
+      s += '\n';
+    }
+
+    s += '【마무리 인사】\n';
+    s += cust + ' 님, 오늘 확인해 드린 내용은 정리해서 따로 남겨드리겠습니다.\n';
+    s += '오늘 바로 결정하지 않으셔도 괜찮습니다.\n';
+    s += '다만 병원에 다녀오신 일이 생기면, 이게 보험금이 되는지 안 되는지 고민하지 마시고\n';
+    s += '저에게 먼저 연락 주세요. 판단은 제가 해드리겠습니다.\n';
+    s += '그게 제가 해드리는 평생든든서비스입니다. 오늘 시간 내주셔서 감사합니다.\n\n';
+    s += '━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n';
+    s += '※ 지급 여부와 금액은 반드시 약관과 회사 시스템에서 최종 확인 후 안내하세요.\n';
+    s += '※ 보험금 청구권 소멸시효는 3년입니다. 오래된 건부터 우선 확인하세요.\n';
+    return s;
+  }
+
+  const LEVELS = {
+    m: { t: '숨은보험금 · 환급', c: 't-m' },
+    a: { t: '즉시 조치', c: 't-a' },
+    b: { t: '보완 · 제안', c: 't-b' },
+    i: { t: '참고 안내', c: 't-i' }
+  };
+
+  const Analysis = { analyze: analyze, buildScript: buildScript, LEVELS: LEVELS };
+
+  if (isNode) module.exports = Analysis;
+  else (global.KB = global.KB || {}).Analysis = Analysis;
+})(typeof globalThis !== 'undefined' ? globalThis : this);
+
+</script>
+<script>
+/* ===== standalone/xlsx-lite.js ===== */
+/*
+ * 브라우저에서 엑셀(.xlsx) 파일을 직접 만드는 작은 모듈입니다.
+ * 인터넷 연결이나 외부 라이브러리 없이 동작하도록 직접 만들었습니다.
+ * (xlsx 파일은 XML 몇 장을 ZIP 으로 묶은 것이라, 압축 없이 그대로 담아 만듭니다)
+ *
+ *   KBXlsx.build([{ name:'시트이름', cols:[{w:14}], rows:[[셀,...]], merges:['A1:D1'] }])  → Blob
+ *   셀 : 문자열 · 숫자 · {v:값, s:서식번호, n:true(숫자)}
+ */
+(function (global) {
+  'use strict';
+
+  /* ---------- CRC32 ---------- */
+  const CRC_TABLE = (function () {
+    const t = new Uint32Array(256);
+    for (let i = 0; i < 256; i++) {
+      let c = i;
+      for (let k = 0; k < 8; k++) c = (c & 1) ? (0xEDB88320 ^ (c >>> 1)) : (c >>> 1);
+      t[i] = c >>> 0;
+    }
+    return t;
+  })();
+
+  function crc32(bytes) {
+    let c = 0xFFFFFFFF;
+    for (let i = 0; i < bytes.length; i++) c = CRC_TABLE[(c ^ bytes[i]) & 0xFF] ^ (c >>> 8);
+    return (c ^ 0xFFFFFFFF) >>> 0;
+  }
+
+  const enc = new TextEncoder();
+
+  /* ---------- ZIP (압축 없이 담기) ---------- */
+  function zip(files) {
+    const now = new Date();
+    const dosTime = ((now.getHours() & 31) << 11) | ((now.getMinutes() & 63) << 5) | ((now.getSeconds() / 2) & 31);
+    const dosDate = (((now.getFullYear() - 1980) & 127) << 9) | (((now.getMonth() + 1) & 15) << 5) | (now.getDate() & 31);
+
+    const chunks = [];
+    const central = [];
+    let offset = 0;
+
+    files.forEach(function (f) {
+      const name = enc.encode(f.name);
+      const data = typeof f.data === 'string' ? enc.encode(f.data) : f.data;
+      const crc = crc32(data);
+
+      const local = new DataView(new ArrayBuffer(30));
+      local.setUint32(0, 0x04034b50, true);
+      local.setUint16(4, 20, true);              // 필요 버전
+      local.setUint16(6, 0x0800, true);          // UTF-8 이름
+      local.setUint16(8, 0, true);               // 압축 안 함
+      local.setUint16(10, dosTime, true);
+      local.setUint16(12, dosDate, true);
+      local.setUint32(14, crc, true);
+      local.setUint32(18, data.length, true);
+      local.setUint32(22, data.length, true);
+      local.setUint16(26, name.length, true);
+      local.setUint16(28, 0, true);
+
+      chunks.push(new Uint8Array(local.buffer), name, data);
+
+      const cen = new DataView(new ArrayBuffer(46));
+      cen.setUint32(0, 0x02014b50, true);
+      cen.setUint16(4, 20, true);
+      cen.setUint16(6, 20, true);
+      cen.setUint16(8, 0x0800, true);
+      cen.setUint16(10, 0, true);
+      cen.setUint16(12, dosTime, true);
+      cen.setUint16(14, dosDate, true);
+      cen.setUint32(16, crc, true);
+      cen.setUint32(20, data.length, true);
+      cen.setUint32(24, data.length, true);
+      cen.setUint16(28, name.length, true);
+      cen.setUint32(42, offset, true);
+      central.push(new Uint8Array(cen.buffer), name);
+
+      offset += 30 + name.length + data.length;
+    });
+
+    let centralSize = 0;
+    central.forEach(function (c) { centralSize += c.length; });
+
+    const end = new DataView(new ArrayBuffer(22));
+    end.setUint32(0, 0x06054b50, true);
+    end.setUint16(8, files.length, true);
+    end.setUint16(10, files.length, true);
+    end.setUint32(12, centralSize, true);
+    end.setUint32(16, offset, true);
+
+    return new Blob(chunks.concat(central, [new Uint8Array(end.buffer)]),
+      { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+  }
+
+  /* ---------- XML 도우미 ---------- */
+  function xmlEsc(s) {
+    return String(s == null ? '' : s)
+      .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;').replace(/\x00-\x08|\x0B|\x0C|\x0E-\x1F/g, '');
+  }
+
+  function colName(n) {
+    let s = '';
+    while (n > 0) { const m = (n - 1) % 26; s = String.fromCharCode(65 + m) + s; n = (n - m - 1) / 26; }
+    return s;
+  }
+
+  /*
+   * 서식 번호 (셀의 s 값)
+   *  0 기본        1 큰제목      2 중제목      3 표머리      4 항목이름
+   *  5 입력칸      6 입력칸(숫자) 7 도움말      8 구분칸      9 줄바꿈본문
+   * 10 굵게       11 자동칸     12 숫자       13 초록칸     14 빨강칸
+   * 15 주황칸     16 파랑칸
+   */
+  const STYLES_XML =
+    '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>' +
+    '<styleSheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main">' +
+    '<numFmts count="1"><numFmt numFmtId="164" formatCode="#,##0.##"/></numFmts>' +
+    '<fonts count="8">' +
+    '<font><sz val="11"/><name val="맑은 고딕"/></font>' +
+    '<font><b/><sz val="15"/><color rgb="FFFFFFFF"/><name val="맑은 고딕"/></font>' +
+    '<font><b/><sz val="11.5"/><color rgb="FFFFFFFF"/><name val="맑은 고딕"/></font>' +
+    '<font><b/><sz val="10"/><color rgb="FF0B3A5D"/><name val="맑은 고딕"/></font>' +
+    '<font><sz val="10.5"/><name val="맑은 고딕"/></font>' +
+    '<font><sz val="9.5"/><color rgb="FF6B7885"/><name val="맑은 고딕"/></font>' +
+    '<font><b/><sz val="10.5"/><color rgb="FF0B3A5D"/><name val="맑은 고딕"/></font>' +
+    '<font><b/><sz val="11"/><name val="맑은 고딕"/></font>' +
+    '</fonts>' +
+    '<fills count="11">' +
+    '<fill><patternFill patternType="none"/></fill>' +
+    '<fill><patternFill patternType="gray125"/></fill>' +
+    '<fill><patternFill patternType="solid"><fgColor rgb="FF0B3A5D"/><bgColor indexed="64"/></patternFill></fill>' +
+    '<fill><patternFill patternType="solid"><fgColor rgb="FF155B8A"/><bgColor indexed="64"/></patternFill></fill>' +
+    '<fill><patternFill patternType="solid"><fgColor rgb="FFEEF2F6"/><bgColor indexed="64"/></patternFill></fill>' +
+    '<fill><patternFill patternType="solid"><fgColor rgb="FFFFFDF2"/><bgColor indexed="64"/></patternFill></fill>' +
+    '<fill><patternFill patternType="solid"><fgColor rgb="FFF7F9FB"/><bgColor indexed="64"/></patternFill></fill>' +
+    '<fill><patternFill patternType="solid"><fgColor rgb="FFE9F5EE"/><bgColor indexed="64"/></patternFill></fill>' +
+    '<fill><patternFill patternType="solid"><fgColor rgb="FFFDECEA"/><bgColor indexed="64"/></patternFill></fill>' +
+    '<fill><patternFill patternType="solid"><fgColor rgb="FFFDF3E6"/><bgColor indexed="64"/></patternFill></fill>' +
+    '<fill><patternFill patternType="solid"><fgColor rgb="FFEEF4FA"/><bgColor indexed="64"/></patternFill></fill>' +
+    '</fills>' +
+    '<borders count="2">' +
+    '<border><left/><right/><top/><bottom/><diagonal/></border>' +
+    '<border>' +
+    '<left style="thin"><color rgb="FFD8DFE6"/></left><right style="thin"><color rgb="FFD8DFE6"/></right>' +
+    '<top style="thin"><color rgb="FFD8DFE6"/></top><bottom style="thin"><color rgb="FFD8DFE6"/></bottom>' +
+    '<diagonal/></border>' +
+    '</borders>' +
+    '<cellStyleXfs count="1"><xf numFmtId="0" fontId="0" fillId="0" borderId="0"/></cellStyleXfs>' +
+    '<cellXfs count="17">' +
+    '<xf numFmtId="0" fontId="0" fillId="0" borderId="0" xfId="0"/>' +
+    '<xf numFmtId="0" fontId="1" fillId="2" borderId="0" xfId="0" applyFont="1" applyFill="1" applyAlignment="1"><alignment vertical="center" indent="1"/></xf>' +
+    '<xf numFmtId="0" fontId="2" fillId="3" borderId="0" xfId="0" applyFont="1" applyFill="1" applyAlignment="1"><alignment vertical="center" indent="1"/></xf>' +
+    '<xf numFmtId="0" fontId="3" fillId="4" borderId="1" xfId="0" applyFont="1" applyFill="1" applyBorder="1" applyAlignment="1"><alignment horizontal="center" vertical="center"/></xf>' +
+    '<xf numFmtId="0" fontId="4" fillId="0" borderId="1" xfId="0" applyFont="1" applyBorder="1" applyAlignment="1"><alignment vertical="center" indent="1"/></xf>' +
+    '<xf numFmtId="0" fontId="4" fillId="5" borderId="1" xfId="0" applyFont="1" applyFill="1" applyBorder="1" applyAlignment="1"><alignment vertical="center" indent="1"/></xf>' +
+    '<xf numFmtId="164" fontId="4" fillId="5" borderId="1" xfId="0" applyNumberFormat="1" applyFont="1" applyFill="1" applyBorder="1" applyAlignment="1"><alignment horizontal="right" vertical="center" indent="1"/></xf>' +
+    '<xf numFmtId="0" fontId="5" fillId="0" borderId="1" xfId="0" applyFont="1" applyBorder="1" applyAlignment="1"><alignment vertical="center" indent="1" wrapText="1"/></xf>' +
+    '<xf numFmtId="0" fontId="6" fillId="6" borderId="1" xfId="0" applyFont="1" applyFill="1" applyBorder="1" applyAlignment="1"><alignment horizontal="center" vertical="center"/></xf>' +
+    '<xf numFmtId="0" fontId="4" fillId="0" borderId="1" xfId="0" applyFont="1" applyBorder="1" applyAlignment="1"><alignment vertical="top" indent="1" wrapText="1"/></xf>' +
+    '<xf numFmtId="0" fontId="7" fillId="0" borderId="0" xfId="0" applyFont="1"/>' +
+    '<xf numFmtId="0" fontId="4" fillId="6" borderId="1" xfId="0" applyFont="1" applyFill="1" applyBorder="1" applyAlignment="1"><alignment vertical="center" indent="1"/></xf>' +
+    '<xf numFmtId="164" fontId="4" fillId="0" borderId="1" xfId="0" applyNumberFormat="1" applyFont="1" applyBorder="1" applyAlignment="1"><alignment horizontal="right" vertical="center" indent="1"/></xf>' +
+    '<xf numFmtId="0" fontId="4" fillId="7" borderId="1" xfId="0" applyFont="1" applyFill="1" applyBorder="1" applyAlignment="1"><alignment horizontal="center" vertical="center" wrapText="1"/></xf>' +
+    '<xf numFmtId="0" fontId="4" fillId="8" borderId="1" xfId="0" applyFont="1" applyFill="1" applyBorder="1" applyAlignment="1"><alignment horizontal="center" vertical="center" wrapText="1"/></xf>' +
+    '<xf numFmtId="0" fontId="4" fillId="9" borderId="1" xfId="0" applyFont="1" applyFill="1" applyBorder="1" applyAlignment="1"><alignment horizontal="center" vertical="center" wrapText="1"/></xf>' +
+    '<xf numFmtId="0" fontId="4" fillId="10" borderId="1" xfId="0" applyFont="1" applyFill="1" applyBorder="1" applyAlignment="1"><alignment horizontal="center" vertical="center" wrapText="1"/></xf>' +
+    '</cellXfs>' +
+    '<cellStyles count="1"><cellStyle name="Normal" xfId="0" builtinId="0"/></cellStyles>' +
+    '</styleSheet>';
+
+  function sheetXml(sheet) {
+    let x = '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>' +
+      '<worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main">';
+
+    if (sheet.cols && sheet.cols.length) {
+      x += '<cols>';
+      sheet.cols.forEach(function (c, i) {
+        x += '<col min="' + (i + 1) + '" max="' + (i + 1) + '" width="' + (c.w || 12) + '" customWidth="1"/>';
+      });
+      x += '</cols>';
+    }
+
+    x += '<sheetData>';
+    (sheet.rows || []).forEach(function (row, ri) {
+      if (!row) return;
+      const r = ri + 1;
+      const h = sheet.heights && sheet.heights[ri];
+      x += '<row r="' + r + '"' + (h ? ' ht="' + h + '" customHeight="1"' : '') + '>';
+      row.forEach(function (cell, ci) {
+        if (cell === null || cell === undefined || cell === '') return;
+        const ref = colName(ci + 1) + r;
+        let v = cell, s = 0, isNum = false;
+        if (typeof cell === 'object') {
+          v = cell.v; s = cell.s || 0;
+          isNum = cell.n === true || (cell.n !== false && typeof v === 'number');
+        } else {
+          isNum = typeof cell === 'number';
+        }
+        if (v === null || v === undefined || v === '') {
+          if (s) x += '<c r="' + ref + '" s="' + s + '"/>';
+          return;
+        }
+        if (isNum && isFinite(Number(v))) {
+          x += '<c r="' + ref + '" s="' + s + '"><v>' + Number(v) + '</v></c>';
+        } else {
+          x += '<c r="' + ref + '" s="' + s + '" t="inlineStr"><is><t xml:space="preserve">' +
+            xmlEsc(v) + '</t></is></c>';
+        }
+      });
+      x += '</row>';
+    });
+    x += '</sheetData>';
+
+    if (sheet.merges && sheet.merges.length) {
+      x += '<mergeCells count="' + sheet.merges.length + '">';
+      sheet.merges.forEach(function (m) { x += '<mergeCell ref="' + m + '"/>'; });
+      x += '</mergeCells>';
+    }
+    if (sheet.autoFilter) x += '<autoFilter ref="' + sheet.autoFilter + '"/>';
+
+    x += '</worksheet>';
+    return x;
+  }
+
+  function build(sheets) {
+    const files = [];
+
+    let types = '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>' +
+      '<Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types">' +
+      '<Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/>' +
+      '<Default Extension="xml" ContentType="application/xml"/>' +
+      '<Override PartName="/xl/workbook.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet.main+xml"/>' +
+      '<Override PartName="/xl/styles.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.styles+xml"/>';
+    sheets.forEach(function (s, i) {
+      types += '<Override PartName="/xl/worksheets/sheet' + (i + 1) +
+        '.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml"/>';
+    });
+    types += '</Types>';
+    files.push({ name: '[Content_Types].xml', data: types });
+
+    files.push({
+      name: '_rels/.rels',
+      data: '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>' +
+        '<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">' +
+        '<Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="xl/workbook.xml"/>' +
+        '</Relationships>'
+    });
+
+    let wb = '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>' +
+      '<workbook xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" ' +
+      'xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships"><sheets>';
+    let rels = '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>' +
+      '<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">';
+    sheets.forEach(function (s, i) {
+      wb += '<sheet name="' + xmlEsc(s.name) + '" sheetId="' + (i + 1) + '" r:id="rId' + (i + 1) + '"/>';
+      rels += '<Relationship Id="rId' + (i + 1) +
+        '" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/worksheet" Target="worksheets/sheet' + (i + 1) + '.xml"/>';
+      files.push({ name: 'xl/worksheets/sheet' + (i + 1) + '.xml', data: sheetXml(s) });
+    });
+    wb += '</sheets></workbook>';
+    rels += '<Relationship Id="rId' + (sheets.length + 1) +
+      '" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/styles" Target="styles.xml"/>';
+    rels += '</Relationships>';
+
+    files.push({ name: 'xl/workbook.xml', data: wb });
+    files.push({ name: 'xl/_rels/workbook.xml.rels', data: rels });
+    files.push({ name: 'xl/styles.xml', data: STYLES_XML });
+
+    return zip(files);
+  }
+
+  const KBXlsx = { build: build, colName: colName, zip: zip, crc32: crc32 };
+
+  if (typeof module !== 'undefined' && module.exports) module.exports = KBXlsx;
+  else (global.KB = global.KB || {}).Xlsx = KBXlsx;
+})(typeof globalThis !== 'undefined' ? globalThis : this);
+
+</script>
+<script>
+/* ===== standalone/local-api.js ===== */
+/*
+ * 태블릿용(단일 파일) 저장 계층
+ *
+ * 서버 없이 혼자 도는 판이라, 서버가 하던 일을 이 브라우저 안에서 대신합니다.
+ * - 고객 자료는 이 기기 브라우저 저장소(localStorage)에 쌓입니다
+ * - 엑셀(.xlsx) 파일은 브라우저에서 직접 만들어 내려받습니다
+ * 화면 코드(app.js)는 서버판과 똑같은 것을 그대로 씁니다. 이 파일이 서버 자리를 대신할 뿐입니다.
+ */
+(function (global) {
+  'use strict';
+
+  const Calc = global.KB.Calc, Schema = global.KB.Schema;
+  const Analysis = global.KB.Analysis, Xlsx = global.KB.Xlsx;
+  const FIELD_MAP = Schema.fieldMap();
+  const KEY = 'kyobo_records_v2';
+
+  /* ---------- 저장소 ---------- */
+
+  const STORE = (function () {
+    try { localStorage.setItem('__t', '1'); localStorage.removeItem('__t'); return localStorage; }
+    catch (e) { return null; }
+  })();
+
+  let MEMORY = [];   // 저장소가 막혀 있을 때 임시로 쓰는 자리
+
+  function loadAll() {
+    if (!STORE) return MEMORY;
+    try { return JSON.parse(STORE.getItem(KEY) || '[]'); } catch (e) { return []; }
+  }
+
+  function saveAll(list) {
+    MEMORY = list;
+    if (!STORE) return;
+    try { STORE.setItem(KEY, JSON.stringify(list)); }
+    catch (e) { throw new Error('저장 공간이 가득 찼습니다. 오래된 기록을 지우거나 백업 파일로 옮겨 주세요.'); }
+  }
+
+  function cleanValue(field, v) {
+    const s = v == null ? '' : String(v).trim();
+    if (!s) return '';
+    if (field && field.type === 'date') return Calc.normDate(s) || s;
+    if (field && field.type === 'number') return String(Calc.numOf(s));
+    return s;
+  }
+
+  function saveRecord(rec) {
+    const list = loadAll();
+    const f = {};
+    Schema.allFields().forEach(function (fd) { f[fd.k] = cleanValue(fd, (rec.f || {})[fd.k]); });
+    if (!f.h_cust) throw new Error('고객(계약자) 성명을 입력해 주세요.');
+
+    const res = Analysis.analyze({ f: f, claims: rec.claims || [] });
+    const claims = (rec.claims || []).filter(function (c) { return c && (c.d || c.t || c.a); })
+      .map(function (c) { return { d: String(c.d || ''), t: Calc.normDate(c.t || '') || '', a: String(c.a || '') }; });
+    const now = new Date().toISOString();
+
+    let saved;
+    const idx = rec.id ? list.findIndex(function (x) { return x.id === rec.id; }) : -1;
+    if (idx >= 0) {
+      saved = list[idx];
+      saved.f = f; saved.chk = rec.chk || {}; saved.claims = claims;
+      saved.money = res.money; saved.hidCnt = res.hidCnt; saved.savedAt = now;
+    } else {
+      const maxId = list.reduce(function (m, x) { return Math.max(m, Number(x.id) || 0); }, 0);
+      saved = {
+        id: maxId + 1, f: f, chk: rec.chk || {}, claims: claims,
+        money: res.money, hidCnt: res.hidCnt, savedAt: now, createdAt: now
+      };
+      list.push(saved);
+    }
+    saveAll(list);
+    return { id: saved.id, record: saved, analysis: res };
+  }
+
+  function listRecords(q) {
+    q = String(q || '').trim();
+    return loadAll()
+      .filter(function (r) {
+        return !q || String(r.f.h_cust || '').indexOf(q) >= 0 || String(r.f.i_prod || '').indexOf(q) >= 0;
+      })
+      .sort(function (a, b) { return String(b.savedAt || '').localeCompare(String(a.savedAt || '')); });
+  }
+
+  function stats() {
+    const list = loadAll();
+    const custs = {};
+    list.forEach(function (r) { custs[r.f.h_cust || '-'] = 1; });
+    const grades = { A: 0, B: 0, C: 0, '': 0 };
+    list.forEach(function (r) { const g = r.f.m_grade || ''; grades[g] = (grades[g] || 0) + 1; });
+
+    const follow = list.filter(function (r) { return r.f.m_deadline || r.f.m_next; })
+      .map(function (r) {
+        return {
+          id: r.id, cust: r.f.h_cust, prod: r.f.i_prod, follow: r.f.m_follow,
+          deadline: r.f.m_deadline, next: r.f.m_next,
+          d: Calc.dday(r.f.m_deadline || r.f.m_next)
+        };
+      })
+      .sort(function (a, b) { return (a.d == null ? 9999 : a.d) - (b.d == null ? 9999 : b.d); });
+
+    const months = {};
+    list.forEach(function (r) {
+      const d = r.f.m_vdate || r.f.h_vdate || r.savedAt || '';
+      const k = String(d).slice(0, 7);
+      if (k) months[k] = (months[k] || 0) + 1;
+    });
+
+    return {
+      total: list.length,
+      customers: Object.keys(custs).length,
+      money: list.reduce(function (s, r) { return s + (r.money || 0); }, 0),
+      hidden: list.filter(function (r) { return (r.money || 0) > 0; }).length,
+      upsell: list.filter(function (r) { return String(r.f.m_upsell || '').trim(); }).length,
+      grades: grades, follow: follow, months: months
+    };
+  }
+
+  /* ---------- 서버 대신 응답하기 ---------- */
+
+  global.__LOCAL_API = function (url, opts) {
+    opts = opts || {};
+    const method = (opts.method || 'GET').toUpperCase();
+    const qs = url.indexOf('?') >= 0 ? url.slice(url.indexOf('?') + 1) : '';
+    const path = url.split('?')[0];
+    const param = function (k) {
+      const m = new RegExp('(^|&)' + k + '=([^&]*)').exec(qs);
+      return m ? decodeURIComponent(m[2].replace(/\+/g, ' ')) : '';
+    };
+    const idOf = function (prefix) { return Number(path.slice(prefix.length)); };
+
+    return new Promise(function (resolve, reject) {
+      try {
+        if (path === '/api/contracts' && method === 'GET') return resolve(listRecords(param('q')));
+        if (path === '/api/contracts' && method === 'POST') {
+          const out = saveRecord(opts.body || {});
+          return resolve({ id: out.id, record: out.record, analysis: out.analysis });
+        }
+        if (path.indexOf('/api/contracts/') === 0 && method === 'GET') {
+          const r = loadAll().find(function (x) { return x.id === idOf('/api/contracts/'); });
+          if (!r) throw new Error('계약을 찾을 수 없습니다.');
+          return resolve(r);
+        }
+        if (path.indexOf('/api/contracts/') === 0 && method === 'DELETE') {
+          const id = idOf('/api/contracts/');
+          const list = loadAll().filter(function (x) { return x.id !== id; });
+          saveAll(list);
+          return resolve({ deleted: 1 });
+        }
+        if (path === '/api/stats') return resolve(stats());
+        if (path === '/api/wipe') { saveAll([]); return resolve({ ok: true }); }
+        if (path === '/api/restore') {
+          const body = opts.body || {};
+          const recs = body.records || body;
+          if (!Array.isArray(recs)) throw new Error('백업 파일 형식이 아닙니다.');
+          let added = 0, failed = 0;
+          recs.forEach(function (r) {
+            try {
+              if (!r || !r.f || !String(r.f.h_cust || '').trim()) { failed++; return; }
+              saveRecord({ f: r.f, claims: r.claims || [], chk: r.chk || {} });
+              added++;
+            } catch (e) { failed++; }
+          });
+          return resolve({ added: added, failed: failed, total: loadAll().length });
+        }
+        throw new Error('이 기능은 태블릿용에서는 쓸 수 없습니다.');
+      } catch (e) { reject(e); }
+    });
+  };
+
+  /* ---------- 엑셀 만들기 ---------- */
+
+  const S = { title: 1, sec: 2, head: 3, label: 4, val: 5, valNum: 6, hint: 7, group: 8, wrap: 9, bold: 10, auto: 11, num: 12 };
+  const LV_STYLE = { m: 13, a: 14, b: 15, i: 16 };
+
+  function titleRows(rows, merges, text, sub) {
+    const r = rows.length;
+    rows.push([{ v: text, s: S.title }, { v: '', s: S.title }, { v: '', s: S.title }, { v: '', s: S.title }]);
+    merges.push('A' + (r + 1) + ':D' + (r + 1));
+    if (sub) {
+      rows.push([{ v: sub, s: 0 }]);
+      merges.push('A' + (r + 2) + ':D' + (r + 2));
+    }
+  }
+
+  function sectionRow(rows, merges, text) {
+    const r = rows.length;
+    rows.push([{ v: text, s: S.sec }, { v: '', s: S.sec }, { v: '', s: S.sec }, { v: '', s: S.sec }]);
+    merges.push('A' + (r + 1) + ':D' + (r + 1));
+  }
+
+  function inputSheets(rec) {
+    const f = (rec && rec.f) || {}, claims = (rec && rec.claims) || [], chk = (rec && rec.chk) || {};
+    const sheets = [];
+
+    /* 계약입력 */
+    const rows = [], merges = [], heights = [];
+    titleRows(rows, merges, '교보생명 평생든든서비스 — 고객 정보파악 서식',
+      '노란 칸이 입력값입니다. 회색 칸은 자동 계산 항목입니다.');
+    heights[0] = 26;
+    rows.push([]);
+
+    Schema.SECTIONS.forEach(function (sec) {
+      sectionRow(rows, merges, (sec.no ? sec.no + '. ' : '') + sec.title + (sec.desc ? '   —   ' + sec.desc : ''));
+      rows.push([{ v: '구분', s: S.head }, { v: '항목', s: S.head }, { v: '입력값', s: S.head }, { v: '사전 자료준비 · 참고', s: S.head }]);
+      let lastGroup = null;
+      sec.fields.forEach(function (fd) {
+        const g = (fd.group && fd.group !== lastGroup) ? fd.group : '';
+        lastGroup = fd.group || lastGroup;
+        const raw = f[fd.k];
+        const has = raw !== undefined && raw !== null && String(raw).trim() !== '';
+        let cell;
+        if (fd.type === 'number') cell = { v: has ? Calc.numOf(raw) : '', s: fd.auto ? S.auto : S.valNum, n: true };
+        else cell = { v: has ? (fd.type === 'date' ? (Calc.normDate(raw) || String(raw)) : String(raw)) : '', s: fd.auto ? S.auto : S.val, n: false };
+
+        const hints = [];
+        if (fd.hint) hints.push(fd.hint);
+        if (fd.ph) hints.push('예: ' + fd.ph);
+        if (fd.auto) hints.push('자동 계산 항목');
+        if (fd.type === 'select' && fd.options) hints.push(fd.options.join(' / '));
+
+        rows.push([
+          { v: g, s: S.group },
+          { v: fd.label + (fd.unit ? ' (' + fd.unit + ')' : '') + (fd.required ? ' *' : ''), s: S.label },
+          cell,
+          { v: hints.join(' · '), s: S.hint }
+        ]);
+      });
+      rows.push([]);
+    });
+    sheets.push({ name: '계약입력', cols: [{ w: 14 }, { w: 34 }, { w: 28 }, { w: 34 }], rows: rows, merges: merges, heights: heights });
+
+    /* 사고보험금 */
+    const crows = [], cmerges = [];
+    titleRows(crows, cmerges, '사고보험금 지급 이력', '과거에 받으신 보험금입니다.');
+    crows.push([]);
+    crows.push([{ v: 'No', s: S.head }, { v: '병명', s: S.head }, { v: '수령일', s: S.head }, { v: '수령액(원)', s: S.head }]);
+    const n = Math.max(10, claims.length + 3);
+    for (let i = 0; i < n; i++) {
+      const c = claims[i];
+      crows.push([
+        { v: i + 1, s: S.label, n: true },
+        { v: c ? (c.d || '') : '', s: S.val },
+        { v: c ? (Calc.normDate(c.t) || c.t || '') : '', s: S.val },
+        { v: c && c.a ? Calc.numOf(c.a) : '', s: S.valNum, n: true }
+      ]);
+    }
+    sheets.push({ name: '사고보험금', cols: [{ w: 6 }, { w: 34 }, { w: 16 }, { w: 18 }], rows: crows, merges: cmerges });
+
+    /* 준비물 · 추가점검 */
+    const krows = [], kmerges = [];
+    titleRows(krows, kmerges, '방문 전 준비물 · 추가 점검사항', '분석을 실행하면 필요한 항목이 자동으로 체크됩니다.');
+    krows.push([]);
+    [['준비물', Schema.PREPS], ['추가 점검사항', Schema.EXTRAS]].forEach(function (pair) {
+      sectionRow(krows, kmerges, pair[0]);
+      krows.push([{ v: '구분', s: S.head }, { v: '항목', s: S.head }, { v: '체크', s: S.head }]);
+      pair[1].forEach(function (item) {
+        krows.push([
+          { v: item.id, s: S.label },
+          { v: item.t, s: S.label },
+          { v: chk[item.id] ? 'O' : '', s: S.val }
+        ]);
+      });
+      krows.push([]);
+    });
+    sheets.push({ name: '준비물체크', cols: [{ w: 12 }, { w: 52 }, { w: 12 }], rows: krows, merges: kmerges });
+
+    return sheets;
+  }
+
+  function resultSheet(rec) {
+    const res = Analysis.analyze(rec);
+    const rows = [], merges = [], heights = [];
+    titleRows(rows, merges, '진단 결과 — ' + res.cust + ' 님',
+      '판정 기준은 회사 양식을 옮긴 것입니다. 실제 지급 여부와 금액은 약관·회사 시스템에서 최종 확인하세요.');
+    heights[0] = 26;
+    rows.push([]);
+
+    sectionRow(rows, merges, '요약');
+    const cnt = function (k) { return res.findings.filter(function (x) { return x.lv === k; }).length; };
+    [
+      ['숨은보험금 · 환급 건', cnt('m') + ' 건'],
+      ['즉시 조치 항목', cnt('a') + ' 건'],
+      ['보완 · 제안 항목', cnt('b') + ' 건'],
+      ['발견 예상액', Calc.won(res.money) + ' 원' + (res.moneyUnknown ? ' (금액확인 필요 ' + res.moneyUnknown + '건 별도)' : '')],
+      ['추천 방문결과 등급', res.grade]
+    ].forEach(function (k) {
+      const r = rows.length;
+      rows.push([{ v: '', s: 0 }, { v: k[0], s: S.group }, { v: '', s: S.group }, { v: k[1], s: S.label }]);
+      merges.push('B' + (r + 1) + ':C' + (r + 1));
+    });
+    rows.push([]);
+
+    sectionRow(rows, merges, '발견 항목 · 고객 안내 멘트 · 제안 근거   —   급한 순서');
+    rows.push([{ v: '순위', s: S.head }, { v: '구분', s: S.head }, { v: '항목', s: S.head }, { v: '고객 안내 멘트 / 제안 근거', s: S.head }]);
+    res.findings.forEach(function (fd, i) {
+      heights[rows.length] = Math.min(190, 26 + fd.basis.length * 13 + Math.ceil(fd.ment.length / 42) * 13);
+      rows.push([
+        { v: i + 1, s: S.label, n: true },
+        { v: Analysis.LEVELS[fd.lv].t + '\n' + fd.cat, s: LV_STYLE[fd.lv] },
+        { v: fd.t, s: S.wrap },
+        {
+          v: '[고객 안내]\n' + fd.ment + '\n\n[제안 근거]\n· ' + fd.basis.join('\n· ') +
+            (fd.prep && fd.prep.length ? '\n\n[지참 자료] ' + fd.prep.join(' / ') : ''),
+          s: S.wrap
+        }
+      ]);
+    });
+    rows.push([]);
+
+    sectionRow(rows, merges, '확인이 안 된 항목   —   방문 전에 채워야 할 빈칸');
+    if (res.blanks.length) {
+      res.blanks.forEach(function (b, i) {
+        const r = rows.length;
+        rows.push([{ v: i + 1, s: S.label, n: true }, { v: b, s: S.label }, { v: '', s: S.label }, { v: '', s: S.label }]);
+        merges.push('B' + (r + 1) + ':D' + (r + 1));
+      });
+    } else {
+      rows.push([{ v: '모든 항목이 입력되었습니다.', s: S.label }]);
+    }
+    rows.push([]);
+
+    sectionRow(rows, merges, '상담 스크립트');
+    Analysis.buildScript(rec, res).split('\n').forEach(function (line) {
+      const r = rows.length;
+      rows.push([{ v: line, s: 0 }]);
+      merges.push('A' + (r + 1) + ':D' + (r + 1));
+    });
+
+    return { name: '진단결과', cols: [{ w: 6 }, { w: 22 }, { w: 46 }, { w: 62 }], rows: rows, merges: merges, heights: heights };
+  }
+
+  function ledgerSheets() {
+    const list = listRecords('');
+    const st = stats();
+
+    const rows = [];
+    rows.push(Schema.LEDGER_COLS.map(function (c) { return { v: c.label, s: S.head }; }));
+    list.forEach(function (rec) {
+      rows.push(Schema.LEDGER_COLS.map(function (c) {
+        if (c.k === '_savedAt') return { v: String(rec.savedAt || '').slice(0, 19).replace('T', ' '), s: S.label };
+        if (c.k === '_money') return { v: rec.money || 0, s: S.num, n: true };
+        if (c.k === '_hidCnt') return { v: rec.hidCnt || 0, s: S.num, n: true };
+        const fd = FIELD_MAP[c.k], v = rec.f[c.k];
+        if (fd && fd.type === 'number' && v) return { v: Calc.numOf(v), s: S.num, n: true };
+        return { v: v || '', s: S.label };
+      }));
+    });
+    const data = {
+      name: '데이터',
+      cols: Schema.LEDGER_COLS.map(function (c) { return { w: Math.max(12, Math.min(30, c.label.length * 2 + 6)) }; }),
+      rows: rows,
+      autoFilter: 'A1:' + Xlsx.colName(Schema.LEDGER_COLS.length) + '1'
+    };
+
+    const srows = [], smerges = [];
+    titleRows(srows, smerges, '누적 활동 통계', '데이터 시트를 기준으로 집계했습니다.');
+    srows.push([]);
+    [
+      ['누적 계약 분석 건수', st.total + ' 건'],
+      ['관리 고객 수', st.customers + ' 명'],
+      ['숨은보험금 발견 건수', st.hidden + ' 건'],
+      ['발견 예상액 누계', Calc.won(st.money) + ' 원'],
+      ['업셀링 제안 건수', st.upsell + ' 건'],
+      ['A등급 비율', (st.total ? Math.round((st.grades.A || 0) / st.total * 100) : 0) + ' %'],
+      ['건당 평균 발견액', Calc.won(st.total ? st.money / st.total : 0) + ' 원']
+    ].forEach(function (k) { srows.push([{ v: k[0], s: S.group }, { v: k[1], s: S.label }]); });
+    srows.push([]);
+
+    sectionRow(srows, smerges, '방문결과 등급 분포');
+    const GL = { A: 'A (즉시 제안 가능)', B: 'B (추후 재접촉)', C: 'C (유지관리)', '': '등급 미입력' };
+    ['A', 'B', 'C', ''].forEach(function (g) {
+      srows.push([{ v: GL[g], s: S.label }, { v: (st.grades[g] || 0) + ' 건', s: S.label }]);
+    });
+    srows.push([]);
+
+    sectionRow(srows, smerges, '월별 방문 추이');
+    Object.keys(st.months).sort().forEach(function (k) {
+      srows.push([{ v: k.replace('-', '년 ') + '월', s: S.label }, { v: st.months[k] + ' 건', s: S.label }]);
+    });
+    srows.push([]);
+
+    sectionRow(srows, smerges, '후속조치 관리');
+    srows.push([{ v: '고객 / 상품', s: S.head }, { v: '처리기한 · 차기방문', s: S.head }, { v: '후속조치', s: S.head }]);
+    st.follow.forEach(function (x) {
+      srows.push([
+        { v: (x.cust || '-') + ' / ' + (x.prod || '-'), s: S.label },
+        {
+          v: (x.deadline ? Calc.ymd(x.deadline) : '-') +
+            (x.d != null ? (x.d < 0 ? ' (' + (-x.d) + '일 경과)' : ' (D-' + x.d + ')') : '') +
+            (x.next ? ' · 차기 ' + Calc.ymd(x.next) : ''), s: S.label
+        },
+        { v: x.follow || '-', s: S.wrap }
+      ]);
+    });
+    srows.push([]);
+    srows.push([{ v: '※ 고객 개인정보가 담긴 파일입니다. 회사 보안 규정에 따라 보관해 주세요.', s: S.bold }]);
+
+    return [data, { name: '통계', cols: [{ w: 30 }, { w: 26 }, { w: 40 }], rows: srows, merges: smerges }];
+  }
+
+  /* ---------- 내려받기 ---------- */
+
+  function stamp() {
+    const d = new Date();
+    return d.getFullYear() + String(d.getMonth() + 1).padStart(2, '0') + String(d.getDate()).padStart(2, '0');
+  }
+
+  /*
+   * 내려받을 파일 이름은 영문·숫자로 만듭니다.
+   * 일부 브라우저(특히 파일을 직접 열었을 때)는 이름에 한글이 있으면
+   * 이름 전체를 버려서 확장자까지 사라지고, 그러면 엑셀이 열리지 않습니다.
+   */
+  function saveBlob(blob, filename, 안내) {
+    if (global.claude && global.claude.downloads && global.claude.downloads.save) {
+      global.claude.downloads.save({ filename: filename, data: blob })
+        .catch(function (e) { alert('파일을 저장하지 못했습니다 : ' + (e && e.message ? e.message : e)); });
+      return;
+    }
+    const a = document.createElement('a');
+    const u = URL.createObjectURL(blob);
+    a.href = u; a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    setTimeout(function () { URL.revokeObjectURL(u); }, 1000);
+    if (안내 && typeof global.toast === 'function') global.toast(안내 + ' — ' + filename);
+  }
+
+  function csvText() {
+    const esc = function (v) { return '"' + String(v == null ? '' : v).replace(/"/g, '""').replace(/\r?\n/g, ' ') + '"'; };
+    let csv = '﻿' + Schema.LEDGER_COLS.map(function (c) { return c.label; }).join(',') + '\n';
+    listRecords('').forEach(function (rec) {
+      csv += Schema.LEDGER_COLS.map(function (c) {
+        if (c.k === '_savedAt') return esc(String(rec.savedAt || '').slice(0, 19).replace('T', ' '));
+        if (c.k === '_money') return rec.money || 0;
+        if (c.k === '_hidCnt') return rec.hidCnt || 0;
+        const fd = FIELD_MAP[c.k], v = rec.f[c.k];
+        if (fd && fd.type === 'number' && v) return Calc.numOf(v);
+        return esc(v);
+      }).join(',') + '\n';
+    });
+    return csv;
+  }
+
+  global.__LOCAL_DOWNLOAD = function (path) {
+    try {
+      if (path === '/api/backup') {
+        const body = JSON.stringify({ ver: 2, exportedAt: new Date().toISOString(), records: loadAll() }, null, 2);
+        return saveBlob(new Blob([body], { type: 'application/json' }),
+          'Kyobo-Backup-' + stamp() + '.json', '백업 파일을 저장했습니다');
+      }
+      if (path === '/api/csv') {
+        return saveBlob(new Blob([csvText()], { type: 'text/csv;charset=utf-8' }),
+          'Kyobo-Ledger-' + stamp() + '.csv', 'CSV 파일을 저장했습니다');
+      }
+      if (path === '/api/excel/template') {
+        return saveBlob(Xlsx.build(inputSheets(null)),
+          'Kyobo-Form-Blank.xlsx', '빈 서식을 저장했습니다');
+      }
+      if (path === '/api/excel/ledger') {
+        if (!loadAll().length) { alert('저장된 자료가 없습니다.'); return; }
+        return saveBlob(Xlsx.build(ledgerSheets()),
+          'Kyobo-Ledger-' + stamp() + '.xlsx', '누적 관리대장을 저장했습니다');
+      }
+      if (path.indexOf('/api/excel/contract/') === 0) {
+        const id = Number(path.slice('/api/excel/contract/'.length));
+        const rec = loadAll().find(function (x) { return x.id === id; });
+        if (!rec) { alert('계약을 찾을 수 없습니다.'); return; }
+        return saveBlob(Xlsx.build(inputSheets(rec).concat([resultSheet(rec)])),
+          'Kyobo-Contract-' + id + '-' + stamp() + '.xlsx',
+          (rec.f.h_cust || '') + ' 님 계약 파일을 저장했습니다');
+      }
+      alert('이 기능은 태블릿용에서는 쓸 수 없습니다.');
+    } catch (e) {
+      alert('파일을 만들지 못했습니다 : ' + (e && e.message ? e.message : e));
+    }
+  };
+
+  /* ---------- 태블릿용 화면 손질 ---------- */
+
+  global.__LOCAL_READY = function () {
+    const hide = document.getElementById('btnImportPick');
+    if (hide) hide.style.display = 'none';
+    const xf = document.getElementById('xf');
+    if (xf) xf.style.display = 'none';
+
+    const hint = document.querySelector('#p4 .card .hint');
+    if (hint) {
+      hint.innerHTML = '컴퓨터가 없는 자리에서도 태블릿에서 바로 입력하시고, ' +
+        '<b>[누적 관리대장 내려받기]</b>로 엑셀 파일을 만들어 매니저님께 제출하시면 됩니다. ' +
+        '각 계약의 <b>[엑셀]</b> 단추를 누르면 그 고객의 진단 결과와 상담 스크립트까지 담긴 파일이 만들어집니다.';
+    }
+
+    const warn = document.querySelector('#p4 .warn');
+    if (warn) {
+      warn.innerHTML = '<b>보관 안내</b> · 이 판(태블릿용)은 고객 자료가 <b>이 기기의 브라우저 안에</b> 쌓입니다. ' +
+        '인터넷으로 나가지 않아 안전하지만, <b>브라우저 기록·저장 공간을 지우면 함께 사라집니다.</b> ' +
+        '반드시 <b>주 1회 [전체 백업 파일 저장]</b>을 눌러 파일로 남겨 두세요. ' +
+        '그 파일만 있으면 [백업 파일 복원]으로 언제든 되살릴 수 있습니다.';
+    }
+
+    const sub = document.querySelector('#p4 h2 .gsub');
+    if (sub) sub.textContent = '— 이 기기에 저장';
+
+    if (!STORE) {
+      const el = document.getElementById('netWarn');
+      if (el) {
+        el.style.display = 'block';
+        el.innerHTML = '<b>주의 — 이 브라우저에서는 자동 저장이 막혀 있습니다.</b><br>' +
+          '사생활 보호(시크릿) 모드이거나 저장이 차단된 상태라, 창을 닫으면 입력한 내용이 사라집니다. ' +
+          '일반 창에서 여시거나, 작업을 마치실 때마다 ④ 탭의 [전체 백업 파일 저장]으로 파일에 남겨 주세요.';
+      }
+    }
+  };
+})(typeof globalThis !== 'undefined' ? globalThis : this);
+
+</script>
+<script>
+/* ===== public/app.js ===== */
+/*
+ * 화면 동작 — 입력 · 자동계산 · 진단 · 서버 저장 · 엑셀
+ * 진단 로직은 서버와 같은 파일(/shared/analysis.js)을 씁니다.
+ */
+'use strict';
+
+const Calc = KB.Calc, Schema = KB.Schema, Analysis = KB.Analysis;
+const $ = function (id) { return document.getElementById(id); };
+const V = function (id) { const e = $(id); return e ? String(e.value || '').trim() : ''; };
+const N = function (id) { return Calc.numOf(V(id)); };
+const won = Calc.won, normDate = Calc.normDate, ymd = Calc.ymd, numOf = Calc.numOf;
+const todayStr = Calc.todayStr();
+
+const FIELDS = Schema.allFields().map(function (f) { return f.k; });
+const PREPS = Schema.PREPS, EXTRAS = Schema.EXTRAS;
+const DRAFT_KEY = 'kyobo_draft_v2';
+const FP_KEY = 'kyobo_fp_v1';
+const FP_DEFAULT = '평촌지점 추진이';
+
+let RES = null;        // 최근 분석 결과
+let editId = null;     // 서버에 저장된 계약 id (수정 중일 때)
+let DBCACHE = [];      // ④ 탭 목록
+
+/* ===================== 공통 ===================== */
+
+const STORE = (function () {
+  try { localStorage.setItem('__t', '1'); localStorage.removeItem('__t'); return localStorage; }
+  catch (e) { return null; }
+})();
+
+let toastTimer = null;
+function toast(msg, bad) {
+  const t = $('toast');
+  t.textContent = msg;
+  t.className = 'toast on' + (bad ? ' bad' : '');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(function () { t.className = 'toast'; }, bad ? 4200 : 2400);
+}
+
+function netError(msg) {
+  const el = $('netWarn');
+  el.style.display = 'block';
+  el.innerHTML = '<b>서버와 연결하지 못했습니다.</b> ' + msg +
+    '<br>입력하신 내용은 이 컴퓨터에 임시 보관되어 있으니, 서버가 살아나면 [저장]을 다시 눌러 주세요.';
+}
+
+async function api(url, opts) {
+  opts = opts || {};
+  /* 태블릿용(단일 파일)에서는 서버 대신 브라우저 안에서 처리합니다 */
+  if (window.__LOCAL_API) return window.__LOCAL_API(url, opts);
+  const init = { method: opts.method || 'GET', headers: {} };
+  if (opts.body !== undefined) {
+    init.headers['Content-Type'] = 'application/json';
+    init.body = JSON.stringify(opts.body);
+  }
+  if (opts.form) init.body = opts.form;
+  const r = await fetch(url, init);
+  const ct = r.headers.get('content-type') || '';
+  const data = ct.indexOf('application/json') >= 0 ? await r.json() : await r.text();
+  if (!r.ok) throw new Error((data && data.error) || ('서버 오류 (' + r.status + ')'));
+  $('netWarn').style.display = 'none';
+  return data;
+}
+
+/* 내려받기 — 서버판은 주소로 이동, 태블릿용은 브라우저에서 직접 파일을 만듭니다 */
+function download(path) {
+  if (window.__LOCAL_DOWNLOAD) return window.__LOCAL_DOWNLOAD(path);
+  window.location = path;
+}
+
+function esc(s) {
+  return String(s == null ? '' : s)
+    .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+}
+
+/* ===================== 탭 ===================== */
+
+function tab(n) {
+  for (let i = 1; i <= 5; i++) {
+    $('p' + i).classList.toggle('on', i === n);
+    $('tb' + i).classList.toggle('on', i === n);
+  }
+  if (n === 4) drawDB();
+  if (n === 5) drawStat();
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+document.addEventListener('click', function (e) {
+  const t = e.target.closest('[data-tab]');
+  if (t) { e.preventDefault(); tab(+t.dataset.tab); }
+});
+
+/* ===================== 날짜 · 금액 입력 도우미 ===================== */
+
+/* 날짜 : 숫자만 쳐도 되고, 📅 단추로 달력에서 고를 수도 있습니다. */
+function enhanceDates(root) {
+  (root || document).querySelectorAll('input[data-date]').forEach(function (el) {
+    if (el.dataset.enhanced) return;
+    el.dataset.enhanced = '1';
+    el.setAttribute('placeholder', el.getAttribute('placeholder') || 'YYYY-MM-DD');
+    el.setAttribute('inputmode', 'numeric');
+
+    const wrap = document.createElement('div');
+    wrap.className = 'dtwrap';
+    el.parentNode.insertBefore(wrap, el);
+    wrap.appendChild(el);
+
+    const btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = 'dtbtn';
+    btn.textContent = '📅';
+    btn.title = '달력에서 고르기';
+    wrap.appendChild(btn);
+
+    btn.addEventListener('click', function () {
+      const h = $('pickHelper');
+      h.value = normDate(el.value) || '';
+      h.onchange = function () {
+        if (h.value) { el.value = h.value; el.dispatchEvent(new Event('change', { bubbles: true })); }
+        h.onchange = null;
+      };
+      if (h.showPicker) { try { h.showPicker(); return; } catch (err) { /* 아래로 */ } }
+      const v = prompt('날짜를 넣어 주세요 (예: 2003-05-14 또는 20030514)', el.value || '');
+      if (v !== null) { el.value = normDate(v) || v; el.dispatchEvent(new Event('change', { bubbles: true })); }
+    });
+
+    el.addEventListener('blur', function () {
+      const v = normDate(el.value);
+      if (v) el.value = v;
+      else if (el.value.trim()) el.style.borderColor = 'var(--red)';
+      if (v) el.style.borderColor = '';
+    });
+  });
+}
+
+/* 금액 : 자리 쉼표를 넣어 읽기 쉽게 */
+function enhanceMoney(root) {
+  (root || document).querySelectorAll('input[data-money]').forEach(function (el) {
+    if (el.dataset.enhanced) return;
+    el.dataset.enhanced = '1';
+    el.setAttribute('inputmode', 'numeric');
+    el.style.textAlign = 'right';
+    el.addEventListener('focus', function () {
+      const n = numOf(el.value);
+      el.value = n ? String(n) : '';
+    });
+    el.addEventListener('blur', function () {
+      const n = numOf(el.value);
+      el.value = n ? n.toLocaleString('ko-KR') : '';
+    });
+  });
+}
+
+function moneyRefresh() {
+  document.querySelectorAll('input[data-money]').forEach(function (el) {
+    if (document.activeElement === el) return;
+    const n = numOf(el.value);
+    el.value = n ? n.toLocaleString('ko-KR') : '';
+  });
+}
+
+/* ===================== 자동 계산 ===================== */
+
+function calcBMI() {
+  const v = Calc.bmi(V('f_ht'), V('f_wt'));
+  $('f_bmi').value = v;
+}
+
+function setAutoVal(el, v) {
+  v = String(v);
+  if (!el.value.trim() || el.value === el.dataset.autoval) { el.value = v; el.dataset.autoval = v; return true; }
+  return false;
+}
+
+const AGE_ROWS = [['c_obirth', '계약자', 'c_oja', 'c_ona'], ['c_ibirth', '주피보험자', 'c_ija', 'c_ina']];
+
+function calcAges() {
+  const join = normDate(V('i_join'));
+  AGE_ROWS.forEach(function (row) {
+    const bd = normDate(V(row[0]));
+    if (!bd) return;
+    if (join) { const r = Calc.insAge(bd, join); if (r) setAutoVal($(row[2]), r.age); }
+    const r2 = Calc.insAge(bd, todayStr);
+    if (r2) setAutoVal($(row[3]), r2.age);
+  });
+  const ob = normDate(V('c_obirth'));
+  if (ob) {
+    if (!V('e_bm')) $('e_bm').value = +ob.slice(5, 7);
+    if (!V('e_bd')) $('e_bd').value = +ob.slice(8, 10);
+  }
+  syncAge('c_ija');
+  ageMsg();
+}
+
+function ageMsg() {
+  const el = $('c_ageMsg');
+  const join = normDate(V('i_join'));
+  const out = [];
+  AGE_ROWS.forEach(function (row) {
+    const bd = normDate(V(row[0]));
+    if (!bd) return;
+    const p = [];
+    if (join) {
+      const r = Calc.insAge(bd, join);
+      if (r) p.push('계약일 기준 <b>' + r.age + '세</b> <span style="color:var(--sub)">(' + r.y + '년 ' + r.m + '개월 → ' +
+        (r.up ? '6개월 이상이라 한 살 올림' : '6개월 미만이라 버림') + ')</span>' +
+        (V(row[2]) && V(row[2]) !== String(r.age) ? ' <span style="color:var(--org)">— 직접 넣으신 ' + V(row[2]) + '세 유지 중</span>' : ''));
+    }
+    const r2 = Calc.insAge(bd, todayStr);
+    if (r2) p.push('현재 <b>' + r2.age + '세</b>' +
+      (V(row[3]) && V(row[3]) !== String(r2.age) ? ' <span style="color:var(--org)">— 직접 넣으신 ' + V(row[3]) + '세 유지 중</span>' : ''));
+    if (p.length) out.push('<b>' + row[1] + '</b> ' + bd + ' · ' + p.join(' / '));
+  });
+  if (out.length) { el.innerHTML = out.join('<br>'); el.style.color = 'var(--grn)'; }
+  else {
+    el.innerHTML = '생년월일을 넣으시면 회사 기준(계약일 − 생년월일 → 6개월 미만은 버리고, 6개월 이상이면 한 살 올림)으로 가입연령·현재연령이 자동 계산됩니다.';
+    el.style.color = '';
+  }
+}
+
+function syncAge(from) {
+  if (from === 'i_age') $('c_ija').value = V('i_age');
+  else if (from === 'c_ija') $('i_age').value = V('c_ija');
+  else if (V('i_age')) $('c_ija').value = V('i_age');
+  else if (V('c_ija')) $('i_age').value = V('c_ija');
+}
+
+function applyAuto(id, v) {
+  const el = $(id);
+  el.value = v; el.dataset.autoval = v;
+  calcTerms();
+}
+window.applyAuto = applyAuto;
+
+function showTerm(msgId, elId, out) {
+  const el = $(elId), msg = $(msgId);
+  const say = function (t, c) { msg.innerHTML = t; msg.style.color = c || ''; };
+  if (!out.value) { say(out.how || '', out.how ? 'var(--org)' : ''); return; }
+  const cur = normDate(el.value);
+  if (cur === out.value) { say(out.how, 'var(--grn)'); return; }
+  if (!el.value.trim() || el.value === el.dataset.autoval) {
+    el.value = out.value; el.dataset.autoval = out.value;
+    say(out.how + ' — 자동으로 넣었습니다.', 'var(--grn)');
+  } else {
+    say('자동 계산은 <b>' + out.value + '</b> 입니다. 직접 넣으신 ' + esc(el.value) + ' 을(를) 유지 중 ' +
+      '<button type="button" class="b b-sub sm" style="padding:1px 8px;font-size:11px" ' +
+      'onclick="applyAuto(\'' + elId + '\',\'' + out.value + '\')">자동값으로 바꾸기</button>', 'var(--org)');
+  }
+}
+
+function hint(id, text, color) {
+  const el = $(id);
+  el.innerHTML = text;
+  el.style.color = color || '';
+}
+
+function calcTerms() {
+  /* 보험 만기일 : 가입일 + 보험기간 */
+  const join = V('i_join'), insterm = V('i_insterm');
+  if (!join && !insterm) hint('i_insendMsg', '가입일과 보험기간을 넣으시면 자동으로 채워집니다.');
+  else if (!join) hint('i_insendMsg', '가입일을 넣으시면 만기일이 자동으로 채워집니다.');
+  else if (!insterm) hint('i_insendMsg', '보험기간을 넣으시면 만기일이 자동으로 채워집니다.');
+  else {
+    const out = Calc.calcInsEnd(join, insterm, V('i_age'));
+    if (out.whole) hint('i_insendMsg', '종신 — 만기가 따로 없어 평생 보장됩니다. 만기일은 비워 두셔도 됩니다.', 'var(--blue)');
+    else showTerm('i_insendMsg', 'i_insend', out);
+  }
+
+  /* 납입 만료일 : 가입일 + 납입기간 (전기납은 보험 만기일) */
+  const payterm = V('i_payterm');
+  if (!join && !payterm) hint('i_payendMsg', '가입일과 납입기간을 넣으시면 자동으로 채워집니다.');
+  else if (!join) hint('i_payendMsg', '가입일을 넣으시면 만료일이 자동으로 채워집니다.');
+  else if (!payterm) hint('i_payendMsg', '납입기간을 넣으시면 만료일이 자동으로 채워집니다.');
+  else showTerm('i_payendMsg', 'i_payend', Calc.calcPayEnd(join, payterm, V('i_insend')));
+}
+
+function calcAll() { calcBMI(); calcAges(); calcTerms(); }
+
+/* ===================== 사고보험금 줄 ===================== */
+
+function addClaim(v) {
+  const d = document.createElement('div');
+  d.className = 'grid g3';
+  d.style.gap = '4px';
+  d.style.marginBottom = '4px';
+  d.innerHTML =
+    '<input class="cl-d" placeholder="병명">' +
+    '<input class="cl-t" data-date>' +
+    '<input class="cl-a" data-money placeholder="수령액">';
+  $('claimBox').appendChild(d);
+  if (v) {
+    d.querySelector('.cl-d').value = v.d || '';
+    d.querySelector('.cl-t').value = v.t || '';
+    d.querySelector('.cl-a').value = v.a ? numOf(v.a).toLocaleString('ko-KR') : '';
+  }
+  enhanceDates(d);
+  enhanceMoney(d);
+}
+
+function getClaims() {
+  const ds = [].slice.call(document.querySelectorAll('.cl-d'));
+  const ts = [].slice.call(document.querySelectorAll('.cl-t'));
+  const as = [].slice.call(document.querySelectorAll('.cl-a'));
+  return ds.map(function (e, i) {
+    return { d: e.value.trim(), t: normDate(ts[i].value) || ts[i].value.trim(), a: String(numOf(as[i].value) || '') };
+  }).filter(function (x) { return x.d || x.t || x.a; });
+}
+
+/* ===================== 체크리스트 ===================== */
+
+/* 체크 항목의 입력칸 id : 탭 화면 id(p1~p5) 와 겹치지 않도록 chk_ 를 붙인다 */
+function chkEl(id) { return $('chk_' + id); }
+
+function renderChecks() {
+  const row = function (p) {
+    return '<label class="chk" id="lb_' + p.id + '"><input type="checkbox" id="chk_' + p.id + '"><span>' + esc(p.t) + '</span></label>';
+  };
+  $('prepBox').innerHTML = PREPS.map(row).join('');
+  $('extraBox').innerHTML = EXTRAS.map(row).join('');
+}
+
+/* ===================== 수집 · 적용 ===================== */
+
+function collect() {
+  const o = { id: editId, f: {}, chk: {}, claims: getClaims() };
+  FIELDS.forEach(function (k) {
+    const e = $(k);
+    if (!e) return;
+    o.f[k] = e.dataset.money !== undefined || e.hasAttribute('data-money')
+      ? String(numOf(e.value) || '')
+      : String(e.value || '').trim();
+  });
+  PREPS.concat(EXTRAS).forEach(function (p) { const e = chkEl(p.id); o.chk[p.id] = !!(e && e.checked); });
+  o.money = RES ? RES.money : 0;
+  o.hidCnt = RES ? RES.hidCnt : 0;
+  return o;
+}
+
+function apply(o) {
+  FIELDS.forEach(function (k) {
+    const e = $(k);
+    if (e) e.value = (o.f && o.f[k] !== undefined && o.f[k] !== null) ? o.f[k] : '';
+  });
+  PREPS.concat(EXTRAS).forEach(function (p) {
+    const e = chkEl(p.id);
+    if (e) e.checked = !!(o.chk && o.chk[p.id]);
+  });
+  $('claimBox').innerHTML = '';
+  const cl = (o.claims && o.claims.length) ? o.claims : [null, null, null];
+  cl.forEach(function (c) { addClaim(c); });
+  moneyRefresh();
+  calcAll();
+  saveDraft();
+}
+
+function resetAll() {
+  FIELDS.forEach(function (k) { const e = $(k); if (e) { e.value = ''; e.dataset.autoval = ''; } });
+  PREPS.concat(EXTRAS).forEach(function (p) {
+    const e = chkEl(p.id);
+    if (e) e.checked = false;
+    const lb = $('lb_' + p.id);
+    if (lb) lb.classList.remove('auto');
+  });
+  $('claimBox').innerHTML = '';
+  for (let i = 0; i < 3; i++) addClaim();
+  RES = null; editId = null;
+  $('script').value = '';
+  $('r_items').innerHTML = ''; $('r_kpi').innerHTML = ''; $('r_sum').innerHTML = ''; $('r_blank').innerHTML = '';
+  setSaveState('');
+  initDefaults();
+  calcAll();
+}
+
+function initDefaults() {
+  let fp = FP_DEFAULT;
+  try { if (STORE && STORE.getItem(FP_KEY)) fp = STORE.getItem(FP_KEY); } catch (e) { /* 무시 */ }
+  if (!V('h_fp')) $('h_fp').value = fp;
+  if (!V('h_vdate')) $('h_vdate').value = todayStr;
+}
+
+/* ===================== 진단 ===================== */
+
+function analyze(silent) {
+  const rec = collect();
+  RES = Analysis.analyze(rec);
+  renderResult(rec);
+  autoPrep();
+  $('script').value = Analysis.buildScript(rec, RES);
+  if (!V('m_grade')) $('m_grade').value = RES.grade;
+  $('m_gradeHint').textContent = '자동 추천 : ' + RES.grade + '등급';
+  $('m_hidamt').textContent = won(RES.money);
+  if (!V('m_vdate')) $('m_vdate').value = V('h_vdate');
+  if (!silent) tab(2);
+}
+
+function renderResult(rec) {
+  const R = RES;
+  $('r_head').textContent = R.cust + ' 님 · ' + (V('i_prod') || '상품명 미입력') +
+    ' · 가입일 ' + (ymd(normDate(V('i_join'))) || '-') +
+    ' · 방문예정 ' + (ymd(normDate(V('h_vdate'))) || '-') + ' · FP ' + (V('h_fp') || '-');
+
+  const c = function (k) { return R.findings.filter(function (f) { return f.lv === k; }).length; };
+  $('r_kpi').innerHTML =
+    '<div><div class="n" style="color:var(--grn)">' + c('m') + '</div><div class="t">숨은보험금 · 환급 건</div></div>' +
+    '<div><div class="n" style="color:var(--red)">' + c('a') + '</div><div class="t">즉시 조치 항목</div></div>' +
+    '<div><div class="n" style="color:var(--org)">' + c('b') + '</div><div class="t">보완 · 제안 항목</div></div>' +
+    '<div><div class="n">' + won(R.money) + '<span style="font-size:12px">원</span></div>' +
+    '<div class="t">발견 예상액' + (R.moneyUnknown ? ' (+' + R.moneyUnknown + '건 금액확인)' : '') + '</div></div>' +
+    '<div><div class="n" style="color:var(--brand)">' + R.grade + '</div><div class="t">추천 방문결과 등급</div></div>';
+
+  const top = R.findings.slice(0, 3).map(function (f) { return f.t; }).join(' / ');
+  $('r_sum').innerHTML = '<div class="' + (R.money > 0 ? 'warn' : 'note') + '">' +
+    (R.money > 0
+      ? '<b>' + esc(R.cust) + ' 님께는 지금 바로 찾아드릴 수 있는 보험금·환급금이 약 ' + won(R.money) + '원 있습니다.</b>' +
+      (R.moneyUnknown ? ' 여기에 금액 확인이 필요한 항목이 ' + R.moneyUnknown + '건 더 있습니다.' : '') +
+      '<br>오늘 방문의 첫 마디는 이 이야기로 시작하세요. 가장 확실하게 신뢰를 얻는 방법입니다.'
+      : '현재 입력값 기준으로 즉시 청구 가능한 숨은보험금은 확인되지 않았습니다. 아래 <b>확인이 안 된 항목</b>을 고객께 여쭤보면 추가로 발견될 수 있습니다.') +
+    '<br><br><b>오늘 다룰 핵심</b> · ' + (esc(top) || '-') + '</div>';
+
+  const LV = Analysis.LEVELS;
+  $('r_items').innerHTML = R.findings.length
+    ? R.findings.map(function (f, i) {
+      return '<div class="item ' + f.lv + '">' +
+        '<div class="hd"><div class="ttl"><span class="rk">' + (i + 1) + '</span>' + esc(f.t) + '</div>' +
+        '<div><span class="tag ' + LV[f.lv].c + '">' + LV[f.lv].t + '</span>' +
+        '<span class="hint" style="margin-left:7px">' + esc(f.cat) + '</span></div></div>' +
+        '<div class="blk b-ment"><span class="bt">📢 고객님께 이렇게 안내하세요</span><p>' + esc(f.ment) + '</p></div>' +
+        '<div class="blk b-basis"><span class="bt">📊 제안 근거 · 확인 사항</span><ul>' +
+        f.basis.map(function (b) { return '<li>' + esc(b) + '</li>'; }).join('') + '</ul>' +
+        (f.prep && f.prep.length
+          ? '<div style="margin-top:6px;font-size:11.5px;color:var(--red)"><b>지참 자료</b> · ' + esc(f.prep.join(' / ')) + '</div>'
+          : '') +
+        '</div></div>';
+    }).join('')
+    : '<div class="note">입력된 내용이 없습니다. ① 계약 입력 탭에서 O/X 항목을 채워 주세요.</div>';
+
+  $('r_blank').innerHTML = R.blanks.length
+    ? '<div class="warn"><b>비어 있는 항목 ' + R.blanks.length + '개</b> — 방문 전 회사 시스템 조회 또는 고객 통화로 확인하세요.' +
+    '<ul style="margin:7px 0 0;padding-left:18px">' + R.blanks.map(function (b) { return '<li>' + esc(b) + '</li>'; }).join('') + '</ul></div>'
+    : '<div class="note" style="color:var(--grn)">✅ 모든 항목이 입력되었습니다.</div>';
+}
+
+function autoPrep() {
+  PREPS.forEach(function (p) { const lb = $('lb_' + p.id); if (lb) lb.classList.remove('auto'); });
+  RES.prep.forEach(function (id) {
+    const e = chkEl(id), lb = $('lb_' + id);
+    if (e) e.checked = true;
+    if (lb) lb.classList.add('auto');
+  });
+}
+
+function fillHidden() {
+  if (!RES) { toast('먼저 분석을 실행해 주세요.', true); return; }
+  const m = RES.findings.filter(function (f) { return f.lv === 'm'; });
+  $('m_hidden').value = m.length
+    ? m.map(function (f) { return '· ' + f.t; }).join('\n') +
+    '\n\n[발견 예상액 합계] ' + won(RES.money) + '원' +
+    (RES.moneyUnknown ? ' (금액확인 필요 ' + RES.moneyUnknown + '건 별도)' : '')
+    : '해당 없음';
+  $('m_hidamt').textContent = won(RES.money);
+  saveDraft();
+}
+
+/* ===================== 저장 (서버) ===================== */
+
+/* 저장·불러오기 같은 중요한 안내는 잠시 그대로 두고, 자동보관 문구가 덮지 않게 한다 */
+let noticeUntil = 0;
+function setSaveState(t, c, sticky) {
+  const e = $('saveState');
+  e.textContent = t;
+  e.style.color = c || '';
+  if (sticky) noticeUntil = Date.now() + 8000;
+  else if (!t) noticeUntil = 0;
+}
+
+async function saveRecord() {
+  const name = V('h_cust');
+  if (!name) { toast('고객(계약자) 성명을 입력해 주세요.', true); tab(1); $('h_cust').focus(); return; }
+  const j = normDate(V('i_join'));
+  if (j) $('i_join').value = j;
+  if (!RES) analyze(true);
+  const rec = collect();
+  try {
+    const out = await api('/api/contracts', { method: 'POST', body: rec });
+    const isNew = !editId;
+    editId = out.id;
+    const label = name + ' 님 / ' + (rec.f.i_prod || '상품명 없음');
+    setSaveState('저장 완료 · ' + label, 'var(--grn)', true);
+    toast(isNew ? label + ' 계약을 서버에 저장했습니다.' : label + ' 내용을 수정 저장했습니다.');
+    saveDraft();
+    DBCACHE = [];
+  } catch (e) {
+    netError(esc(e.message));
+    toast('저장하지 못했습니다 — ' + e.message, true);
+  }
+}
+
+/* ===================== ④ 고객 누적 DB ===================== */
+
+async function drawDB() {
+  const box = $('dbBox');
+  const q = V('q');
+  box.innerHTML = '<div class="note">불러오는 중…</div>';
+  let list;
+  try {
+    list = await api('/api/contracts?q=' + encodeURIComponent(q));
+  } catch (e) {
+    box.innerHTML = '<div class="err">목록을 불러오지 못했습니다 — ' + esc(e.message) + '</div>';
+    return;
+  }
+  DBCACHE = list;
+  if (!list.length) {
+    box.innerHTML = '<div class="note">' + (q ? '검색 결과가 없습니다.' : '저장된 계약이 없습니다. ③ 탭 하단의 [이 계약 저장]을 눌러 주세요.') + '</div>';
+    return;
+  }
+  const byCust = {};
+  list.forEach(function (r) {
+    const k = r.f.h_cust || '(무명)';
+    (byCust[k] = byCust[k] || []).push(r);
+  });
+  let h = '';
+  Object.keys(byCust).sort().forEach(function (k) {
+    const rs = byCust[k];
+    const sumM = rs.reduce(function (s, r) { return s + (r.money || 0); }, 0);
+    h += '<div style="margin-bottom:16px"><div class="custhd">' +
+      '<b style="color:var(--brand);font-size:14px">' + esc(k) + ' <span class="gsub">· 계약 ' + rs.length + '건</span></b>' +
+      '<span class="hint">발견 예상액 합계 <b style="color:var(--grn)">' + won(sumM) + '원</b></span></div>' +
+      '<table class="dt"><tr><th>저장일</th><th>상품명</th><th>가입일</th><th>보험료</th><th>등급</th>' +
+      '<th>숨은보험금</th><th>후속조치 기한</th><th>차기방문</th><th class="noprint">관리</th></tr>';
+    rs.forEach(function (r) {
+      const dl = r.f.m_deadline, d = Calc.dday(dl);
+      h += '<tr>' +
+        '<td>' + String(r.savedAt || '').slice(0, 10) + '</td>' +
+        '<td class="l">' + esc(r.f.i_prod || '-') + '</td>' +
+        '<td>' + (ymd(normDate(r.f.i_join)) || esc(r.f.i_join) || '-') + '</td>' +
+        '<td style="text-align:right">' + (r.f.i_prem ? won(r.f.i_prem) : '-') + '</td>' +
+        '<td>' + (r.f.m_grade
+          ? '<span class="tag ' + (r.f.m_grade === 'A' ? 't-a' : r.f.m_grade === 'B' ? 't-b' : 't-i') + '">' + esc(r.f.m_grade) + '</span>'
+          : '-') + '</td>' +
+        '<td style="color:' + (r.money > 0 ? 'var(--grn)' : 'var(--sub)') + ';font-weight:' + (r.money > 0 ? 700 : 400) + '">' +
+        (r.money ? won(r.money) + '원' : '-') + '</td>' +
+        '<td style="color:' + (d !== null && d < 0 ? 'var(--red)' : d !== null && d <= 7 ? 'var(--org)' : 'inherit') + '">' +
+        (dl ? ymd(dl) + (d !== null ? ' (D' + (d < 0 ? '+' + (-d) : '-' + d) + ')' : '') : '-') + '</td>' +
+        '<td>' + (ymd(r.f.m_next) || '-') + '</td>' +
+        '<td class="noprint">' +
+        '<button class="b b-sub sm" data-pick="' + r.id + '">불러오기</button> ' +
+        '<button class="b b-sub sm" data-xls="' + r.id + '">엑셀</button> ' +
+        '<button class="b b-red sm" data-del="' + r.id + '">삭제</button></td></tr>';
+    });
+    h += '</table></div>';
+  });
+  box.innerHTML = h;
+}
+
+async function pick(id) {
+  try {
+    const r = await api('/api/contracts/' + id);
+    apply(r);
+    editId = r.id;
+    analyze(true);
+    $('restoreBar').style.display = 'none';
+    setSaveState('불러옴 · ' + (r.f.h_cust || '') + ' / ' + (r.f.i_prod || ''), 'var(--blue)', true);
+    toast((r.f.h_cust || '') + ' 님 계약을 불러왔습니다. 수정 후 저장하면 같은 건에 덮어쓰기 됩니다.');
+    tab(1);
+  } catch (e) { toast('불러오지 못했습니다 — ' + e.message, true); }
+}
+
+async function del(id) {
+  if (!confirm('이 계약 기록을 삭제할까요?')) return;
+  try {
+    await api('/api/contracts/' + id, { method: 'DELETE' });
+    if (editId === id) editId = null;
+    drawDB();
+    toast('삭제했습니다.');
+  } catch (e) { toast('삭제하지 못했습니다 — ' + e.message, true); }
+}
+
+document.addEventListener('click', function (e) {
+  const p = e.target.closest('[data-pick]');
+  if (p) { pick(+p.dataset.pick); return; }
+  const d = e.target.closest('[data-del]');
+  if (d) { del(+d.dataset.del); return; }
+  const x = e.target.closest('[data-xls]');
+  if (x) { download('/api/excel/contract/' + x.dataset.xls); }
+});
+
+/* ===================== ⑤ 통계 ===================== */
+
+async function drawStat() {
+  let s;
+  try { s = await api('/api/stats'); }
+  catch (e) {
+    $('s_dist').innerHTML = '<div class="err">통계를 불러오지 못했습니다 — ' + esc(e.message) + '</div>';
+    return;
+  }
+  if (!s.total) {
+    $('s_kpi').innerHTML = '';
+    $('s_dist').innerHTML = '<div class="note">저장된 자료가 없습니다.</div>';
+    $('s_follow').innerHTML = ''; $('s_month').innerHTML = '';
+    return;
+  }
+  $('s_kpi').innerHTML =
+    '<div><div class="n">' + s.total + '</div><div class="t">누적 계약 분석 건수</div></div>' +
+    '<div><div class="n">' + s.customers + '</div><div class="t">관리 고객 수</div></div>' +
+    '<div><div class="n" style="color:var(--grn)">' + s.hidden + '</div><div class="t">숨은보험금 발견 건수</div></div>' +
+    '<div><div class="n" style="color:var(--grn)">' + won(s.money) + '<span style="font-size:12px">원</span></div><div class="t">발견 예상액 누계</div></div>' +
+    '<div><div class="n" style="color:var(--org)">' + s.upsell + '</div><div class="t">업셀링 제안 건수</div></div>';
+
+  const G = s.grades || {};
+  const mx = Math.max(1, G.A || 0, G.B || 0, G.C || 0, G[''] || 0);
+  const gl = { A: 'A (즉시 제안 가능)', B: 'B (추후 재접촉)', C: 'C (유지관리)', '': '등급 미입력' };
+  const gc = { A: 'var(--red)', B: 'var(--org)', C: 'var(--blue)', '': '#aaa' };
+  $('s_dist').innerHTML =
+    '<table class="dt"><tr><th style="width:34%">방문결과 등급</th><th>건수</th><th style="width:46%">비율</th></tr>' +
+    ['A', 'B', 'C', ''].map(function (k) {
+      return '<tr><td class="l">' + gl[k] + '</td><td>' + (G[k] || 0) + '건</td>' +
+        '<td><div class="bar"><i style="width:' + ((G[k] || 0) / mx * 100) + '%;background:' + gc[k] + '"></i></div></td></tr>';
+    }).join('') + '</table>' +
+    '<div class="note" style="margin-top:11px">A등급 비율 <b>' + Math.round((G.A || 0) / s.total * 100) + '%</b> · ' +
+    '숨은보험금 발견율 <b>' + Math.round(s.hidden / s.total * 100) + '%</b> · ' +
+    '건당 평균 발견액 <b>' + won(s.money / s.total) + '원</b></div>';
+
+  $('s_follow').innerHTML = s.follow.length
+    ? '<table class="dt"><tr><th>고객</th><th>상품</th><th class="l">후속조치</th><th>처리기한</th><th>차기방문</th><th>상태</th></tr>' +
+    s.follow.map(function (x) {
+      const d = x.d;
+      const st = (d === null || d === undefined) ? '-'
+        : d < 0 ? '<span class="tag t-a">' + (-d) + '일 경과</span>'
+          : d <= 7 ? '<span class="tag t-b">D-' + d + '</span>'
+            : '<span class="tag t-i">D-' + d + '</span>';
+      return '<tr><td>' + esc(x.cust || '-') + '</td><td>' + esc(x.prod || '-') + '</td>' +
+        '<td class="l">' + esc(x.follow || '-') + '</td><td>' + (ymd(x.deadline) || '-') + '</td>' +
+        '<td>' + (ymd(x.next) || '-') + '</td><td>' + st + '</td></tr>';
+    }).join('') + '</table>'
+    : '<div class="note">등록된 후속조치가 없습니다.</div>';
+
+  const ks = Object.keys(s.months).sort();
+  const mm = Math.max.apply(null, [1].concat(ks.map(function (k) { return s.months[k]; })));
+  $('s_month').innerHTML = ks.length
+    ? '<table class="dt"><tr><th style="width:22%">월</th><th style="width:14%">방문 건수</th><th>추이</th></tr>' +
+    ks.map(function (k) {
+      return '<tr><td>' + k.replace('-', '년 ') + '월</td><td>' + s.months[k] + '건</td>' +
+        '<td><div class="bar"><i style="width:' + (s.months[k] / mm * 100) + '%;background:var(--navy2)"></i></div></td></tr>';
+    }).join('') + '</table>'
+    : '<div class="note">방문일 정보가 없습니다.</div>';
+}
+
+/* ===================== 임시 보관 (이 컴퓨터) ===================== */
+
+let draftTimer = null;
+function markDirty() { clearTimeout(draftTimer); draftTimer = setTimeout(saveDraft, 500); }
+
+function saveDraft() {
+  if (!STORE) return;
+  try {
+    const d = collect();
+    d.draftAt = new Date().toISOString();
+    STORE.setItem(DRAFT_KEY, JSON.stringify(d));
+    if (Date.now() >= noticeUntil) {
+      const n = new Date();
+      setSaveState('자동 보관됨 · ' + String(n.getHours()).padStart(2, '0') + ':' + String(n.getMinutes()).padStart(2, '0'), 'var(--sub)');
+    }
+  } catch (e) { /* 무시 */ }
+}
+
+function draftHasContent(d) {
+  const skip = ['h_vdate', 'm_vdate', 'h_fp'];
+  return Object.keys(d.f || {}).some(function (k) {
+    const v = d.f[k];
+    return v && String(v).trim() && skip.indexOf(k) < 0 && v !== '0';
+  });
+}
+
+function restoreDraft() {
+  if (!STORE) return;
+  let d;
+  try { d = JSON.parse(STORE.getItem(DRAFT_KEY) || 'null'); } catch (e) { return; }
+  if (!d || !draftHasContent(d)) return;
+  apply(d);
+  editId = d.id || null;
+  const t = d.draftAt ? new Date(d.draftAt) : null;
+  const bar = $('restoreBar');
+  bar.style.display = 'block';
+  bar.innerHTML = '<b>이어서 작업하실 수 있도록 이전 내용을 그대로 불러왔습니다.</b>' +
+    (t ? ' <span style="color:var(--sub)">(' + (t.getMonth() + 1) + '월 ' + t.getDate() + '일 ' +
+      String(t.getHours()).padStart(2, '0') + ':' + String(t.getMinutes()).padStart(2, '0') + ' 기준)</span>' : '') +
+    (d.f && d.f.h_cust ? ' — ' + esc(d.f.h_cust) + ' 님' : '') +
+    ' <button type="button" class="b b-sub sm" style="margin-left:6px" id="btnNew2">새 고객으로 시작</button>';
+  $('btnNew2').addEventListener('click', newRecord);
+  setSaveState('이전 내용 복원됨', 'var(--grn)', true);
+}
+
+function newRecord() {
+  if (draftHasContent(collect()) && !confirm('지금 화면의 내용을 비우고 새로 시작할까요?\n\n서버에 저장해 두신 고객 자료는 그대로 남습니다.')) return;
+  resetAll();
+  if (STORE) { try { STORE.removeItem(DRAFT_KEY); } catch (e) { /* 무시 */ } }
+  $('restoreBar').style.display = 'none';
+  setSaveState('');
+}
+
+/* ===================== 백업 · 복원 · 엑셀 ===================== */
+
+async function restoreBackup(input) {
+  const file = input.files[0];
+  if (!file) return;
+  const text = await file.text();
+  input.value = '';
+  let json;
+  try { json = JSON.parse(text); } catch (e) { toast('백업 파일을 읽을 수 없습니다.', true); return; }
+  try {
+    const out = await api('/api/restore', { method: 'POST', body: json });
+    toast('복원 완료 — 새로 등록 ' + out.added + '건' + (out.failed ? ' / 실패 ' + out.failed + '건' : '') + ' (전체 ' + out.total + '건)');
+    drawDB();
+  } catch (e) { toast('복원하지 못했습니다 — ' + e.message, true); }
+}
+
+async function importExcel(input) {
+  const file = input.files[0];
+  if (!file) return;
+  const fd = new FormData();
+  fd.append('file', file);
+  input.value = '';
+  try {
+    const out = await api('/api/excel/import', { method: 'POST', form: fd });
+    toast('엑셀 서식을 등록했습니다 — ' + (out.record.f.h_cust || '') + ' 님');
+    apply(out.record);
+    editId = out.record.id;
+    analyze(true);
+    drawDB();
+  } catch (e) { toast('엑셀을 등록하지 못했습니다 — ' + e.message, true); }
+}
+
+async function wipe() {
+  if (!confirm('서버에 저장된 모든 고객 기록을 삭제합니다. 되돌릴 수 없습니다. 계속할까요?')) return;
+  if (!confirm('정말 삭제할까요? 먼저 [전체 백업 파일 저장]을 하시길 권합니다.')) return;
+  try {
+    await api('/api/wipe', { method: 'POST' });
+    editId = null;
+    drawDB(); drawStat();
+    toast('전체 삭제했습니다.');
+  } catch (e) { toast('삭제하지 못했습니다 — ' + e.message, true); }
+}
+
+function copyScript() {
+  const t = $('script');
+  t.select();
+  t.setSelectionRange(0, 999999);
+  try {
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(t.value);
+    } else {
+      document.execCommand('copy');
+    }
+    toast('스크립트를 복사했습니다.');
+  } catch (e) { toast('복사에 실패했습니다. 직접 선택해 복사해 주세요.', true); }
+}
+
+/* ===================== 예시 ===================== */
+
+function demo() {
+  resetAll();
+  const v = {
+    h_cust: '김영수', i_join: '2003-05-14', i_prod: '교보 무배당 실속종신보험',
+    i_prem: '128000', i_age: '32', i_payterm: '20년', i_payend: '2023-05-14', i_insterm: '종신', i_rate: '6.5',
+    c_on: '김영수', c_os: '남', c_obirth: '1971-03-20', c_in: '김영수', c_is: '남', c_ibirth: '1971-03-20',
+    f_std: 'O', f_ht: '174', f_wt: '70', f_smoke: '비흡연', f_hprem: '118000', f_href: '640000',
+    f_disc: 'X', f_comp: '대한기계(주)', f_surg: 'O', f_impl: 'O', f_acc: 'O', f_tooth: 'O',
+    f_c21: 'O', f_ben: 'X', f_polyp: 'O', f_hc: 'X', f_life: '5000', f_hcamt: '8000', f_hcprem: '42000',
+    b_paid: '30720000', b_surr: '27400000', b_lbal: '5000000', b_lrate: '5.9', b_lti: '820000', b_wdavl: '3200000',
+    b_matdt: '2026-05-14', b_matamt: '12000000', b_as: '분할 X', b_am: '만기 X', b_ro: '당사 O', b_rt: '타사 O',
+    b_crider: '2027-05-14'
+  };
+  Object.keys(v).forEach(function (k) { if ($(k)) $(k).value = v[k]; });
+  $('claimBox').innerHTML = '';
+  addClaim({ d: '요추 염좌(교통사고)', t: '2023-08-02', a: '1200000' });
+  addClaim(); addClaim();
+  moneyRefresh();
+  calcAll();
+  saveDraft();
+  toast('예시 데이터를 넣었습니다. [분석 실행]을 눌러보세요.');
+}
+
+/* ===================== 시작 ===================== */
+
+renderChecks();
+enhanceDates();
+enhanceMoney();
+for (let i = 0; i < 3; i++) addClaim();
+initDefaults();
+calcAll();
+
+$('btnSave').addEventListener('click', saveRecord);
+$('btnSave2').addEventListener('click', saveRecord);
+$('btnNew').addEventListener('click', newRecord);
+$('btnDemo').addEventListener('click', demo);
+$('btnAnalyze').addEventListener('click', function () { analyze(); });
+$('btnAddClaim').addEventListener('click', function () { addClaim(); });
+$('btnFillHidden').addEventListener('click', fillHidden);
+$('btnCopy').addEventListener('click', copyScript);
+$('btnRebuild').addEventListener('click', function () { analyze(true); toast('스크립트를 다시 만들었습니다.'); });
+$('btnPrint2').addEventListener('click', function () { window.print(); });
+$('btnPrint3').addEventListener('click', function () { window.print(); });
+$('btnReload').addEventListener('click', drawDB);
+$('q').addEventListener('input', function () { clearTimeout(window.__qt); window.__qt = setTimeout(drawDB, 250); });
+$('btnBackup').addEventListener('click', function () { download('/api/backup'); });
+$('btnCsv').addEventListener('click', function () { download('/api/csv'); });
+$('btnTemplate').addEventListener('click', function () { download('/api/excel/template'); });
+$('btnLedger').addEventListener('click', function () { download('/api/excel/ledger'); });
+$('btnRestorePick').addEventListener('click', function () { $('rf').click(); });
+$('rf').addEventListener('change', function () { restoreBackup(this); });
+$('btnImportPick').addEventListener('click', function () { $('xf').click(); });
+$('xf').addEventListener('change', function () { importExcel(this); });
+$('btnWipe').addEventListener('click', wipe);
+
+$('h_fp').addEventListener('change', function () {
+  if (STORE && V('h_fp')) { try { STORE.setItem(FP_KEY, V('h_fp')); } catch (e) { /* 무시 */ } }
+});
+['f_ht', 'f_wt'].forEach(function (id) { $(id).addEventListener('input', calcBMI); });
+['c_obirth', 'c_ibirth', 'i_join'].forEach(function (id) {
+  $(id).addEventListener('change', calcAll);
+  $(id).addEventListener('blur', function () { setTimeout(calcAll, 0); });
+});
+['c_oja', 'c_ona', 'c_ina'].forEach(function (id) { $(id).addEventListener('input', ageMsg); });
+$('i_age').addEventListener('input', function () { syncAge('i_age'); calcTerms(); ageMsg(); });
+$('c_ija').addEventListener('input', function () { syncAge('c_ija'); calcTerms(); ageMsg(); });
+['i_insterm', 'i_payterm'].forEach(function (id) {
+  $(id).addEventListener('input', calcTerms);
+  $(id).addEventListener('blur', calcTerms);
+});
+['i_insend', 'i_payend'].forEach(function (id) {
+  $(id).addEventListener('change', calcTerms);
+  $(id).addEventListener('blur', function () { setTimeout(calcTerms, 0); });
+});
+
+document.addEventListener('input', markDirty, true);
+document.addEventListener('change', markDirty, true);
+window.addEventListener('pagehide', function () { clearTimeout(draftTimer); saveDraft(); });
+document.addEventListener('visibilitychange', function () {
+  if (document.visibilityState === 'hidden') { clearTimeout(draftTimer); saveDraft(); }
+});
+
+if (window.__LOCAL_READY) window.__LOCAL_READY();
+restoreDraft();
+
+</script>
+</body>
+</html>

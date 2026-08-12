@@ -46,6 +46,8 @@ function netError(msg) {
 
 async function api(url, opts) {
   opts = opts || {};
+  /* 태블릿용(단일 파일)에서는 서버 대신 브라우저 안에서 처리합니다 */
+  if (window.__LOCAL_API) return window.__LOCAL_API(url, opts);
   const init = { method: opts.method || 'GET', headers: {} };
   if (opts.body !== undefined) {
     init.headers['Content-Type'] = 'application/json';
@@ -58,6 +60,12 @@ async function api(url, opts) {
   if (!r.ok) throw new Error((data && data.error) || ('서버 오류 (' + r.status + ')'));
   $('netWarn').style.display = 'none';
   return data;
+}
+
+/* 내려받기 — 서버판은 주소로 이동, 태블릿용은 브라우저에서 직접 파일을 만듭니다 */
+function download(path) {
+  if (window.__LOCAL_DOWNLOAD) return window.__LOCAL_DOWNLOAD(path);
+  window.location = path;
 }
 
 function esc(s) {
@@ -299,13 +307,15 @@ function getClaims() {
 
 /* ===================== 체크리스트 ===================== */
 
+/* 체크 항목의 입력칸 id : 탭 화면 id(p1~p5) 와 겹치지 않도록 chk_ 를 붙인다 */
+function chkEl(id) { return $('chk_' + id); }
+
 function renderChecks() {
-  $('prepBox').innerHTML = PREPS.map(function (p) {
-    return '<label class="chk" id="lb_' + p.id + '"><input type="checkbox" id="' + p.id + '"><span>' + esc(p.t) + '</span></label>';
-  }).join('');
-  $('extraBox').innerHTML = EXTRAS.map(function (p) {
-    return '<label class="chk" id="lb_' + p.id + '"><input type="checkbox" id="' + p.id + '"><span>' + esc(p.t) + '</span></label>';
-  }).join('');
+  const row = function (p) {
+    return '<label class="chk" id="lb_' + p.id + '"><input type="checkbox" id="chk_' + p.id + '"><span>' + esc(p.t) + '</span></label>';
+  };
+  $('prepBox').innerHTML = PREPS.map(row).join('');
+  $('extraBox').innerHTML = EXTRAS.map(row).join('');
 }
 
 /* ===================== 수집 · 적용 ===================== */
@@ -319,7 +329,7 @@ function collect() {
       ? String(numOf(e.value) || '')
       : String(e.value || '').trim();
   });
-  PREPS.concat(EXTRAS).forEach(function (p) { const e = $(p.id); o.chk[p.id] = !!(e && e.checked); });
+  PREPS.concat(EXTRAS).forEach(function (p) { const e = chkEl(p.id); o.chk[p.id] = !!(e && e.checked); });
   o.money = RES ? RES.money : 0;
   o.hidCnt = RES ? RES.hidCnt : 0;
   return o;
@@ -331,7 +341,7 @@ function apply(o) {
     if (e) e.value = (o.f && o.f[k] !== undefined && o.f[k] !== null) ? o.f[k] : '';
   });
   PREPS.concat(EXTRAS).forEach(function (p) {
-    const e = $(p.id);
+    const e = chkEl(p.id);
     if (e) e.checked = !!(o.chk && o.chk[p.id]);
   });
   $('claimBox').innerHTML = '';
@@ -345,7 +355,7 @@ function apply(o) {
 function resetAll() {
   FIELDS.forEach(function (k) { const e = $(k); if (e) { e.value = ''; e.dataset.autoval = ''; } });
   PREPS.concat(EXTRAS).forEach(function (p) {
-    const e = $(p.id);
+    const e = chkEl(p.id);
     if (e) e.checked = false;
     const lb = $('lb_' + p.id);
     if (lb) lb.classList.remove('auto');
@@ -432,7 +442,7 @@ function renderResult(rec) {
 function autoPrep() {
   PREPS.forEach(function (p) { const lb = $('lb_' + p.id); if (lb) lb.classList.remove('auto'); });
   RES.prep.forEach(function (id) {
-    const e = $(id), lb = $('lb_' + id);
+    const e = chkEl(id), lb = $('lb_' + id);
     if (e) e.checked = true;
     if (lb) lb.classList.add('auto');
   });
@@ -570,7 +580,7 @@ document.addEventListener('click', function (e) {
   const d = e.target.closest('[data-del]');
   if (d) { del(+d.dataset.del); return; }
   const x = e.target.closest('[data-xls]');
-  if (x) { window.location = '/api/excel/contract/' + x.dataset.xls; }
+  if (x) { download('/api/excel/contract/' + x.dataset.xls); }
 });
 
 /* ===================== ⑤ 통계 ===================== */
@@ -791,10 +801,10 @@ $('btnPrint2').addEventListener('click', function () { window.print(); });
 $('btnPrint3').addEventListener('click', function () { window.print(); });
 $('btnReload').addEventListener('click', drawDB);
 $('q').addEventListener('input', function () { clearTimeout(window.__qt); window.__qt = setTimeout(drawDB, 250); });
-$('btnBackup').addEventListener('click', function () { window.location = '/api/backup'; });
-$('btnCsv').addEventListener('click', function () { window.location = '/api/csv'; });
-$('btnTemplate').addEventListener('click', function () { window.location = '/api/excel/template'; });
-$('btnLedger').addEventListener('click', function () { window.location = '/api/excel/ledger'; });
+$('btnBackup').addEventListener('click', function () { download('/api/backup'); });
+$('btnCsv').addEventListener('click', function () { download('/api/csv'); });
+$('btnTemplate').addEventListener('click', function () { download('/api/excel/template'); });
+$('btnLedger').addEventListener('click', function () { download('/api/excel/ledger'); });
 $('btnRestorePick').addEventListener('click', function () { $('rf').click(); });
 $('rf').addEventListener('change', function () { restoreBackup(this); });
 $('btnImportPick').addEventListener('click', function () { $('xf').click(); });
@@ -828,4 +838,5 @@ document.addEventListener('visibilitychange', function () {
   if (document.visibilityState === 'hidden') { clearTimeout(draftTimer); saveDraft(); }
 });
 
+if (window.__LOCAL_READY) window.__LOCAL_READY();
 restoreDraft();

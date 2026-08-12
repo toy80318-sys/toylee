@@ -8,7 +8,7 @@
     "start": "node server/index.js",
     "dev": "node --watch server/index.js",
     "template": "node scripts/make-template.js",
-    "seed": "node scripts/seed.js"
+    "build:tablet": "node scripts/build-standalone.js"
   },
   "dependencies": {
     "better-sqlite3": "^13.0.3",

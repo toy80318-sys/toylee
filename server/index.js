@@ -23,12 +23,16 @@ app.use(express.json({ limit: '5mb' }));
 app.use('/shared', express.static(path.join(__dirname, '..', 'shared')));
 app.use(express.static(path.join(__dirname, '..', 'public')));
 
-/* 한글 파일명 첨부 */
-function attach(res, filename, type) {
+/*
+ * 파일 첨부 — 한글 이름(filename*)을 기본으로 보내되,
+ * 한글 이름을 못 다루는 브라우저를 위해 뜻이 통하는 영문 이름을 함께 보냅니다.
+ * (영문 대체 이름에도 확장자가 들어 있어야 엑셀이 열립니다)
+ */
+function attach(res, filename, ascii, type) {
   res.setHeader('Content-Type', type);
   res.setHeader(
     'Content-Disposition',
-    "attachment; filename=\"download.xlsx\"; filename*=UTF-8''" + encodeURIComponent(filename)
+    'attachment; filename="' + ascii + "\"; filename*=UTF-8''" + encodeURIComponent(filename)
   );
 }
 
@@ -121,7 +125,7 @@ app.get('/api/backup', function (req, res) {
   res.setHeader('Content-Type', 'application/json; charset=utf-8');
   res.setHeader(
     'Content-Disposition',
-    "attachment; filename=\"backup.json\"; filename*=UTF-8''" +
+    'attachment; filename="Kyobo-Backup-' + stamp() + ".json\"; filename*=UTF-8''" +
     encodeURIComponent('평생든든_고객DB_백업_' + stamp() + '.json')
   );
   res.send(JSON.stringify({ ver: 2, exportedAt: new Date().toISOString(), records: records }, null, 2));
@@ -150,7 +154,7 @@ app.post('/api/wipe', function (req, res) {
 /* ---------- 엑셀 ---------- */
 app.get('/api/excel/template', wrap(async function (req, res) {
   const wb = excel.buildWorkbook(null, { withResult: false });
-  attach(res, '평생든든_고객정보파악_서식.xlsx',
+  attach(res, '평생든든_고객정보파악_서식.xlsx', 'Kyobo-Form-Blank.xlsx',
     'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
   await wb.xlsx.write(res);
   res.end();
@@ -161,7 +165,7 @@ app.get('/api/excel/contract/:id', wrap(async function (req, res) {
   if (!rec) return res.status(404).json({ error: '계약을 찾을 수 없습니다.' });
   const wb = excel.buildWorkbook(rec, { withResult: true });
   const name = (rec.f.h_cust || '고객') + '_' + (rec.f.i_prod || '계약') + '_평생든든.xlsx';
-  attach(res, name.replace(/[\\/:*?"<>|]/g, '_'),
+  attach(res, name.replace(/[\\/:*?"<>|]/g, '_'), 'Kyobo-Contract-' + rec.id + '-' + stamp() + '.xlsx',
     'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
   await wb.xlsx.write(res);
   res.end();
@@ -169,7 +173,7 @@ app.get('/api/excel/contract/:id', wrap(async function (req, res) {
 
 app.get('/api/excel/ledger', wrap(async function (req, res) {
   const wb = excel.buildLedger(store.listContracts({}), store.stats());
-  attach(res, '평생든든_고객누적관리대장_' + stamp() + '.xlsx',
+  attach(res, '평생든든_고객누적관리대장_' + stamp() + '.xlsx', 'Kyobo-Ledger-' + stamp() + '.xlsx',
     'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
   await wb.xlsx.write(res);
   res.end();
@@ -213,7 +217,7 @@ app.get('/api/csv', function (req, res) {
   res.setHeader('Content-Type', 'text/csv; charset=utf-8');
   res.setHeader(
     'Content-Disposition',
-    "attachment; filename=\"ledger.csv\"; filename*=UTF-8''" +
+    'attachment; filename="Kyobo-Ledger-' + stamp() + ".csv\"; filename*=UTF-8''" +
     encodeURIComponent('평생든든_고객누적_' + stamp() + '.csv')
   );
   res.send(csv);
