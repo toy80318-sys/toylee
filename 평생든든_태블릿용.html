@@ -2314,6 +2314,9 @@ textarea#script{height:280px;font-size:12.8px;line-height:1.7;white-space:pre-wr
 
   /* ---------- 태블릿용 화면 손질 ---------- */
 
+  /* 저장이 막힌 상태인지 화면 코드에서도 알 수 있게 알려둔다 */
+  global.__LOCAL_STORAGE_OK = !!STORE;
+
   global.__LOCAL_READY = function () {
     const hide = document.getElementById('btnImportPick');
     if (hide) hide.style.display = 'none';
@@ -2342,9 +2345,13 @@ textarea#script{height:280px;font-size:12.8px;line-height:1.7;white-space:pre-wr
       const el = document.getElementById('netWarn');
       if (el) {
         el.style.display = 'block';
-        el.innerHTML = '<b>주의 — 이 브라우저에서는 자동 저장이 막혀 있습니다.</b><br>' +
-          '사생활 보호(시크릿) 모드이거나 저장이 차단된 상태라, 창을 닫으면 입력한 내용이 사라집니다. ' +
-          '일반 창에서 여시거나, 작업을 마치실 때마다 ④ 탭의 [전체 백업 파일 저장]으로 파일에 남겨 주세요.';
+        el.innerHTML = '<b>주의 — 지금은 자동 저장이 되지 않는 상태입니다. 입력하신 내용이 남지 않습니다.</b><br>' +
+          '메신저·메일·다운로드 알림에서 <b>바로 열면</b> 브라우저가 "임시 미리보기"로 보고 저장을 막습니다. ' +
+          '아래처럼 다시 열어 주세요.<br>' +
+          '<b>① 파일을 태블릿에 저장</b> → <b>② [내 파일] 앱에서 그 파일을 누르기</b> → ' +
+          '<b>③ Chrome 또는 삼성 인터넷으로 열기</b><br>' +
+          '그렇게 여시면 이 문구가 사라지고 자동 저장이 됩니다. ' +
+          '그래도 이 문구가 계속 보이면 알려주세요 — 인터넷 주소로 여는 방식으로 바꿔 드리겠습니다.';
       }
     }
   };
@@ -2830,6 +2837,13 @@ function setSaveState(t, c, sticky) {
 async function saveRecord() {
   const name = V('h_cust');
   if (!name) { toast('고객(계약자) 성명을 입력해 주세요.', true); tab(1); $('h_cust').focus(); return; }
+  /* 태블릿용에서 저장이 막혀 있으면, 저장한 줄 알고 넘어가지 않도록 먼저 알려드린다 */
+  if (window.__LOCAL_STORAGE_OK === false) {
+    tab(1);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+    toast('지금은 저장이 되지 않는 상태입니다. 화면 위 빨간 안내를 봐 주세요.', true);
+    return;
+  }
   const j = normDate(V('i_join'));
   if (j) $('i_join').value = j;
   if (!RES) analyze(true);

@@ -475,6 +475,13 @@ function setSaveState(t, c, sticky) {
 async function saveRecord() {
   const name = V('h_cust');
   if (!name) { toast('고객(계약자) 성명을 입력해 주세요.', true); tab(1); $('h_cust').focus(); return; }
+  /* 태블릿용에서 저장이 막혀 있으면, 저장한 줄 알고 넘어가지 않도록 먼저 알려드린다 */
+  if (window.__LOCAL_STORAGE_OK === false) {
+    tab(1);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+    toast('지금은 저장이 되지 않는 상태입니다. 화면 위 빨간 안내를 봐 주세요.', true);
+    return;
+  }
   const j = normDate(V('i_join'));
   if (j) $('i_join').value = j;
   if (!RES) analyze(true);
