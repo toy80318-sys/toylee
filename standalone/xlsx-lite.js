@@ -210,12 +210,14 @@
     });
     x += '</sheetData>';
 
+    /* 아래 차례는 엑셀이 정한 순서를 지켜야 합니다 (autoFilter 가 mergeCells 보다 앞) */
+    if (sheet.autoFilter) x += '<autoFilter ref="' + sheet.autoFilter + '"/>';
+
     if (sheet.merges && sheet.merges.length) {
       x += '<mergeCells count="' + sheet.merges.length + '">';
       sheet.merges.forEach(function (m) { x += '<mergeCell ref="' + m + '"/>'; });
       x += '</mergeCells>';
     }
-    if (sheet.autoFilter) x += '<autoFilter ref="' + sheet.autoFilter + '"/>';
 
     x += '</worksheet>';
     return x;
