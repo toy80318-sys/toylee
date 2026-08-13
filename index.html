@@ -1,0 +1,1119 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>생애재무설계 플래너 — Financial Life Planner</title>
+<style>
+  :root{ --navy:#1e3a5f; --magenta:#a5237a; --blue:#1d4ed8; --red:#dc2626;
+         --green:#15803d; --amber:#b45309; --bg:#f2f7f4; }
+  *{box-sizing:border-box; margin:0; padding:0;}
+  body{font-family:'Malgun Gothic','Apple SD Gothic Neo',sans-serif; background:var(--bg); color:#222;}
+  header{background:linear-gradient(90deg,#0f2b46,#1e5f4a); color:#fff; padding:14px 24px;
+         display:flex; align-items:baseline; gap:12px; flex-wrap:wrap;}
+  header h1{font-size:22px; white-space:nowrap;}
+  header span{font-size:13px; opacity:.85;}
+  .wrap{display:flex; gap:16px; padding:16px; align-items:flex-start; flex-wrap:wrap;}
+
+  /* ---------- 입력 폼 ---------- */
+  .panel{background:#fff; border-radius:10px; box-shadow:0 2px 8px rgba(0,0,0,.08);}
+  #appRoot{position:relative;}   /* 상담 모달의 절대위치 기준 */
+  .form{width:384px; min-width:320px; flex-shrink:0;}
+  .form h2{background:var(--magenta); color:#fff; font-size:15px; padding:10px 14px;
+           display:flex; justify-content:space-between; align-items:center; gap:8px;}
+  .form h2 button{background:rgba(255,255,255,.2); color:#fff; padding:4px 9px; font-size:11.5px; white-space:nowrap;}
+  .form h2 button:hover{background:rgba(255,255,255,.32);}
+  .form .body{padding:14px;}
+  fieldset{border:1px solid #ddd; border-radius:8px; padding:10px 12px; margin-bottom:12px;}
+  legend{font-size:13px; font-weight:bold; color:var(--magenta); padding:0 6px; white-space:nowrap;}
+  .row{display:flex; gap:8px; align-items:center; margin:7px 0;}
+  .row label{font-size:12px; color:#444; width:100px; flex-shrink:0; line-height:1.25;
+             word-break:keep-all; overflow-wrap:break-word;}
+  .row input, .row select{flex:1; min-width:0; padding:6px 8px; border:1px solid #ccc;
+                          border-radius:6px; font-size:13px; font-family:inherit;}
+  .row input:focus, .row select:focus{outline:2px solid #d8b4fe; outline-offset:-1px;}
+  /* 단위 문구는 길어지면 줄바꿈 (고정폭 안에서 잘리지 않도록) */
+  .row .unit{font-size:11.5px; color:#888; width:92px; flex-shrink:0; line-height:1.25;
+             word-break:keep-all; overflow-wrap:break-word; white-space:normal;}
+  .child{border:1px dashed #bbb; border-radius:6px; padding:6px 8px; margin:6px 0;}
+  .child .row label{width:52px;}
+  .mini{display:flex; gap:6px; flex:1; min-width:0;}
+  .mini input, .mini select{width:33%; flex:1; min-width:0;}
+  button{cursor:pointer; border:none; border-radius:8px; font-size:13px; font-family:inherit;}
+  .btn-add{background:#e8f0e9; color:var(--green); padding:6px 10px; margin-top:4px;}
+  .btn-del{background:#fdecec; color:var(--red); padding:2px 8px; font-size:11px; float:right;}
+  .btn-draw{width:100%; background:var(--magenta); color:#fff; font-size:16px; font-weight:bold;
+            padding:12px; margin-top:4px; white-space:nowrap;}
+  .btn-draw:hover{filter:brightness(1.1);}
+  .formHint{font-size:11px; color:#999; line-height:1.55; margin-top:8px;}
+
+  /* ---------- 차트 영역 ---------- */
+  .chartArea{flex:1; min-width:660px;}
+  .chartArea h2{font-size:16px; color:var(--navy); padding:12px 16px; border-bottom:2px solid var(--navy);}
+  #chartBox{padding:8px;}
+  svg{width:100%; height:auto; display:block;}
+
+  /* ---------- 탭 · 버튼 (줄바꿈 방지) ---------- */
+  .tabs{display:flex; gap:6px; padding:10px 16px 0; align-items:flex-end; flex-wrap:wrap;}
+  .tab{padding:9px 16px; border-radius:8px 8px 0 0; background:#e5e7eb; color:#555;
+       font-size:14px; font-weight:bold; border-bottom:3px solid transparent; white-space:nowrap;}
+  .tab.active{background:#fff; color:var(--magenta); border-bottom:3px solid var(--magenta);}
+  .acts{display:flex; gap:6px; margin-left:auto; flex-wrap:wrap; padding-bottom:3px;}
+  .act{background:#eef2f7; border:1px solid #d0d9e4; color:var(--navy); border-radius:8px;
+       padding:7px 11px; font-size:12.5px; font-weight:bold; white-space:nowrap;}
+  .act:hover{background:#dfe9f5;}
+  .act.accent{background:var(--green); border-color:var(--green); color:#fff;}
+  .act.accent:hover{filter:brightness(1.1);}
+
+  /* ---------- 요약 카드 ---------- */
+  .cards{display:grid; grid-template-columns:repeat(auto-fit,minmax(165px,1fr)); gap:10px; padding:12px 16px 4px;}
+  .card{border-radius:8px; padding:10px 12px; color:#fff;}
+  .card .t{font-size:11.5px; opacity:.9; word-break:keep-all;}
+  .card .v{font-size:19px; font-weight:bold; margin-top:2px; word-break:keep-all; overflow-wrap:break-word;}
+  .card .s{font-size:11px; opacity:.85; margin-top:2px;}
+  .c1{background:#1d4ed8;} .c2{background:#a5237a;} .c3{background:#b45309;}
+  .c4{background:#15803d;} .c5{background:#dc2626;} .c6{background:#0f2b46;}
+  .note{font-size:12px; color:#555; padding:8px 16px 16px; line-height:1.65;}
+
+  /* ---------- 상세분석 표 ---------- */
+  .pageBody{padding:6px 18px 20px;}
+  h3.sec{font-size:15px; color:var(--navy); margin:20px 0 6px; padding-left:10px; border-left:4px solid var(--magenta);}
+  .assume{font-size:11.5px; color:#888; margin-bottom:6px; line-height:1.5;}
+  .dtable{width:100%; border-collapse:collapse; font-size:13px; margin-bottom:6px;}
+  .dtable th{background:var(--navy); color:#fff; padding:7px 9px; font-size:12.5px; text-align:center; white-space:nowrap;}
+  .dtable td{border:1px solid #ddd; padding:6px 9px; text-align:right; background:#fff; white-space:nowrap;}
+  .dtable td:first-child{text-align:left;}
+  .dtable tr.sub td{background:#f0f6ff; font-weight:bold;}
+  .dtable tr.sum td{background:#fdf2f8; font-weight:bold; color:var(--magenta); font-size:13.5px;}
+  .dtable tr.minus td{color:var(--blue);}
+  .dtable tr.short td{background:#fef2f2; color:var(--red); font-weight:bold; font-size:14px;}
+  .dtable tr.good td{background:#f0fdf4; color:var(--green); font-weight:bold; font-size:14px;}
+  .dtable tr.evt td{background:#fffbeb;}
+  .dtable tr.mark td{background:#f8fafc; font-weight:bold;}
+  .dtable tr.neg td{background:#fef2f2; color:var(--red);}
+  .scroll{overflow-x:auto;}
+  .verdict{font-size:13.5px; font-weight:bold; border-radius:8px; padding:11px 13px; margin:8px 0 12px; line-height:1.6;}
+  .verdict.ok{background:#f0fdf4; color:var(--green);}
+  .verdict.bad{background:#fef2f2; color:var(--red);}
+
+  /* ---------- 상담 신청 ---------- */
+  .ctaBox{display:flex; align-items:center; justify-content:center; gap:14px; flex-wrap:wrap;
+    background:#f0faf4; border:1.5px dashed var(--green); border-radius:10px; padding:14px 18px;
+    margin:14px 16px 16px; font-size:13.5px; color:var(--navy); font-weight:bold; text-align:center;}
+  .ctaBox button{background:var(--green); color:#fff; padding:10px 18px; border-radius:8px;
+                 font-size:14px; font-weight:bold; white-space:nowrap;}
+  .ctaBox button:hover{filter:brightness(1.1);}
+  /* ⚠ iframe(아임웹 삽입) 안에서는 position:fixed 가 '부모의 보이는 화면'이 아니라
+     'iframe 전체 높이' 기준이라, 모달이 스크롤 위치와 무관한 엉뚱한 곳에 떠 버린다.
+     따라서 절대위치로 두고, 버튼을 누른 지점 옆에 띄운다. (openConsult 참고) */
+  .modalBg{position:absolute; inset:0; background:rgba(0,0,0,.45); z-index:50;}
+  .modal{position:absolute; left:50%; transform:translateX(-50%); top:0;
+         background:#fff; border-radius:12px; width:min(440px,calc(100% - 24px));
+         padding:20px 22px; box-shadow:0 12px 40px rgba(0,0,0,.3);}
+  .modal h3{color:var(--green); font-size:17px; margin-bottom:4px;}
+  .modal .desc{font-size:12px; color:#888; margin-bottom:12px;}
+  .modal .row label{width:72px;}
+  .modal textarea{flex:1; min-width:0; padding:6px 8px; border:1px solid #ccc; border-radius:6px;
+                  font-size:13px; font-family:inherit;}
+  .modal .chk{display:flex; align-items:center; gap:5px; font-size:12.5px; color:#444;
+    background:#f4f6f8; border-radius:6px; padding:5px 10px; cursor:pointer;
+    width:auto !important; flex:none !important; white-space:nowrap;}
+  .modal .chk input[type=checkbox]{flex:none !important; width:15px !important; height:15px;
+    min-width:0 !important; padding:0 !important; margin:0; accent-color:var(--green);}
+  .modal .agree{margin-top:10px; width:100% !important; white-space:normal; justify-content:flex-start;}
+
+  /* ---------- 토스트 ---------- */
+  .toast{position:fixed; left:50%; bottom:26px; transform:translateX(-50%); background:#111827; color:#fff;
+    padding:11px 18px; border-radius:10px; font-size:13.5px; z-index:80; box-shadow:0 6px 24px rgba(0,0,0,.28);
+    opacity:0; pointer-events:none; transition:opacity .25s;}
+  .toast.on{opacity:.95;}
+
+  @page{ size:A4 landscape; margin:10mm; }
+  @media print{
+    body{background:#fff;} header,.form,.tabs,.ctaBox,.modalBg,.toast,.swipeHint{display:none !important;}
+    .wrap{display:block; padding:0;} .panel{box-shadow:none;} .chartArea{min-width:0;}
+    .page{display:block !important;} .page + .page{page-break-before:always;}
+    .card,.dtable th,.dtable tr td{-webkit-print-color-adjust:exact; print-color-adjust:exact;}
+    .chartScroll{overflow:visible !important;} .chartScroll svg{min-width:0 !important;}
+  }
+
+  /* ---------- 모바일 ---------- */
+  .chartScroll{overflow-x:auto; -webkit-overflow-scrolling:touch;}
+  .chartScroll svg{min-width:900px;}
+  .swipeHint{display:none; font-size:11.5px; color:#999; text-align:center; padding:0 0 6px;}
+  @media (max-width:900px){
+    body{-webkit-text-size-adjust:100%;}
+    header{padding:12px 14px; gap:6px;}
+    header h1{font-size:19px;}
+    header span{font-size:11.5px; white-space:normal;}
+    .wrap{padding:10px; gap:12px;}
+    .form{width:100%; min-width:0;}
+    .chartArea{min-width:0; width:100%;}
+    .chartArea h2{font-size:14.5px; padding:10px 12px;}
+    .swipeHint{display:block;}
+    .tabs{padding:8px 10px 0; gap:5px; flex-wrap:nowrap; overflow-x:auto; -webkit-overflow-scrolling:touch;}
+    .tabs::-webkit-scrollbar{height:0;}
+    .tab{padding:8px 12px; font-size:13px; flex:none;}
+    .acts{margin-left:6px; flex-wrap:nowrap;}
+    .act{padding:7px 9px; font-size:12px;}
+    .cards{grid-template-columns:repeat(2,1fr); gap:8px; padding:10px 12px 4px;}
+    .card{padding:9px 10px;} .card .v{font-size:17px;} .card .t{font-size:11px; white-space:normal;}
+    .note{font-size:11.5px; padding:8px 12px 14px;}
+    .pageBody{padding:6px 12px 18px;}
+    h3.sec{font-size:14px; margin:16px 0 6px;}
+    .dtable{font-size:12px;} .dtable th{font-size:11.5px; padding:6px;} .dtable td{padding:5px 7px;}
+    .ctaBox{margin:12px; padding:12px; font-size:13px; gap:10px;}
+    .ctaBox button{width:100%;}
+    .modal{padding:16px;}
+    .row label{width:92px; font-size:11.5px;}
+    .row .unit{width:64px; font-size:11px;}
+    .row input, .row select{font-size:16px;}   /* iOS 자동 확대 방지 */
+    .modal .row label{width:66px;}
+  }
+  @media (max-width:420px){
+    .cards{grid-template-columns:1fr;}
+    .row label{width:84px;} .row .unit{width:56px;}
+  }
+</style>
+</head>
+<body>
+<div id="appRoot">
+<header>
+  <h1>생애재무설계 플래너</h1>
+  <span>Financial Life Planner — 고객정보를 입력하면 생애 현금흐름이 자동으로 계산됩니다</span>
+</header>
+
+<div class="wrap">
+  <!-- ================= 입력 ================= -->
+  <div class="panel form">
+    <h2>■ 고객정보
+      <span style="display:flex; gap:6px">
+        <button onclick="fillSample()">예시 입력</button>
+        <button onclick="resetForm()">초기화</button>
+      </span>
+    </h2>
+    <div class="body">
+      <fieldset>
+        <legend>가족사항</legend>
+        <div class="row"><label>본인 이름/나이</label>
+          <div class="mini"><input id="selfName" placeholder="이름"><input id="selfAge" type="number" placeholder="나이"></div></div>
+        <div class="row"><label>배우자 이름/나이</label>
+          <div class="mini"><input id="spName" placeholder="이름"><input id="spAge" type="number" placeholder="나이"></div></div>
+        <div id="children"></div>
+        <button class="btn-add" onclick="addChild()">+ 자녀 추가</button>
+      </fieldset>
+
+      <fieldset>
+        <legend>소득 · 정년 · 노후</legend>
+        <div class="row"><label>연소득(세후)</label><input id="salary" type="number" placeholder="예: 6000"><span class="unit">만원/년</span></div>
+        <div class="row"><label>정년(사회적)</label><input id="retireSocial" type="number" placeholder="예: 60"><span class="unit">세</span></div>
+        <div class="row"><label>완전은퇴</label><input id="retirePersonal" type="number" placeholder="예: 65"><span class="unit">세</span></div>
+        <div class="row"><label>정년후 소득</label><input id="postRetireRate" type="number" placeholder="예: 50"><span class="unit">% (현소득 대비)</span></div>
+        <div class="row"><label>기대여명</label><input id="lifeEnd" type="number" placeholder="예: 90"><span class="unit">세까지</span></div>
+        <div class="row"><label>국민연금(월)</label><input id="npsManual" type="number" placeholder="비우면 자동추정"><span class="unit">만원</span></div>
+        <div class="row"><label>퇴직연금(월)</label><input id="pensionRetire" type="number" placeholder="예: 50"><span class="unit">만원</span></div>
+        <div class="row"><label>개인연금(월)</label><input id="pensionPrivate" type="number" placeholder="예: 30"><span class="unit">만원</span></div>
+        <div class="row"><label>연금 개시</label><input id="pensionStart" type="number" placeholder="예: 65"><span class="unit">세부터</span></div>
+      </fieldset>
+
+      <fieldset>
+        <legend>생활비 · 자산 · 대출</legend>
+        <div class="row"><label>생활비(월)</label><input id="living" type="number" placeholder="예: 250"><span class="unit">만원 (보험료·고정지출 포함, 대출상환 제외)</span></div>
+        <div class="row"><label>노후 생활비</label><input id="oldLivingRate" type="number" placeholder="예: 70"><span class="unit">% (현재 대비)</span></div>
+        <div class="row"><label>노후 의료비(월)</label><input id="medical" type="number" placeholder="예: 25"><span class="unit">만원</span></div>
+        <div class="row"><label>노후 간병비(월)</label><input id="nursing" type="number" placeholder="예: 12"><span class="unit">만원</span></div>
+        <div class="row"><label>금융자산</label><input id="finAsset" type="number" placeholder="예: 3000"><span class="unit">만원 (예적금·주식)</span></div>
+        <div class="row"><label>부동산</label><input id="house" type="number" placeholder="예: 20000"><span class="unit">만원 (거주용)</span></div>
+        <div class="row"><label>대출 잔액</label><input id="loan" type="number" placeholder="예: 10000"><span class="unit">만원</span></div>
+        <div class="row"><label>대출 상환(월)</label><input id="loanPayment" type="number" placeholder="예: 80"><span class="unit">만원 (비우면 이자만)</span></div>
+        <div class="row"><label>대출 금리</label><input id="loanRate" type="number" step="0.1" placeholder="예: 4.5"><span class="unit">%/년</span></div>
+        <div class="row"><label>보장자산</label><input id="cover" type="number" placeholder="예: 4000"><span class="unit">만원 (사망보험금)</span></div>
+      </fieldset>
+
+      <fieldset>
+        <legend>자녀교육비 (1인당 월 지출)</legend>
+        <div class="row"><label>초등 (8~13세)</label><input id="eduElem" type="number" placeholder="예: 30"><span class="unit">만원/월</span></div>
+        <div class="row"><label>중학 (14~16세)</label><input id="eduMid" type="number" placeholder="예: 50"><span class="unit">만원/월</span></div>
+        <div class="row"><label>고교 (17~19세)</label><input id="eduHigh" type="number" placeholder="예: 70"><span class="unit">만원/월</span></div>
+        <div class="row"><label>대학 (4년간)</label><input id="eduUniv" type="number" placeholder="예: 100"><span class="unit">만원/월</span></div>
+        <div class="row"><label>대학 입학나이</label><input id="univAge" type="number" placeholder="예: 20"><span class="unit">세</span></div>
+      </fieldset>
+
+      <fieldset>
+        <legend>자녀 결혼 및 경조사</legend>
+        <div class="row"><label>결혼 예상나이</label><input id="marryAge" type="number" placeholder="예: 30"><span class="unit">세</span></div>
+        <div class="row"><label>결혼자금 지원</label><input id="marryFund" type="number" placeholder="예: 15000"><span class="unit">만원 (1인당)</span></div>
+      </fieldset>
+
+      <fieldset>
+        <legend>중대질병 (病)</legend>
+        <div class="row"><label>치료비</label><input id="illnessCost" type="number" placeholder="예: 3000"><span class="unit">만원 (암·뇌·심장 등)</span></div>
+        <div class="row"><label>소득상실 기간</label><input id="illnessYears" type="number" step="0.5" placeholder="예: 2"><span class="unit">년 (치료·회복)</span></div>
+        <div class="row"><label>질병 보장자산</label><input id="illnessCover" type="number" placeholder="예: 3000"><span class="unit">만원 (진단비·실손)</span></div>
+      </fieldset>
+
+      <fieldset>
+        <legend>경제 가정</legend>
+        <div class="row"><label>물가상승률</label><input id="inflation" type="number" step="0.1" placeholder="예: 2.5"><span class="unit">%/년</span></div>
+        <div class="row"><label>임금상승률</label><input id="wageGrowth" type="number" step="0.1" placeholder="예: 3"><span class="unit">%/년</span></div>
+        <div class="row"><label>자산 수익률</label><input id="returnRate" type="number" step="0.1" placeholder="예: 3"><span class="unit">%/년</span></div>
+      </fieldset>
+
+      <button class="btn-draw" onclick="draw()">📈 생애설계 차트 그리기</button>
+      <div class="formHint">입력값은 이 브라우저에만 자동 저장되며 서버로 전송되지 않습니다.
+        (상담 신청 시에만 결과 요약과 함께 전송됩니다.)</div>
+    </div>
+  </div>
+
+  <!-- ================= 결과 ================= -->
+  <div class="panel chartArea">
+    <h2>생애설계 차트 — <span id="titleName">○○○</span> 고객님의 라이프사이클</h2>
+    <div class="tabs">
+      <button class="tab active" id="tabBtn1" onclick="showPage(1)">①&nbsp;생애설계 차트</button>
+      <button class="tab" id="tabBtn2" onclick="showPage(2)">②&nbsp;필요자금 상세분석</button>
+      <button class="tab" id="tabBtn3" onclick="showPage(3)">③&nbsp;연도별 현금흐름</button>
+      <span class="acts">
+        <button class="act" onclick="saveData()">💾&nbsp;고객저장</button>
+        <button class="act" onclick="document.getElementById('loadFile').click()">📂&nbsp;불러오기</button>
+        <button class="act" onclick="downloadPNG()">🖼&nbsp;이미지</button>
+        <button class="act" onclick="printA4()">🖨&nbsp;A4인쇄</button>
+        <button class="act" onclick="shareKakao()">📤&nbsp;카톡공유</button>
+        <button class="act accent" onclick="openConsult(event)">📮&nbsp;상담신청</button>
+      </span>
+    </div>
+    <div id="page1" class="page">
+      <div class="swipeHint">← 차트를 좌우로 밀어서 보세요 →</div>
+      <div class="chartScroll"><div id="chartBox"></div></div>
+      <div class="cards" id="cards"></div>
+      <div class="note" id="note"></div>
+    </div>
+    <div id="page2" class="page pageBody" style="display:none"></div>
+    <div id="page3" class="page pageBody" style="display:none"></div>
+    <div class="ctaBox"><span id="ctaMsg">⏳ 준비는 빠를수록 부담이 줄어듭니다.<br>저축할 수 있는 시간이 지나기 전, 우리 가족 맞춤 플랜을 받아보세요.</span>
+      <button onclick="openConsult(event)">📮 전문 상담 신청하기</button>
+    </div>
+  </div>
+</div>
+
+<input type="file" id="loadFile" accept=".json,application/json" style="display:none" onchange="loadData(event)">
+<div id="toast" class="toast"></div>
+
+<!-- ================= 상담 신청 ================= -->
+<div id="consultBg" class="modalBg" style="display:none" onclick="if(event.target===this)closeConsult()">
+  <div class="modal">
+    <h3>📮 전문 상담 신청</h3>
+    <div class="desc">작성하신 내용과 플래너 결과 요약이 담당 설계사에게 전달됩니다.</div>
+    <div class="row"><label>이름</label><input id="reqName" placeholder="성함"></div>
+    <div class="row"><label>연락처</label><input id="reqPhone" placeholder="010-0000-0000"></div>
+    <div class="row"><label>희망 시간</label>
+      <select id="reqTime"><option>평일 오전</option><option>평일 오후</option><option>평일 저녁</option><option>주말</option><option>상관없음</option></select></div>
+    <div class="row"><label>관심 분야</label>
+      <div style="flex:1; display:flex; flex-wrap:wrap; gap:6px">
+        <label class="chk"><input type="checkbox" class="reqTopic" value="노후자금">노후자금</label>
+        <label class="chk"><input type="checkbox" class="reqTopic" value="보장분석">보장분석</label>
+        <label class="chk"><input type="checkbox" class="reqTopic" value="자녀교육·결혼자금">교육·결혼</label>
+        <label class="chk"><input type="checkbox" class="reqTopic" value="기타">기타</label>
+      </div></div>
+    <div class="row"><label>문의 내용</label><textarea id="reqMemo" rows="3" placeholder="궁금하신 점을 자유롭게 적어주세요"></textarea></div>
+    <label class="chk agree"><input type="checkbox" id="reqAgree"> 상담 목적의 개인정보 수집·이용에 동의합니다.</label>
+    <div style="display:flex; gap:8px; margin-top:12px; flex-wrap:wrap">
+      <button id="reqSendBtn" class="btn-draw" style="flex:1 1 100%; margin:0; background:#15803d">✅ 상담 신청하기</button>
+      <button class="act" style="flex:1" onclick="submitConsult('sms')">📱 문자로</button>
+      <button class="act" style="flex:1" onclick="submitConsult('mail')">📧 이메일로</button>
+      <button class="act" onclick="closeConsult()">닫기</button>
+    </div>
+    <div id="reqStatus" style="font-size:12px; color:#888; margin-top:8px; text-align:center"></div>
+  </div>
+</div>
+</div><!-- /appRoot -->
+
+<script>
+/* ================= 설정 ================= */
+const ADVISOR = { name:'담당 설계사', email:'cnwlsdl@naver.com', phone:'010-9875-8031' };
+const SUPABASE = {
+  url  : 'https://lixkizqprsbnsnozwbpa.supabase.co',
+  key  : 'sb_publishable_8Hh5ncFFBVE8G_TZtVf4pg_QgMv-1Fl',
+  table: 'lifeplan_consult_requests'
+};
+const LS_KEY = 'lifeplanner.form.v3';
+
+const $ = id => document.getElementById(id);
+function hostName(){
+  try{ if(parent && parent!==window && parent.location.hostname) return parent.location.hostname; }catch(e){}
+  if(location.hostname) return location.hostname;
+  try{ if(document.referrer) return new URL(document.referrer).hostname; }catch(e){}
+  return 'embed';
+}
+async function sendToSupabase(payload){
+  const res = await fetch(`${SUPABASE.url}/rest/v1/${SUPABASE.table}`, {
+    method:'POST',
+    headers:{ 'Content-Type':'application/json', apikey:SUPABASE.key,
+              Authorization:`Bearer ${SUPABASE.key}`, Prefer:'return=minimal' },
+    body: JSON.stringify(payload) });
+  if(!res.ok) throw new Error('DB 저장 실패 ('+res.status+')');
+}
+function toast(msg){
+  const t=$('toast'); t.textContent=msg; t.classList.add('on');
+  clearTimeout(t._tm); t._tm=setTimeout(()=>t.classList.remove('on'), 2600);
+}
+
+/* ================= 입력 ================= */
+let childSeq = 0;
+function addChild(name, sex, age){
+  childSeq++;
+  const div = document.createElement('div');
+  div.className = 'child';
+  div.innerHTML =
+    `<button class="btn-del" onclick="this.parentNode.remove(); autoSave()">삭제</button>
+     <div class="row"><label>자녀 ${childSeq}</label>
+       <div class="mini">
+         <input class="cName" placeholder="이름" value="${esc(name||'')}">
+         <select class="cSex"><option ${sex==='남'?'selected':''}>남</option><option ${sex==='여'?'selected':''}>여</option></select>
+         <input class="cAge" type="number" placeholder="나이" value="${age??''}">
+       </div></div>`;
+  $('children').appendChild(div);
+}
+
+function readData(){
+  const v = id => $(id).value;
+  const n = (id, def=0) => { const x = parseFloat(v(id)); return isNaN(x) ? def : x; };
+  const children = [...document.querySelectorAll('.child')].map(c => ({
+    name: c.querySelector('.cName').value.trim() || '자녀',
+    sex : c.querySelector('.cSex').value,
+    age : parseFloat(c.querySelector('.cAge').value)
+  })).filter(c => !isNaN(c.age));
+  const finAsset = n('finAsset'), loan = n('loan');
+  return {
+    selfName:v('selfName').trim(), selfAge:n('selfAge'), spName:v('spName').trim(), spAge:n('spAge'), children,
+    salary:n('salary'), retireSocial:n('retireSocial',60), retirePersonal:n('retirePersonal',65),
+    postRetireRate:n('postRetireRate',50), lifeEnd:n('lifeEnd',90), pensionStart:n('pensionStart',65),
+    npsManual:n('npsManual'), pensionRetire:n('pensionRetire'), pensionPrivate:n('pensionPrivate'),
+    living:n('living'), oldLivingRate:n('oldLivingRate',70), medical:n('medical',25), nursing:n('nursing',12),
+    // 대출은 시작자산에서 빼지 않는다 — 주택담보대출은 부동산이 상계하므로,
+    // 빼 버리면 시작부터 음수가 되어 「현재 나이에 자산 고갈」로 오판된다.
+    // 대신 매년 상환액(또는 이자)을 지출로 흘려보낸다. (simulate 참고)
+    finAsset, house:n('house'), loan, cover:n('cover'), startAsset: finAsset,
+    loanPayment:n('loanPayment'), loanRate:n('loanRate',4.5),
+    eduElem:n('eduElem'), eduMid:n('eduMid'), eduHigh:n('eduHigh'), eduUniv:n('eduUniv'), univAge:n('univAge',20),
+    marryAge:n('marryAge',30), marryFund:n('marryFund'),
+    illnessCost:n('illnessCost',3000), illnessYears:n('illnessYears',2), illnessCover:n('illnessCover'),
+    inflation:n('inflation',2.5), wageGrowth:n('wageGrowth',3), returnRate:n('returnRate',3), aValue:300
+  };
+}
+
+/* ---------- 자동저장 · 예시 · 초기화 ---------- */
+const SAVE_IDS = ['selfName','selfAge','spName','spAge','salary','retireSocial','retirePersonal','postRetireRate',
+  'lifeEnd','pensionStart','npsManual','pensionRetire','pensionPrivate','living','oldLivingRate','medical','nursing',
+  'finAsset','house','loan','loanPayment','loanRate','cover','eduElem','eduMid','eduHigh','eduUniv','univAge',
+  'marryAge','marryFund','illnessCost','illnessYears','illnessCover','inflation','wageGrowth','returnRate'];
+
+function collectRecord(){
+  const o = { app:'생애재무설계플래너', ver:3, saved:new Date().toISOString(), fields:{},
+    children:[...document.querySelectorAll('.child')].map(c=>({
+      name:c.querySelector('.cName').value, sex:c.querySelector('.cSex').value, age:c.querySelector('.cAge').value })) };
+  SAVE_IDS.forEach(id => o.fields[id] = $(id).value);
+  return o;
+}
+function applyRecord(o){
+  SAVE_IDS.forEach(id => { const el=$(id); if(el) el.value=''; });
+  Object.entries(o.fields||{}).forEach(([k,v])=>{ const el=$(k); if(el) el.value=v; });
+  $('children').innerHTML=''; childSeq=0;
+  (o.children||[]).forEach(c=>addChild(c.name,c.sex,c.age));
+  if(!document.querySelector('.child')) addChild();
+}
+function autoSave(){ try{ localStorage.setItem(LS_KEY, JSON.stringify(collectRecord())); }catch(e){} }
+function restoreLocal(){
+  try{
+    const o = JSON.parse(localStorage.getItem(LS_KEY) || 'null');
+    if(!o) return false;
+    applyRecord(o);
+    return true;
+  }catch(e){ return false; }
+}
+function fillSample(){
+  applyRecord({ fields:{
+      selfName:'홍길동', selfAge:42, spName:'김영희', spAge:40,
+      salary:6000, retireSocial:60, retirePersonal:65, postRetireRate:50,
+      lifeEnd:90, pensionStart:65, npsManual:'', pensionRetire:50, pensionPrivate:30,
+      living:250, oldLivingRate:70, medical:25, nursing:12,
+      finAsset:8000, house:20000, loan:10000, loanPayment:80, loanRate:4.5, cover:4000,
+      eduElem:30, eduMid:50, eduHigh:70, eduUniv:100, univAge:20,
+      marryAge:30, marryFund:15000,
+      illnessCost:3000, illnessYears:2, illnessCover:3000,
+      inflation:2.5, wageGrowth:3, returnRate:3 },
+    children:[{name:'홍민준',sex:'남',age:12},{name:'홍서연',sex:'여',age:9}] });
+  autoSave(); draw(); toast('예시 고객 정보를 불러왔습니다.');
+}
+function resetForm(){
+  if(!confirm('입력하신 내용을 모두 지울까요?')) return;
+  applyRecord({fields:{}, children:[]});
+  try{ localStorage.removeItem(LS_KEY); }catch(e){}
+  $('titleName').textContent='○○○';
+  $('chartBox').innerHTML=emptyMsg; $('page2').innerHTML=emptyMsg; $('page3').innerHTML=emptyMsg;
+  $('cards').innerHTML=''; $('note').innerHTML='';
+  toast('입력 내용을 초기화했습니다.');
+}
+
+/* ================= 계산 엔진 (연도별 현금흐름) ================= */
+// 국민연금 추정: 기본연금 = 40% × (A값 + 본인평균소득)/2 × (가입연수/40), 기준소득 상한 적용
+function estimatePension(monthlyIncome, joinYears, AVALUE){
+  if(!(monthlyIncome>0) || !(joinYears>0)) return 0;
+  const A = AVALUE || 300, B = Math.min(monthlyIncome, 637);
+  return Math.max(0, 0.40 * ((A+B)/2) * (Math.min(joinYears,40)/40));
+}
+function simulate(d){
+  const now=d.selfAge, end=d.lifeEnd;
+  const infl=d.inflation/100, wage=d.wageGrowth/100, ret=d.returnRate/100;
+  const tSoc=d.retireSocial, tRet=d.retirePersonal, tPen=d.pensionStart;
+  const npsMonthly = d.npsManual>0 ? d.npsManual
+                   : estimatePension(d.salary/12, Math.max(0,tSoc-25), d.aValue);
+  const pensionMonthly = npsMonthly + d.pensionRetire + d.pensionPrivate;
+  // 대학을 먼저 판정한다 — 고교를 먼저 보면 univAge를 19 이하로 넣었을 때
+  // 그 해가 고교로 잡혀 대학 첫해 교육비가 통째로 누락된다.
+  const eduCostAt = ca => {
+    if(ca>=d.univAge && ca<=d.univAge+3) return d.eduUniv;
+    if(ca>=8 && ca<=13) return d.eduElem;
+    if(ca>=14 && ca<=16) return d.eduMid;
+    if(ca>=17 && ca<=19) return d.eduHigh;
+    return 0;
+  };
+  const rows=[]; let asset=d.startAsset, firstDeficitAge=null, depletionAge=null;
+  let bal=Math.max(0,d.loan), loanRate=d.loanRate/100, loanClearAge=null;
+  for(let t=now; t<=end; t++){
+    const k=t-now, pi=Math.pow(1+infl,k), wi=Math.pow(1+wage,k);
+    let earned = 0;
+    if(t < tSoc)      earned = d.salary*wi;
+    else if(t < tRet) earned = d.salary*wi*(d.postRetireRate/100);
+    const pensionY = (t>=tPen) ? pensionMonthly*12*pi : 0;
+    const income = earned + pensionY;
+    const livingBase = (t<tRet) ? d.living : d.living*(d.oldLivingRate/100);
+    const living = livingBase*12*pi;
+    const edu   = d.children.reduce((s,c)=> s + eduCostAt(c.age+k)*12*pi, 0);
+    // 나이가 소수로 입력돼도 매칭되도록 반올림 비교 (정수 완전일치는 결혼자금이 통째로 누락됨)
+    const marry = d.children.reduce((s,c)=> s + ((Math.round(c.age+k)===Math.round(d.marryAge)) ? d.marryFund*pi : 0), 0);
+    const care  = (t>=tRet) ? (d.medical+d.nursing)*12*pi : 0;
+    // 대출: 상환액이 있으면 원리금 상환으로 잔액을 줄이고, 없으면 이자만 비용으로 잡는다.
+    // (상환액 미입력 시 원금이 줄지 않으므로 ④ 사망보장에서 잔액이 그대로 필요보장에 잡힌다)
+    let loanPay = 0;
+    if(bal > 0){
+      const interest = bal*loanRate;
+      if(d.loanPayment > 0){
+        loanPay = Math.min(d.loanPayment*12, bal+interest);
+        bal = Math.max(0, bal+interest-loanPay);
+        if(bal===0 && loanClearAge===null) loanClearAge=t;
+      } else {
+        loanPay = interest;   // 이자만 — 잔액 유지
+      }
+    }
+    const expense = living+edu+marry+care+loanPay;
+    const net = income-expense;
+    asset = asset*(1+ret) + net;
+    if(firstDeficitAge===null && net<0) firstDeficitAge=t;
+    if(depletionAge===null && asset<0)  depletionAge=t;
+    rows.push({age:t,k,pi,income,earned,pensionY,expense,living,edu,marry,care,loanPay,loanBal:bal,net,asset});
+  }
+  const at = a => rows.find(r=>r.age===a) || rows[rows.length-1];
+  return { rows, npsMonthly, pensionMonthly,
+    assetAtRetire: at(Math.min(tRet,end)).asset, assetAtEnd: rows[rows.length-1].asset,
+    firstDeficitAge, depletionAge, loanClearAge, peakAsset: Math.max(...rows.map(r=>r.asset)) };
+}
+// base 를 넘기면 재계산하지 않는다 — 이분탐색이 60회 이상 호출하므로 그때마다 전체 시뮬레이션을 다시 돌 이유가 없다
+function simulateWithExtra(d, extraMonthly, base){
+  base = base || simulate(d);
+  const ret = d.returnRate/100, tRet = d.retirePersonal;
+  let add=0, depletionAge=null;
+  const rows = base.rows.map(r=>{
+    add = add*(1+ret) + (r.age < tRet ? extraMonthly*12 : 0);
+    const total = r.asset + add;
+    if(depletionAge===null && total<0) depletionAge=r.age;
+    return {age:r.age, asset:total};
+  });
+  return { rows, assetAtEnd: rows[rows.length-1].asset, depletionAge };
+}
+function simulateWithLump(d, lump){ return simulate({...d, startAsset: d.startAsset + lump}); }
+// 이분탐색 공통 — 상한까지 확장해도 해결되지 않으면 null(산출 불가)을 돌려준다
+function solveMin(okFn, start, cap){
+  let hi = start;
+  while(!okFn(hi) && hi < cap) hi *= 2;
+  if(!okFn(hi)) return null;
+  let lo = 0;
+  for(let i=0;i<60;i++){ const mid=(lo+hi)/2; if(okFn(mid)) hi=mid; else lo=mid; }
+  return hi;
+}
+function requiredMonthlySaving(d){
+  const base = simulate(d);
+  if(base.assetAtEnd>=0 && base.depletionAge===null) return 0;
+  // 이미 은퇴했다면 추가 저축을 쌓을 구간이 없다 → 월저축으로는 해결 불가(일시금으로 안내)
+  if(d.selfAge >= d.retirePersonal) return null;
+  return solveMin(x => { const s=simulateWithExtra(d,x,base); return s.assetAtEnd>=0 && s.depletionAge===null; }, 10, 1e8);
+}
+function requiredLumpSum(d){
+  const base = simulate(d);
+  if(base.assetAtEnd>=0 && base.depletionAge===null) return 0;
+  return solveMin(x => { const s=simulateWithLump(d,x); return s.assetAtEnd>=0 && s.depletionAge===null; }, 1000, 1e9);
+}
+
+/* ================= SVG 헬퍼 ================= */
+const S = (tag,attrs,txt) => {
+  let s=`<${tag}`; for(const k in attrs) s+=` ${k}="${attrs[k]}"`;
+  return txt!==undefined ? s+`>${txt}</${tag}>` : s+'/>';
+};
+let placedCallouts=[];
+function callout(x,y,lines,fill='#fde047'){
+  const w=Math.max(...lines.map(t=>t.length))*12.5+18, h=lines.length*17+10, origY=y;
+  const hits=()=>placedCallouts.some(r=>!(x+w/2+6<r.x1||x-w/2-6>r.x2||y+6<r.y1||y-h-6>r.y2));
+  let guard=0; while(hits() && guard++<40) y-=14;
+  placedCallouts.push({x1:x-w/2,y1:y-h,x2:x+w/2,y2:y});
+  let g='';
+  if(y<origY-2) g+=S('line',{x1:x,y1:y+2,x2:x,y2:origY+6,stroke:'#caa50a','stroke-width':1.2,'stroke-dasharray':'3 3'});
+  g+=S('rect',{x:x-w/2,y:y-h,width:w,height:h,rx:6,fill,stroke:'#caa50a','stroke-width':1});
+  g+=`<polygon points="${x-5},${y} ${x+5},${y} ${x},${y+8}" fill="${fill}" stroke="#caa50a"/>`;
+  lines.forEach((t,i)=>{ g+=S('text',{x,y:y-h+15+i*16,'text-anchor':'middle','font-size':12,'font-weight':'bold',fill:'#333'},esc(t)); });
+  return g;
+}
+function periodArrow(x1,x2,y,label,color){
+  let g=S('line',{x1,y1:y,x2,y2:y,stroke:color,'stroke-width':1.6,'stroke-dasharray':'5 4'});
+  g+=`<polygon points="${x1},${y} ${x1+8},${y-4} ${x1+8},${y+4}" fill="${color}"/>`;
+  g+=`<polygon points="${x2},${y} ${x2-8},${y-4} ${x2-8},${y+4}" fill="${color}"/>`;
+  const cx=(x1+x2)/2, w=label.length*11.5+10;
+  g+=S('rect',{x:cx-w/2,y:y-9,width:w,height:18,rx:4,fill:'#fff',stroke:color,'stroke-width':.8});
+  g+=S('text',{x:cx,y:y+4,'text-anchor':'middle','font-size':11.5,'font-weight':'bold',fill:color},esc(label));
+  return g;
+}
+const fmt = n => { const a=Math.abs(n);
+  return a>=10000 ? (n/10000).toFixed(2)+'억' : Math.round(n).toLocaleString()+'만'; };
+// 고객이 입력한 문자열(이름 등)은 innerHTML/SVG로 들어가므로 반드시 이스케이프
+const esc = s => String(s??'').replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
+
+/* ================= 메인 ================= */
+function draw(){
+  const d = readData();
+  const miss=[];
+  if(!(d.selfAge>0)) miss.push('본인 나이');
+  if(!(d.salary>0))  miss.push('연소득');
+  if(!(d.living>0))  miss.push('생활비');
+  if(!(d.lifeEnd>d.selfAge)) miss.push('기대여명(현재 나이보다 커야 합니다)');
+  if(d.retireSocial>d.retirePersonal) miss.push('정년은 완전은퇴 나이보다 늦을 수 없습니다');
+  if(miss.length){ alert('다음 항목을 입력해 주세요:\n· '+miss.join('\n· ')); return; }
+
+  $('titleName').textContent = d.selfName || '○○○';
+  const sim = simulate(d);
+  const rows = sim.rows, now = d.selfAge, end = d.lifeEnd;
+  const tSoc = d.retireSocial, tRet = d.retirePersonal;
+
+  // 실질(현재물가) 환산 — 장기 명목금액은 물가로 왜곡되므로 오늘 돈 기준으로 표시
+  const rIncome = r => r.income/r.pi/12;                    // 월, 만원
+  const rFlowExp= r => (r.expense-r.marry)/r.pi/12;         // 결혼자금(일시금) 제외한 경상지출
+  const rAsset  = r => r.asset/r.pi;                        // 만원
+
+  const eldest   = d.children.length ? d.children.reduce((a,b)=>a.age>b.age?a:b) : null;
+  const youngest = d.children.length ? d.children.reduce((a,b)=>a.age<b.age?a:b) : null;
+  const tUni = eldest ? now + (d.univAge - eldest.age) : null;
+  const tMar = youngest ? now + (d.marryAge - youngest.age) : null;
+  const oldYears = Math.max(0, end - tRet);
+  const savingYears = Math.max(0, tSoc - now);
+  const dutyYears = tMar ? Math.max(0, tMar - now) : null;
+
+  /* ---------- 좌표계 ---------- */
+  // 좌우 여백을 넉넉히 — 좌측 금액눈금 / 우측 누적자산축·「인생(나이)」이 잘리지 않도록
+  const W=1320, L=132, R=1148, y0=560, yTop=115;
+  const maxFlow = Math.max(...rows.map(r=>Math.max(rIncome(r), rFlowExp(r))))*1.25 || 100;
+  const maxAsset= Math.max(Math.max(...rows.map(rAsset)), 1);
+  const minAsset= Math.min(Math.min(...rows.map(rAsset)), 0);
+  const span = Math.max(1, end-now);
+  const x = a => L + (a-now)/span*(R-L);
+  const y = v => y0 - (v/maxFlow)*(y0-yTop);
+  const ya= v => y0 - ((v-minAsset)/(maxAsset-minAsset||1))*(y0-yTop);
+
+  let g=''; placedCallouts=[];
+  g += `<defs><pattern id="hatch" width="7" height="7" patternTransform="rotate(45)" patternUnits="userSpaceOnUse">
+        <line x1="0" y1="0" x2="0" y2="7" stroke="#dc2626" stroke-width="1.4" opacity="0.55"/></pattern></defs>`;
+
+  // 수입<지출 구간(적자) 음영
+  let area='', inDef=false;
+  rows.forEach(r=>{ if(rIncome(r)<rFlowExp(r)){ if(!inDef){area+=`M${x(r.age)} ${y(rFlowExp(r))} `;inDef=true;} else area+=`L${x(r.age)} ${y(rFlowExp(r))} `; } });
+  if(inDef){ for(let i=rows.length-1;i>=0;i--){ const r=rows[i]; if(rIncome(r)<rFlowExp(r)) area+=`L${x(r.age)} ${y(rIncome(r))} `; } area+='Z'; g+=S('path',{d:area,fill:'url(#hatch)',stroke:'none'}); }
+
+  // 축
+  g += S('line',{x1:L-15,y1:y0,x2:R+40,y2:y0,stroke:'#111','stroke-width':3});
+  g += `<polygon points="${R+40},${y0} ${R+27},${y0-6} ${R+27},${y0+6}" fill="#111"/>`;
+  g += S('text',{x:R+20,y:y0+24,'font-size':13,'font-weight':'bold'},'인생(나이)');
+  g += S('line',{x1:L,y1:y0+8,x2:L,y2:65,stroke:'#111','stroke-width':3});
+  g += `<polygon points="${L},65 ${L-6},78 ${L+6},78" fill="#111"/>`;
+  g += S('text',{x:L+14,y:80,'font-size':13,'font-weight':'bold'},'월 현금흐름(만원, 현재물가 기준)');
+
+  // 좌축 눈금
+  const step = (m=>{ const raw=m/5; for(const p of [10,20,50,100,200,250,500,1000,2000,5000]) if(p>=raw) return p; return Math.ceil(raw/1000)*1000; })(maxFlow);
+  for(let v=step; v<=maxFlow; v+=step){
+    g += S('line',{x1:L+6,y1:y(v),x2:R,y2:y(v),stroke:'#000','stroke-width':1,opacity:.05});
+    g += S('line',{x1:L-6,y1:y(v),x2:L+6,y2:y(v),stroke:'#111','stroke-width':2});
+    g += S('text',{x:L-10,y:y(v)+4,'text-anchor':'end','font-size':11.5,fill:'#444'},v.toLocaleString());
+  }
+  // 우축(자산)
+  g += S('line',{x1:R,y1:y0,x2:R,y2:yTop,stroke:'#15803d','stroke-width':1.5,opacity:.5});
+  g += S('text',{x:R+8,y:yTop-6,'font-size':12,'font-weight':'bold',fill:'#15803d'},'누적자산(억)');
+  for(let i=1;i<=4;i++){
+    const v = minAsset + (maxAsset-minAsset)*i/4;
+    g += S('text',{x:R+8,y:ya(v)+4,'font-size':11,fill:'#15803d'}, (v/10000).toFixed(1));
+    g += S('line',{x1:R-5,y1:ya(v),x2:R+4,y2:ya(v),stroke:'#15803d','stroke-width':1.5});
+  }
+  if(minAsset<0){ g += S('line',{x1:L,y1:ya(0),x2:R,y2:ya(0),stroke:'#15803d','stroke-width':1,'stroke-dasharray':'4 4',opacity:.6}); }
+
+  // 나이 눈금 + 가족 나이표
+  const fam = [[esc(d.selfName||'본인'),d.selfAge]];
+  if(d.spAge>0) fam.push([esc(d.spName||'배우자'),d.spAge]);
+  d.children.forEach(c=>fam.push([esc(c.name+'('+c.sex+')'),c.age]));
+  fam.forEach((f,i)=>{ g+=S('text',{x:8,y:y0+26+i*19,'font-size':12.5,'font-weight':'bold',fill:'#1e3a5f'},f[0]); });
+  // 현재 나이와 1년 이내로 붙는 눈금은 건너뛴다 (라벨이 겹쳐 읽히지 않음)
+  const ticks=[now]; for(let a=Math.ceil(now/5)*5;a<=end;a+=5) if(a>now+1) ticks.push(a);
+  ticks.forEach(a=>{
+    g += S('line',{x1:x(a),y1:y0-6,x2:x(a),y2:y0+6,stroke:'#111','stroke-width':2});
+    fam.forEach((f,i)=>{ g+=S('text',{x:x(a),y:y0+26+i*19,'text-anchor':'middle','font-size':12.5,fill:i===0?'#111':'#555'},f[1]+(a-now)); });
+  });
+
+  // 주요 시점 수직선
+  const vline=(a,c)=>S('line',{x1:x(a),y1:y0,x2:x(a),y2:yTop+20,stroke:c,'stroke-width':1.3,'stroke-dasharray':'4 4'});
+  if(sim.firstDeficitAge) g+=vline(sim.firstDeficitAge,'#a5237a');
+  g+=vline(tSoc,'#555'); if(tRet!==tSoc) g+=vline(tRet,'#555');
+
+  // 곡선
+  const path = fn => rows.map((r,i)=>(i?'L':'M')+x(r.age).toFixed(1)+' '+fn(r).toFixed(1)).join(' ');
+  g += S('path',{d:path(r=>ya(rAsset(r))),fill:'none',stroke:'#15803d','stroke-width':3,'stroke-dasharray':'7 4',opacity:.85});
+  g += S('path',{d:path(r=>y(rIncome(r))),fill:'none',stroke:'#1d4ed8','stroke-width':3.5,'stroke-linejoin':'round'});
+  g += S('path',{d:path(r=>y(rFlowExp(r))),fill:'none',stroke:'#dc2626','stroke-width':3.5,'stroke-linejoin':'round'});
+  g += S('text',{x:x(now)+6,y:y(rIncome(rows[0]))-10,'font-size':13,'font-weight':'bold',fill:'#1d4ed8'},'수입');
+  g += S('text',{x:x(now)+6,y:y(rFlowExp(rows[0]))+18,'font-size':13,'font-weight':'bold',fill:'#dc2626'},'지출');
+  g += S('text',{x:x(end)-6,y:ya(rAsset(rows[rows.length-1]))-10,'text-anchor':'end','font-size':12.5,'font-weight':'bold',fill:'#15803d'},'누적자산');
+
+  // 말풍선
+  const last = rows[rows.length-1];
+  g += callout(x(tSoc), y(rIncome(rows.find(r=>r.age===tSoc)||last))-14, ['사회적 정년','(정년 '+tSoc+'세)']);
+  if(tRet!==tSoc) g += callout(x(tRet), y(rIncome(rows.find(r=>r.age===tRet)||last))-14, ['완전 은퇴','('+tRet+'세)']);
+  if(sim.firstDeficitAge)
+    g += callout(x(sim.firstDeficitAge), y(rFlowExp(rows.find(r=>r.age===sim.firstDeficitAge)))-14,
+        ['경제적 정년 '+sim.firstDeficitAge+'세','(이때부터 수입<지출)']);
+  if(sim.depletionAge)
+    g += callout(x(sim.depletionAge), ya(0)-14, ['⚠ 자산 고갈 '+sim.depletionAge+'세','추가 준비 필요'], '#fecaca');
+  if(tMar && tMar<=end && d.marryFund>0)
+    g += callout(x(tMar), yTop+60, ['자녀 결혼 '+tMar+'세','결혼자금 '+fmt(d.marryFund*d.children.length)], '#fef3c7');
+
+  // 기간 화살표
+  g += periodArrow(x(now), x(tSoc), y0-32, `저축가능기간(${savingYears}년)`, '#1d4ed8');
+  if(tMar && tMar>now) g += periodArrow(x(now), x(Math.min(tMar,end)), y0-62, `가장의 최소책임기간(${dutyYears}년)`, '#b45309');
+  if(oldYears>0) g += periodArrow(x(tRet), x(end), y0-32, `노후생활기간(${oldYears}년)`, '#15803d');
+
+  // 生老病死 — 우측 상단 한 줄로 배치 (2행일 때 누적자산 축 라벨과 겹쳤음)
+  const rx0 = W-206;
+  ['生','老','病','死'].forEach((c,i)=>{
+    const cx=rx0+i*48, cy=46;
+    g += S('circle',{cx,cy,r:17,fill:'#6b7280'});
+    g += S('text',{x:cx,y:cy+6,'text-anchor':'middle','font-size':15,'font-weight':'bold',fill:'#fff'},c);
+  });
+  g += S('text',{x:rx0+72,y:20,'text-anchor':'middle','font-size':11.5,fill:'#555'},'인생의 4대 위험');
+
+  // 범례
+  g += S('line',{x1:L+15,y1:40,x2:L+52,y2:40,stroke:'#1d4ed8','stroke-width':3.5});
+  g += S('text',{x:L+57,y:44,'font-size':13},'수입');
+  g += S('line',{x1:L+110,y1:40,x2:L+147,y2:40,stroke:'#dc2626','stroke-width':3.5});
+  g += S('text',{x:L+152,y:44,'font-size':13},'지출');
+  g += S('line',{x1:L+205,y1:40,x2:L+242,y2:40,stroke:'#15803d','stroke-width':3,'stroke-dasharray':'7 4'});
+  g += S('text',{x:L+247,y:44,'font-size':13},'누적자산');
+  g += S('rect',{x:L+330,y:32,width:26,height:15,fill:'url(#hatch)',stroke:'#dc2626','stroke-width':.8});
+  g += S('text',{x:L+361,y:44,'font-size':13},'수입<지출 구간');
+
+  $('chartBox').innerHTML =
+    `<svg viewBox="0 0 ${W} ${y0+44+fam.length*19}" xmlns="http://www.w3.org/2000/svg" style="background:#fff">${g}</svg>`;
+
+  /* ---------- 요약 카드 ---------- */
+  const need = requiredMonthlySaving(d);              // null = 월저축으로 산출 불가
+  const lump = (need===null) ? requiredLumpSum(d) : null;   // 그때는 일시금으로 안내
+  const eduTotal = rows.reduce((s,r)=>s+r.edu,0);
+  const marTotal = rows.reduce((s,r)=>s+r.marry,0);
+  const netWorth = (d.finAsset + d.house - d.loan)/10000;
+  const ok = sim.depletionAge===null && sim.assetAtEnd>=0;
+
+  const cards = [
+    ['c1','저축가능기간', savingYears+'년', now+'세 → 정년 '+tSoc+'세'],
+    ['c3','가장의 최소책임기간', dutyYears!==null?dutyYears+'년':'—', tMar?('현재 → 막내 결혼('+tMar+'세)'):'자녀 정보 없음'],
+    ['c4','노후생활기간', oldYears+'년', tRet+'세 → '+end+'세'],
+    ['c2','자녀 교육·결혼자금', fmt(eduTotal+marTotal), '교육 '+fmt(eduTotal)+' + 결혼 '+fmt(marTotal)],
+    [ok?'c4':'c5', ok?'은퇴시점 예상자산':'자산 고갈 예상',
+      ok?fmt(sim.assetAtRetire):sim.depletionAge+'세',
+      ok?(end+'세 잔액 '+fmt(sim.assetAtEnd)):'현재 계획으로는 부족합니다'],
+    (ok        ? ['c4','추가 필요 준비금','0원','현재 계획으로 충분']
+     : need>0  ? ['c5','추가 필요 월저축','약 '+Math.round(need).toLocaleString()+'만/월','정년까지 '+savingYears+'년간']
+     : lump>0  ? ['c5','추가 필요 일시금','약 '+fmt(lump),'이미 은퇴 — 월저축 구간 없음']
+               : ['c5','추가 필요 준비금','산출 불가','입력값을 확인해 주세요']),
+    ['c6','순자산 / 보장자산', netWorth.toFixed(1)+'억 / '+(d.cover/10000).toFixed(1)+'억', '대출 '+(d.loan/10000).toFixed(1)+'억 차감']
+  ];
+  $('cards').innerHTML =
+    cards.map(c=>`<div class="card ${c[0]}"><div class="t">${esc(c[1])}</div><div class="v">${esc(c[2])}</div><div class="s">${esc(c[3])}</div></div>`).join('');
+
+  $('note').innerHTML =
+    `<b>계산 방식</b> — 매년 <b>수입 − 지출 = 저축</b>을 자산에 누적하고 수익률 ${d.returnRate}%로 운용, 지출은 물가 ${d.inflation}%·소득은 임금 ${d.wageGrowth}%를 반영합니다. `+
+    `차트 금액은 비교가 쉽도록 <b>현재 물가 기준(실질)</b>으로 환산했습니다. 항목별 상세 근거는 <b>「② 필요자금 상세분석」</b>, 해마다의 수지는 <b>「③ 연도별 현금흐름」</b> 탭에서 확인하세요.`;
+
+  const nm = esc(d.selfName||'고객');
+  const fix = need>0 ? `지금 준비하면 월 ${Math.round(need).toLocaleString()}만원으로 해결할 수 있습니다.`
+            : lump>0 ? `일시금 ${fmt(lump)}을 추가로 마련하면 해결할 수 있습니다.`
+                     : `맞춤 플랜으로 해결 방법을 함께 찾아보세요.`;
+  $('ctaMsg').innerHTML = ok
+    ? `✅ ${nm}님은 현재 계획으로 노후자금이 준비됩니다.<br>세금·수익률·보장 점검으로 더 효율적인 플랜이 가능합니다.`
+    : `⏳ ${nm}님, <b style="color:#dc2626">${sim.depletionAge}세</b>에 자산이 소진될 것으로 예상됩니다.<br>${fix}`;
+
+  /* ---------- 상세분석 · 연도별 현금흐름 ---------- */
+  const risk = buildPage2(d, sim, {need, lump, eduTotal, marTotal, tUni, tMar, tSoc, tRet, oldYears, savingYears, dutyYears, ok, netWorth});
+  buildPage3(d, sim, {ok, need, lump});
+
+  window._plannerInput  = d;
+  window._plannerResult = {
+    savingYears, dutyYears, oldYears,
+    eduTotal:Math.round(eduTotal), marryTotal:Math.round(marTotal),
+    assetAtRetire:Math.round(sim.assetAtRetire), assetAtEnd:Math.round(sim.assetAtEnd),
+    firstDeficitAge:sim.firstDeficitAge, depletionAge:sim.depletionAge,
+    monthlyNeed: need===null?null:Math.round(need),
+    lumpNeed   : lump===null?null:Math.round(lump),
+    coverShort : Math.round(risk.coverShort), illnessShort: Math.round(risk.illShort),
+    pensionMonthly:Math.round(sim.pensionMonthly),
+    npsMonthly:Math.round(sim.npsMonthly), sufficient:ok, unit:'만원'
+  };
+  window._custName = d.selfName || '고객';
+  window._summary =
+    `[생애재무설계 플래너] ${window._custName}님\n`+
+    `· 저축가능기간 ${savingYears}년 / 노후생활기간 ${oldYears}년\n`+
+    `· 자녀 교육비 ${fmt(eduTotal)} · 결혼자금 ${fmt(marTotal)}\n`+
+    `· 연금소득 월 ${Math.round(sim.pensionMonthly)}만원 (국민 ${Math.round(sim.npsMonthly)} + 퇴직 ${d.pensionRetire} + 개인 ${d.pensionPrivate})\n`+
+    `· 보장 점검 — 사망 ${risk.coverShort>0?fmt(risk.coverShort)+' 부족':'충분'} · 질병 ${risk.illShort>0?fmt(risk.illShort)+' 부족':'충분'}\n`+
+    (ok ? `· 은퇴시점 예상자산 ${fmt(sim.assetAtRetire)} · ${end}세 잔액 ${fmt(sim.assetAtEnd)} (충분)\n`
+        : `· ${sim.depletionAge}세 자산 고갈 예상 → 추가 필요 ${need>0?`월저축 ${Math.round(need).toLocaleString()}만원`:(lump>0?`일시금 ${fmt(lump)}`:'준비금 산출 불가')}\n`);
+
+  autoSave();
+}
+
+function buildPage2(d, sim, m){
+  const rows=sim.rows, now=d.selfAge, end=d.lifeEnd;
+  let p2='';
+
+  /* ① 생애 현금흐름 */
+  p2 += `<h3 class="sec">📊 ① 생애 현금흐름 (주요 시점 요약)</h3>
+    <div class="assume">모든 금액은 해당 연도의 실제 금액(명목)입니다 · 물가 ${d.inflation}% · 임금상승 ${d.wageGrowth}% · 자산수익률 ${d.returnRate}% 가정<br>
+    자산 = 전년도 자산 × (1+수익률) + (수입 − 지출)  ·  시작 금융자산 ${fmt(d.finAsset)}<br>
+    ${d.loan>0 ? `대출 ${fmt(d.loan)} (금리 ${d.loanRate}%)은 자산에서 빼지 않고 <b>매년 상환액을 지출로</b> 반영합니다 — 거주용 부동산이 상계하기 때문입니다.
+      ${d.loanPayment>0 ? `월 ${d.loanPayment}만원 상환${sim.loanClearAge?` → <b>${sim.loanClearAge}세에 완제</b>`:' (기간 내 완제되지 않음 — 상환액을 확인하세요)'}`
+                        : '<b>상환액 미입력 — 이자만 반영</b>했습니다. 실제 상환액을 넣으면 정확해집니다.'}` : '대출 없음'}<br>
+    해마다의 전체 흐름은 <b>「③ 연도별 현금흐름」</b> 탭에 있습니다.</div>
+    <div class="scroll"><table class="dtable"><tr>
+      <th>나이</th><th>근로·사업소득</th><th>연금소득</th><th>생활비</th><th>교육비</th><th>결혼·의료</th><th>대출상환</th><th>연간 수지</th><th>누적자산</th></tr>`;
+  rows.filter(r=>r.age===now || r.age%5===0 || r.age===end || r.age===d.retireSocial || r.age===d.retirePersonal || r.marry>0 || r.age===sim.loanClearAge)
+      .forEach(r=>{
+    const cls = r.asset<0 ? 'neg' : (r.net<0 ? 'evt' : '');
+    p2 += `<tr class="${cls}"><td>${r.age}세</td><td>${fmt(r.earned)}</td><td>${fmt(r.pensionY)}</td>
+      <td>${fmt(r.living)}</td><td>${fmt(r.edu)}</td><td>${fmt(r.marry+r.care)}</td>
+      <td>${r.loanPay>0?fmt(r.loanPay):'—'}</td>
+      <td>${r.net>=0?'+':''}${fmt(r.net)}</td><td><b>${fmt(r.asset)}</b></td></tr>`;
+  });
+  p2 += `</table></div>`;
+
+  /* ② 자녀 교육·결혼 */
+  // 고교 끝은 대학 입학 직전까지 — simulate 의 eduCostAt 과 구간이 어긋나면 ②표와 숫자가 달라진다
+  const stageDefs=[['초등',8,13,d.eduElem],['중학',14,16,d.eduMid],
+                   ['고교',17,Math.min(19,d.univAge-1),d.eduHigh],['대학',d.univAge,d.univAge+3,d.eduUniv]];
+  p2 += `<h3 class="sec">📚 ② 자녀 교육·결혼자금</h3>
+    <div class="assume">현재 나이 이후 잔여기간만 계산 · 물가상승률 ${d.inflation}% 반영(미래가치)</div>`;
+  if(!d.children.length) p2 += `<div class="assume">등록된 자녀가 없습니다.</div>`;
+  d.children.forEach(c=>{
+    p2 += `<div class="scroll"><table class="dtable"><tr><th style="text-align:left">${esc(c.name)} (${esc(c.sex)}, ${c.age}세)</th>
+      <th>자녀 나이</th><th>본인 나이</th><th>기간</th><th>월 교육비</th><th>필요금액(물가반영)</th></tr>`;
+    let sub=0;
+    stageDefs.forEach(([nm,a1,a2,cost])=>{
+      const s=Math.max(c.age,a1), yrs=Math.max(0,a2-s+1);
+      if(yrs>0 && cost>0 && c.age<=a2){
+        let amt=0; for(let ca=s; ca<=a2; ca++) amt += cost*12*Math.pow(1+d.inflation/100, ca-c.age);
+        sub+=amt;
+        p2 += `<tr><td>${nm}</td><td>${s}~${a2}세</td><td>${now+(s-c.age)}~${now+(a2-c.age)}세</td>
+          <td>${yrs}년</td><td>${cost}만</td><td>${fmt(amt)}</td></tr>`;
+      }
+    });
+    if(d.marryFund>0 && c.age<=d.marryAge){
+      const amt=d.marryFund*Math.pow(1+d.inflation/100, d.marryAge-c.age); sub+=amt;
+      p2 += `<tr><td>결혼자금</td><td>${d.marryAge}세</td><td>${now+(d.marryAge-c.age)}세</td><td>일시금</td>
+        <td>${fmt(d.marryFund)}</td><td>${fmt(amt)}</td></tr>`;
+    }
+    p2 += `<tr class="sub"><td colspan="5">소계</td><td>${fmt(sub)}</td></tr></table></div>`;
+  });
+  p2 += `<div class="scroll"><table class="dtable"><tr class="sum"><td>자녀 관련 총 필요자금</td><td style="width:170px">${fmt(m.eduTotal+m.marTotal)}</td></tr></table></div>`;
+
+  /* ③ 노후 */
+  const oldRows = rows.filter(r=>r.age>=d.retirePersonal);
+  const oldNeed = oldRows.reduce((s,r)=>s+r.expense,0);
+  const oldInc  = oldRows.reduce((s,r)=>s+r.income,0);
+  p2 += `<h3 class="sec">🏦 ③ 노후자금 (${d.retirePersonal}세 ~ ${end}세, ${m.oldYears}년)</h3>
+    <div class="assume">노후 생활비는 현재의 ${d.oldLivingRate}% + 의료비 월 ${d.medical}만 + 간병비 월 ${d.nursing}만 (물가 반영)<br>
+    국민연금 월 ${Math.round(sim.npsMonthly)}만원 ${d.npsManual>0?'(직접 입력)':'— 자동추정: 소득대체율 40%, 기준소득 상한 적용'} + 퇴직연금 ${d.pensionRetire}만 + 개인연금 ${d.pensionPrivate}만</div>
+    <div class="scroll"><table class="dtable"><tr><th>항목</th><th>내용</th><th>금액</th></tr>
+    <tr><td>은퇴시점(${d.retirePersonal}세) 예상 자산</td><td>그동안의 저축 + 운용수익 누적</td><td><b>${fmt(sim.assetAtRetire)}</b></td></tr>
+    <tr><td>노후 총 지출</td><td>생활비·의료비·간병비 ${m.oldYears}년 합계</td><td>${fmt(oldNeed)}</td></tr>
+    <tr class="minus"><td>(−) 노후 총 연금소득</td><td>3층연금 ${m.oldYears}년 합계</td><td>−${fmt(oldInc)}</td></tr>
+    <tr class="sub"><td>자산에서 충당해야 할 금액</td><td>총지출 − 총연금</td><td>${fmt(Math.max(0,oldNeed-oldInc))}</td></tr>
+    <tr class="${m.ok?'good':'short'}"><td>${end}세 시점 자산 잔액</td>
+      <td>${m.ok?'노후자금이 준비되어 있습니다':'자산이 '+sim.depletionAge+'세에 소진됩니다'}</td>
+      <td>${fmt(sim.assetAtEnd)}</td></tr></table></div>`;
+
+  /* ④ 사망보장 */
+  const survYears = m.dutyYears || Math.max(0, d.retireSocial-now);
+  let survCost=0; for(let i=0;i<survYears;i++) survCost += d.living*0.7*12*Math.pow(1+d.inflation/100,i);
+  const needCover = survCost + m.eduTotal + m.marTotal + d.loan;
+  const coverShort = Math.max(0, needCover - d.cover - Math.max(0,d.finAsset));
+  p2 += `<h3 class="sec">🛡 ④ 가장 유고 시(死) 필요보장</h3>
+    <div class="assume">가장 조기사망 시 유족 생활비는 현재 생활비의 70%, 최소책임기간 ${survYears}년 기준(물가 반영)</div>
+    <div class="scroll"><table class="dtable"><tr><th>항목</th><th>산출 기준</th><th>필요금액</th></tr>
+    <tr><td>유족 생활비</td><td>월 ${Math.round(d.living*0.7)}만 × ${survYears}년</td><td>${fmt(survCost)}</td></tr>
+    <tr><td>자녀 교육·결혼자금</td><td>② 합계</td><td>${fmt(m.eduTotal+m.marTotal)}</td></tr>
+    <tr><td>대출 상환</td><td>부채 정리</td><td>${fmt(d.loan)}</td></tr>
+    <tr class="sub"><td colspan="2">총 필요보장자산</td><td>${fmt(needCover)}</td></tr>
+    <tr class="minus"><td colspan="2">(−) 현재 보장자산 + 금융자산</td><td>−${fmt(d.cover + Math.max(0,d.finAsset))}</td></tr>
+    <tr class="${coverShort>0?'short':'good'}"><td colspan="2">${coverShort>0?'보장 부족액 (추가 보장 필요)':'보장 충분'}</td><td>${fmt(coverShort)}</td></tr></table></div>`;
+
+  /* ⑤ 중대질병(病) — 치료비 + 소득상실. 생활비는 소득으로 충당하던 것이라 소득상실에 포함돼 이중계상되지 않는다 */
+  const illLoss  = d.salary * d.illnessYears;
+  const illNeed  = d.illnessCost + illLoss;
+  const illShort = Math.max(0, illNeed - d.illnessCover);
+  p2 += `<h3 class="sec">🩺 ⑤ 중대질병 시(病) 필요보장</h3>
+    <div class="assume">암·뇌혈관·심장질환 등 중대질병 발병 시, 치료비와 <b>치료·회복 기간의 소득 공백</b>을 함께 본다.
+    생활비는 원래 소득으로 충당하던 것이므로 소득상실액에 포함되어 있다 (별도 가산하지 않음).</div>
+    <div class="scroll"><table class="dtable"><tr><th>항목</th><th>산출 기준</th><th>필요금액</th></tr>
+    <tr><td>치료비</td><td>진단·수술·항암 등 직접 비용</td><td>${fmt(d.illnessCost)}</td></tr>
+    <tr><td>소득 상실</td><td>연소득 ${fmt(d.salary)} × ${d.illnessYears}년</td><td>${fmt(illLoss)}</td></tr>
+    <tr class="sub"><td colspan="2">총 필요보장</td><td>${fmt(illNeed)}</td></tr>
+    <tr class="minus"><td colspan="2">(−) 현재 질병 보장자산 (진단비·실손)</td><td>−${fmt(d.illnessCover)}</td></tr>
+    <tr class="${illShort>0?'short':'good'}"><td colspan="2">${illShort>0?'질병보장 부족액 (추가 보장 필요)':'질병보장 충분'}</td><td>${fmt(illShort)}</td></tr></table></div>`;
+
+  /* ⑥ 종합 */
+  const fixTxt = m.ok ? '' :
+    (m.need>0 ? `월 ${Math.round(m.need).toLocaleString()}만원 추가 저축 필요`
+     : m.lump>0 ? `일시금 ${fmt(m.lump)} 추가 마련 필요`
+     : '추가 준비금 산출 불가 — 입력값 확인 필요');
+  p2 += `<h3 class="sec">✅ ⑥ 종합 진단</h3>
+    <div class="scroll"><table class="dtable"><tr><th>진단 항목</th><th>결과</th><th>내용</th></tr>
+    <tr><td>노후자금</td><td style="color:${m.ok?'#15803d':'#dc2626'};font-weight:bold">${m.ok?'준비됨':'부족'}</td>
+      <td style="text-align:left">${m.ok?`${end}세까지 자산 유지 (잔액 ${fmt(sim.assetAtEnd)})`:`${sim.depletionAge}세 소진 → ${fixTxt}`}</td></tr>
+    <tr><td>사망보장 (死)</td><td style="color:${coverShort>0?'#dc2626':'#15803d'};font-weight:bold">${coverShort>0?'부족':'충분'}</td>
+      <td style="text-align:left">${coverShort>0?`${fmt(coverShort)} 추가 보장 필요`:'현재 보장으로 가족 생활 유지 가능'}</td></tr>
+    <tr><td>질병보장 (病)</td><td style="color:${illShort>0?'#dc2626':'#15803d'};font-weight:bold">${illShort>0?'부족':'충분'}</td>
+      <td style="text-align:left">${illShort>0?`${fmt(illShort)} 추가 보장 필요 — 치료비 ${fmt(d.illnessCost)} + 소득공백 ${d.illnessYears}년`:'현재 보장으로 치료·회복기 대응 가능'}</td></tr>
+    <tr><td>경제적 정년</td><td style="font-weight:bold">${sim.firstDeficitAge?sim.firstDeficitAge+'세':'없음'}</td>
+      <td style="text-align:left">${sim.firstDeficitAge?`이 시점부터 수입보다 지출이 커집니다`:'전 생애에 걸쳐 수입이 지출보다 큽니다'}</td></tr>
+    </table></div>
+    <div class="note" style="padding:10px 0 0"><b>인생의 4대 위험(生·老·病·死)</b> —
+    <b>生</b> 저축가능기간 ${m.savingYears}년 안에 준비해야 하는 위험 ·
+    <b>老</b> ${d.retirePersonal}세 은퇴 후 ${m.oldYears}년의 노후 ·
+    <b>病</b> 중대질병 시 치료비·소득상실 ${illShort>0?`— <b style="color:#dc2626">${fmt(illShort)} 부족</b>`:'— 보장 충분'} ·
+    <b>死</b> 조기사망 시 ${survYears}년간 가족 생활비 공백.
+    <br><br><span style="color:#888">※ 본 결과는 입력값과 위 가정에 근거한 추정치이며, 실제 수익률·물가·제도 변화에 따라 달라질 수 있습니다. 국민연금 예상액은 국민연금공단 조회 금액을 직접 입력하시면 더 정확합니다.</span></div>`;
+
+  $('page2').innerHTML = p2;
+  return { coverShort, illShort, illNeed };   // draw() 가 결과 요약에 쓴다
+}
+
+/* ================= ③ 연도별 현금흐름 (전체) ================= */
+function buildPage3(d, sim, m){
+  const rows = sim.rows, end = d.lifeEnd;
+  const mark = r =>
+    r.age===d.retireSocial   ? '사회적 정년' :
+    r.age===d.retirePersonal ? '완전 은퇴'   :
+    r.age===d.pensionStart   ? '연금 개시'   :
+    r.age===sim.loanClearAge ? '대출 완제'   :
+    r.age===sim.depletionAge ? '자산 고갈'   :
+    r.marry>0 ? '자녀 결혼' : '';
+
+  let h = `<h3 class="sec">💧 ③ 연도별 현금흐름 (전체 ${rows.length}개년)</h3>
+    <div class="assume">해당 연도의 실제 금액(명목, 만원) · 물가 ${d.inflation}% · 임금상승 ${d.wageGrowth}% · 자산수익률 ${d.returnRate}%<br>
+    금융자산만 계산합니다 — 부동산 ${fmt(d.house)}과 대출 잔액은 서로 상계되는 것으로 보고, 대출은 <b>매년 상환액만 지출</b>로 반영합니다.</div>`;
+
+  h += m.ok
+    ? `<div class="verdict ok">✅ 기대여명 ${end}세까지 금융자산이 유지됩니다. (${end}세 잔액 ${fmt(sim.assetAtEnd)} · 최대 ${fmt(sim.peakAsset)})</div>`
+    : `<div class="verdict bad">⚠ ${sim.depletionAge}세에 금융자산이 소진됩니다 — 이후 ${end-sim.depletionAge}년의 생활비 공백이 발생합니다.
+       ${m.need>0 ? `지금부터 월 <b>${Math.round(m.need).toLocaleString()}만원</b>을 추가 저축하면 해소됩니다.`
+        : m.lump>0 ? `일시금 <b>${fmt(m.lump)}</b>을 추가로 마련하면 해소됩니다.` : ''}</div>`;
+
+  h += `<div class="scroll"><table class="dtable"><tr>
+      <th>나이</th><th>근로소득</th><th>연금소득</th><th>수입 계</th>
+      <th>생활비</th><th>교육비</th><th>결혼</th><th>의료·간병</th><th>대출상환</th><th>지출 계</th>
+      <th>연간 수지</th><th>금융자산 잔액</th><th>비고</th></tr>`;
+  rows.forEach(r=>{
+    const tag = mark(r);
+    const cls = r.asset<0 ? 'neg' : (r.marry>0 ? 'evt' : (tag ? 'mark' : ''));
+    h += `<tr class="${cls}"><td>${r.age}세</td>
+      <td>${r.earned>0?fmt(r.earned):'—'}</td><td>${r.pensionY>0?fmt(r.pensionY):'—'}</td><td>${fmt(r.income)}</td>
+      <td>${fmt(r.living)}</td><td>${r.edu>0?fmt(r.edu):'—'}</td><td>${r.marry>0?fmt(r.marry):'—'}</td>
+      <td>${r.care>0?fmt(r.care):'—'}</td><td>${r.loanPay>0?fmt(r.loanPay):'—'}</td><td>${fmt(r.expense)}</td>
+      <td style="color:${r.net<0?'#dc2626':'#1d4ed8'}">${r.net>=0?'+':''}${fmt(r.net)}</td>
+      <td><b>${fmt(r.asset)}</b></td><td style="text-align:left;color:#a5237a">${tag}</td></tr>`;
+  });
+  h += `</table></div>`;
+  $('page3').innerHTML = h;
+}
+
+/* ================= 저장 · 불러오기 ================= */
+function saveData(){
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(new Blob([JSON.stringify(collectRecord(),null,2)],{type:'application/json'}));
+  a.download = `고객_${$('selfName').value||'미입력'}_${new Date().toISOString().slice(0,10)}.json`;
+  document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(()=>URL.revokeObjectURL(a.href),3000);
+  toast('고객 정보를 파일로 저장했습니다.');
+}
+function loadData(ev){
+  const f=ev.target.files[0]; if(!f) return;
+  const r=new FileReader();
+  r.onload=()=>{ try{
+      applyRecord(JSON.parse(r.result));
+      autoSave(); draw(); toast('고객 정보를 불러왔습니다.');
+    }catch(e){ alert('불러오기에 실패했습니다. 이 앱에서 저장한 고객 파일(.json)인지 확인해 주세요.'); } };
+  r.readAsText(f); ev.target.value='';
+}
+
+/* ================= 이미지 · 인쇄 · 공유 ================= */
+function chartSvgEl(){
+  const s=document.querySelector('#chartBox svg');
+  if(!s) alert('먼저 「생애설계 차트 그리기」 버튼으로 차트를 생성해 주세요.');
+  return s;
+}
+function pngFileName(){ return `생애설계차트_${window._custName||'고객'}_${new Date().toISOString().slice(0,10)}.png`; }
+function chartToPngBlob(cb){
+  const svg=chartSvgEl(); if(!svg) return;
+  const vb=svg.viewBox.baseVal, xml=new XMLSerializer().serializeToString(svg), img=new Image();
+  img.onload=()=>{ const c=document.createElement('canvas');
+    c.width=vb.width*2; c.height=vb.height*2;
+    const ctx=c.getContext('2d'); ctx.fillStyle='#fff'; ctx.fillRect(0,0,c.width,c.height);
+    ctx.drawImage(img,0,0,c.width,c.height); c.toBlob(cb,'image/png'); };
+  img.onerror=()=>alert('이미지 변환에 실패했습니다. 다시 시도해 주세요.');
+  img.src='data:image/svg+xml;charset=utf-8,'+encodeURIComponent(xml);
+}
+function saveBlob(blob){
+  const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download=pngFileName();
+  document.body.appendChild(a); a.click(); a.remove(); setTimeout(()=>URL.revokeObjectURL(a.href),3000);
+}
+function downloadPNG(){ chartToPngBlob(b=>{ saveBlob(b); toast('차트 이미지를 저장했습니다.'); }); }
+function printA4(){ if(chartSvgEl()) window.print(); }
+function shareKakao(){
+  chartToPngBlob(async blob=>{
+    const file=new File([blob],pngFileName(),{type:'image/png'}), text=window._summary||'';
+    if(navigator.canShare && navigator.canShare({files:[file]})){
+      try{ await navigator.share({files:[file],title:'생애재무설계 플래너',text}); return; }
+      catch(e){ if(e && e.name==='AbortError') return; }
+    }
+    try{ await navigator.clipboard.writeText(text); }catch(e){}
+    saveBlob(blob);
+    alert('이 기기에서는 공유창을 열 수 없어 차트 이미지를 다운로드했습니다.\n요약 내용이 클립보드에 복사되었으니 카카오톡에 이미지 첨부 후 붙여넣기 해주세요.');
+  });
+}
+
+/* ================= 상담 신청 ================= */
+function openConsult(ev){
+  const nm=$('selfName').value;
+  if(nm && !$('reqName').value) $('reqName').value=nm;
+  const bg=$('consultBg'), modal=bg.querySelector('.modal');
+  bg.style.display='block';
+  // 누른 버튼 바로 옆에 모달을 배치 — iframe 안에서도 항상 보이는 위치에 뜨도록
+  const root=$('appRoot');
+  const rootTop=root.getBoundingClientRect().top+window.scrollY;
+  const btn=ev && ev.currentTarget && ev.currentTarget.getBoundingClientRect ? ev.currentTarget : null;
+  const anchor=(btn ? btn.getBoundingClientRect().top+window.scrollY : rootTop+40)-rootTop;
+  modal.style.top='0px';
+  const mh=modal.offsetHeight, rh=root.offsetHeight;
+  let top=anchor-Math.min(140, mh*0.3);
+  top=Math.max(12, Math.min(top, Math.max(12, rh-mh-12)));
+  modal.style.top=top+'px';
+}
+function closeConsult(){ $('consultBg').style.display='none'; }
+async function submitConsult(kind){
+  const name=$('reqName').value.trim();
+  const phone=$('reqPhone').value.trim();
+  if(!name||!phone){ alert('이름과 연락처를 입력해 주세요.'); return; }
+  if(!$('reqAgree').checked){ alert('상담 목적의 개인정보 수집·이용에 동의해 주세요.'); return; }
+  const time=$('reqTime').value;
+  const topicArr=[...document.querySelectorAll('.reqTopic:checked')].map(c=>c.value);
+  const memo=$('reqMemo').value.trim();
+  const body = `[생애재무설계 상담 신청]\n· 이름: ${name}\n· 연락처: ${phone}\n· 희망 시간: ${time}\n`+
+    `· 관심 분야: ${topicArr.join(', ')||'미선택'}\n`+(memo?`· 문의 내용: ${memo}\n`:'')+
+    (window._summary?`\n──── 플래너 결과 요약 ────\n${window._summary}`:'');
+
+  if(kind==='db'){
+    const st=$('reqStatus'), btn=$('reqSendBtn');
+    st.textContent='접수 중입니다...'; btn.disabled=true;
+    try{
+      await sendToSupabase({ name, phone, preferred_time:time, topics:topicArr, memo:memo||null,
+        planner_input:window._plannerInput||null, planner_result:window._plannerResult||null,
+        summary_text:window._summary||null, source:hostName() });
+      st.textContent=''; closeConsult();
+      alert(`✅ ${name}님, 상담 신청이 정상 접수되었습니다.\n담당 설계사가 「${time}」에 연락드리겠습니다. 감사합니다!`);
+    }catch(e){
+      st.innerHTML='<span style="color:#dc2626">온라인 접수에 실패했습니다. 아래 「문자로」 또는 「이메일로」 버튼을 이용해 주세요.</span>';
+    }finally{ btn.disabled=false; }
+    return;
+  }
+  try{ navigator.clipboard.writeText(body); }catch(e){}
+  if(kind==='sms' && ADVISOR.phone)
+    location.href='sms:'+ADVISOR.phone.replace(/-/g,'')+'?body='+encodeURIComponent(body);
+  else
+    location.href='mailto:'+ADVISOR.email+'?subject='+encodeURIComponent('[상담신청] '+name+' 고객님')+'&body='+encodeURIComponent(body);
+  closeConsult();
+  setTimeout(()=>alert('메일(문자) 앱이 열리면 내용을 확인하고 전송 버튼을 눌러 주세요.\n앱이 열리지 않으면 신청 내용이 클립보드에 복사되어 있으니 붙여넣기로 보내실 수 있습니다.'),400);
+}
+$('reqSendBtn').onclick = () => submitConsult('db');
+
+/* ================= 탭 · 초기화 ================= */
+function showPage(n){
+  [1,2,3].forEach(i=>{
+    $('page'+i).style.display = (i===n) ? '' : 'none';
+    $('tabBtn'+i).classList.toggle('active', i===n);
+  });
+}
+const emptyMsg = `<div style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:340px;color:#999;gap:10px;text-align:center;padding:12px">
+  <div style="font-size:44px">📝</div>
+  <div style="font-size:15px;font-weight:bold;color:#777">아직 작성된 생애설계 차트가 없습니다</div>
+  <div style="font-size:13px">왼쪽에 고객정보를 입력한 뒤 <b style="color:#a5237a">「생애설계 차트 그리기」</b> 버튼을 눌러 주세요.
+  <br>상단 <b>「예시 입력」</b> 으로 샘플 결과를 먼저 볼 수도 있습니다.</div></div>`;
+$('chartBox').innerHTML = emptyMsg;
+$('page2').innerHTML = emptyMsg;
+$('page3').innerHTML = emptyMsg;
+
+// 이전 입력 복원 — 있으면 바로 다시 그린다
+if(!restoreLocal()) addChild();
+document.addEventListener('input', e => { if(e.target.closest && e.target.closest('.form')) autoSave(); });
+document.addEventListener('keydown', e => {
+  if(e.key==='Escape') closeConsult();
+  if(e.key==='Enter' && e.target.closest && e.target.closest('.form')) draw();
+});
+if($('selfAge').value && $('salary').value && $('living').value) draw();
+
+/* ================= 임베드(iframe) 높이 보고 =================
+   ⚠ 무한 증가 방지: documentElement.scrollHeight 는 부모가 늘린 iframe 높이를
+   그대로 되돌려주기 때문에 (측정 → 부모가 키움 → 다시 측정) 되먹임 루프가 생긴다.
+   따라서 '실제 콘텐츠(#appRoot)의 바닥 위치'만 측정하고, 변화가 클 때만 보고한다. */
+(function(){
+  if (window.parent === window) return;          // 임베드 상태가 아니면 아무것도 하지 않음
+  const root = $('appRoot');
+  let lastSent = 0;
+  function contentHeight(){
+    const r = root.getBoundingClientRect();
+    return Math.ceil(r.top + window.scrollY + r.height) + 16;   // 콘텐츠 실제 바닥
+  }
+  function report(){
+    const h = contentHeight();
+    if (h > 0 && Math.abs(h - lastSent) > 12) {                 // 미세 변동은 무시
+      lastSent = h;
+      try{ parent.postMessage({ lifeplanHeight: h }, '*'); }catch(e){}
+    }
+  }
+  window.addEventListener('load', report);
+  window.addEventListener('resize', report);
+  // 콘텐츠가 실제로 바뀔 때만 반응 (attributes 감시 제외 — 루프 원인)
+  new MutationObserver(report).observe(root, { childList:true, subtree:true });
+  setTimeout(report, 300);
+  setTimeout(report, 1200);
+})();
+</script>
+</body>
+</html>
