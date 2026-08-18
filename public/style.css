@@ -2,7 +2,7 @@
  * 색은 회사 양식(개정판) 인쇄본의 크림색 바탕 · 분홍 포인트를 그대로 옮긴 것입니다.
  */
 :root{
-  color-scheme:light dark;
+  color-scheme:light;   /* 기기가 어두운 화면이어도 서식 그대로 크림색으로 보이게 합니다 */
   /* 포인트 */
   --navy:#d85b7e;--navy2:#c9506f;--gold:#d2975b;--ongold:#fff;
   --rose:#d85b7e;--rose2:#b85c78;--rosebg:#fbe2e7;
@@ -20,19 +20,6 @@
   --basisbg:#fdf4ea;--basisline:#e8cfa9;--basistxt:#a8762e;
   --warnbg:#fdeef1;--warnline:#f0c4cf;--warntxt:#a5405e;
 }
-@media(prefers-color-scheme:dark){:root:not([data-theme="light"]){
-  --navy:#e58aa4;--navy2:#d3708d;--gold:#dcae74;--ongold:#241a10;
-  --rose:#eb96ad;--rose2:#f0aabd;--rosebg:#3a2730;
-  --bg:#1d1a1c;--card:#252023;--line:#3b3336;--line2:#332c30;
-  --surf1:#2d2629;--surf2:#282124;--surf3:#262022;--hover:#332a2e;
-  --field:#2a2326;--ib:#4a4045;--btnline:#4d4045;
-  --txt:#eae3dc;--sub:#a99c9f;--brand:#eb96ad;
-  --red:#f08a7d;--org:#e8b06c;--grn:#8ec5b6;--blue:#9db6c7;
-  --redbg:#3a2320;--orgbg:#372a1c;--grnbg:#23332f;--bluebg:#26303a;
-  --mentbg:#23302e;--mentline:#456059;--menttxt:#d5e6e1;
-  --basisbg:#332a1d;--basisline:#5f4e2e;--basistxt:#e0bd7e;
-  --warnbg:#3a2730;--warnline:#6b4353;--warntxt:#f0b7c6;
-}}
 :root[data-theme="dark"]{
   --navy:#e58aa4;--navy2:#d3708d;--gold:#dcae74;--ongold:#241a10;
   --rose:#eb96ad;--rose2:#f0aabd;--rosebg:#3a2730;
