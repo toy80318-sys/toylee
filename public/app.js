@@ -1,5 +1,5 @@
 /*
- * 화면 동작 — 입력 · 자동계산 · 진단 · 서버 저장 · 엑셀
+ * 화면 동작 — 입력 · 자동계산 · 진단 · 저장 · 엑셀
  * 진단 로직은 서버와 같은 파일(/shared/analysis.js)을 씁니다.
  */
 'use strict';
@@ -13,12 +13,13 @@ const todayStr = Calc.todayStr();
 
 const FIELDS = Schema.allFields().map(function (f) { return f.k; });
 const PREPS = Schema.PREPS, EXTRAS = Schema.EXTRAS;
-const DRAFT_KEY = 'kyobo_draft_v2';
+const RSETS = Schema.ROWSETS, RSMAP = Schema.rowsetMap();
+const DRAFT_KEY = 'kyobo_draft_v3';
 const FP_KEY = 'kyobo_fp_v1';
-const FP_DEFAULT = '평촌지점 추진이';
+const FP_DEFAULT = '교보생명 평촌지점 추진이 FP';
 
 let RES = null;        // 최근 분석 결과
-let editId = null;     // 서버에 저장된 계약 id (수정 중일 때)
+let editId = null;     // 저장된 기록 id (수정 중일 때)
 let DBCACHE = [];      // ④ 탭 목록
 
 /* ===================== 공통 ===================== */
@@ -41,7 +42,7 @@ function netError(msg) {
   const el = $('netWarn');
   el.style.display = 'block';
   el.innerHTML = '<b>서버와 연결하지 못했습니다.</b> ' + msg +
-    '<br>입력하신 내용은 이 컴퓨터에 임시 보관되어 있으니, 서버가 살아나면 [저장]을 다시 눌러 주세요.';
+    '<br>입력하신 내용은 이 기기에 임시 보관되어 있으니, 서버가 살아나면 [저장]을 다시 눌러 주세요.';
 }
 
 async function api(url, opts) {
@@ -138,71 +139,195 @@ function commafy(digits) {
   return digits.replace(/\B(?=(\d{3})+(?!\d))/g, ',');
 }
 
-/* 값을 다시 꾸미고, 커서는 '앞에 있던 숫자 개수' 기준으로 제자리에 둔다 */
 function formatMoneyLive(el) {
-  const raw = el.value;
-  let caret = el.selectionEnd;
-  if (caret === null || caret === undefined) caret = raw.length;
-  const before = raw.slice(0, caret).replace(/[^0-9]/g, '').length;
-  const out = commafy(raw);
-  if (out === raw) return;
+  const before = el.value.slice(0, el.selectionStart == null ? el.value.length : el.selectionStart);
+  const digitsBefore = before.replace(/[^0-9]/g, '').length;
+  const out = commafy(el.value);
+  if (out === el.value) return;
   el.value = out;
-  let pos = 0, seen = 0;
-  while (pos < out.length && seen < before) {
-    if (out.charCodeAt(pos) >= 48 && out.charCodeAt(pos) <= 57) seen++;
-    pos++;
+  let pos = out.length, seen = 0;
+  for (let i = 0; i < out.length; i++) {
+    if (/[0-9]/.test(out[i])) seen++;
+    if (seen === digitsBefore) { pos = i + 1; break; }
+    if (digitsBefore === 0) { pos = 0; break; }
   }
-  try { el.setSelectionRange(pos, pos); } catch (e) { /* 커서를 못 옮기는 칸은 그냥 둔다 */ }
+  try { el.setSelectionRange(pos, pos); } catch (e) { /* 무시 */ }
 }
 
 function enhanceMoney(root) {
   (root || document).querySelectorAll('input[data-money]').forEach(function (el) {
-    if (el.dataset.enhanced) return;
-    el.dataset.enhanced = '1';
+    if (el.dataset.moneyOn) return;
+    el.dataset.moneyOn = '1';
     el.setAttribute('inputmode', 'numeric');
-    el.style.textAlign = 'right';
+    el.classList.add('num');
 
-    /* 쉼표 바로 뒤에서 지우기를 누르면, 쉼표가 아니라 그 앞의 숫자가 지워지게 한다 */
-    el.addEventListener('beforeinput', function (e) {
-      if (e.inputType !== 'deleteContentBackward') return;
-      const p = el.selectionStart;
-      if (p !== el.selectionEnd || p < 2 || el.value.charAt(p - 1) !== ',') return;
-      e.preventDefault();
-      el.value = el.value.slice(0, p - 2) + el.value.slice(p);
-      try { el.setSelectionRange(p - 2, p - 2); } catch (err) { /* 무시 */ }
-      formatMoneyLive(el);
-      el.dispatchEvent(new Event('input', { bubbles: true }));
+    /* 쉼표 바로 뒤에서 지우면 쉼표가 아니라 그 앞 숫자가 지워지도록 */
+    el.addEventListener('beforeinput', function (ev) {
+      if (ev.inputType !== 'deleteContentBackward') return;
+      const s = el.selectionStart, e2 = el.selectionEnd;
+      if (s !== e2 || s === 0) return;
+      if (el.value[s - 1] === ',') {
+        ev.preventDefault();
+        el.value = el.value.slice(0, s - 2) + el.value.slice(s);
+        try { el.setSelectionRange(s - 2, s - 2); } catch (err) { /* 무시 */ }
+        formatMoneyLive(el);
+        el.dispatchEvent(new Event('input', { bubbles: true }));
+      }
     });
-
     el.addEventListener('input', function () { formatMoneyLive(el); });
-    el.addEventListener('blur', function () { formatMoneyLive(el); });
+    el.addEventListener('blur', function () { el.value = commafy(el.value); });
   });
 }
 
-function moneyRefresh() {
-  document.querySelectorAll('input[data-money]').forEach(function (el) {
-    if (document.activeElement === el) return;
+function moneyRefresh(root) {
+  (root || document).querySelectorAll('input[data-money]').forEach(function (el) {
     el.value = commafy(el.value);
   });
 }
 
-/* ===================== 자동 계산 ===================== */
+/* ===================== 여러 줄 표 (계약사항 · 사고보험금 …) ===================== */
 
-function calcBMI() {
-  const v = Calc.bmi(V('f_ht'), V('f_wt'));
-  $('f_bmi').value = v;
+function rsInput(set, col) {
+  const attr = [];
+  let cls = 'rsi';
+  if (col.type === 'date') attr.push('data-date');
+  if (col.type === 'number') {
+    if (col.unit === '%') attr.push('type="number"', 'step="0.1"');
+    else attr.push('data-money');
+  }
+  if (col.auto) cls += ' autoval';
+  if (col.ph) attr.push('placeholder="' + esc(col.ph) + '"');
+  return '<input class="' + cls + '" data-rs="' + set.key + '" data-col="' + col.k + '" ' + attr.join(' ') + '>';
 }
+
+function renderRowsets() {
+  RSETS.forEach(function (set) {
+    const box = $('rs_' + set.key);
+    if (!box) return;
+    box.innerHTML =
+      '<div class="tscroll"><table class="form rs" id="rst_' + set.key + '">' +
+      '<thead><tr><th class="rsno">No</th>' +
+      set.cols.map(function (c) {
+        return '<th' + (c.w ? ' style="width:' + (c.w * 9) + 'px"' : '') + '>' + esc(c.label) +
+          (c.unit ? ' <span class="gsub">(' + esc(c.unit) + ')</span>' : '') +
+          (c.auto ? ' <span class="gsub">자동</span>' : '') + '</th>';
+      }).join('') +
+      '<th class="rsx noprint"></th></tr></thead>' +
+      '<tbody id="rsb_' + set.key + '"></tbody></table></div>' +
+      (set.sub ? '<div class="hint">' + esc(set.sub) + '</div>' : '') +
+      '<div class="btns noprint" style="margin-top:6px">' +
+      '<button type="button" class="b b-sub sm" data-rsadd="' + set.key + '">' + esc(set.addLabel || '＋ 줄 추가') + '</button></div>';
+  });
+}
+
+function rsRenumber(key) {
+  const tb = $('rsb_' + key);
+  if (!tb) return;
+  [].slice.call(tb.children).forEach(function (tr, i) {
+    const c = tr.querySelector('.rsno');
+    if (c) c.textContent = i + 1;
+  });
+}
+
+function addRow(key, v) {
+  const set = RSMAP[key];
+  const tb = $('rsb_' + key);
+  if (!set || !tb) return null;
+  const tr = document.createElement('tr');
+  tr.innerHTML = '<td class="rsno"></td>' +
+    set.cols.map(function (c) { return '<td>' + rsInput(set, c) + '</td>'; }).join('') +
+    '<td class="rsx noprint"><button type="button" class="rsdel" title="이 줄 지우기">✕</button></td>';
+  tb.appendChild(tr);
+  if (v) {
+    set.cols.forEach(function (c) {
+      const el = tr.querySelector('[data-col="' + c.k + '"]');
+      if (!el) return;
+      const raw = v[c.k] == null ? '' : String(v[c.k]);
+      el.value = (c.type === 'number' && c.unit === '원') ? commafy(raw) : raw;
+    });
+  }
+  enhanceDates(tr);
+  enhanceMoney(tr);
+  rsRenumber(key);
+  return tr;
+}
+
+function getRows(key) {
+  const set = RSMAP[key];
+  const tb = $('rsb_' + key);
+  if (!set || !tb) return [];
+  const out = [];
+  [].slice.call(tb.children).forEach(function (tr) {
+    const o = {};
+    set.cols.forEach(function (c) {
+      const el = tr.querySelector('[data-col="' + c.k + '"]');
+      let v = el ? String(el.value || '').trim() : '';
+      if (c.type === 'date') v = normDate(v) || v;
+      if (c.type === 'number') v = String(numOf(v) || '');
+      o[c.k] = v;
+    });
+    out.push(o);
+  });
+  return Schema.pruneRows(set, out);
+}
+
+function allRows() {
+  const o = {};
+  RSETS.forEach(function (s) { o[s.key] = getRows(s.key); });
+  return o;
+}
+
+function setRows(key, listIn) {
+  const set = RSMAP[key];
+  const tb = $('rsb_' + key);
+  if (!set || !tb) return;
+  tb.innerHTML = '';
+  const list = (listIn || []).slice();
+  const n = Math.max(set.rows || 1, list.length);
+  for (let i = 0; i < n; i++) addRow(key, list[i]);
+}
+
+function resetRows() {
+  RSETS.forEach(function (s) { setRows(s.key, []); });
+}
+
+document.addEventListener('click', function (e) {
+  const a = e.target.closest('[data-rsadd]');
+  if (a) { e.preventDefault(); addRow(a.dataset.rsadd); markDirty(); return; }
+  const d = e.target.closest('.rsdel');
+  if (d) {
+    e.preventDefault();
+    const tr = d.closest('tr'), tb = tr.parentNode;
+    const key = tb.id.replace('rsb_', '');
+    tr.remove();
+    if (!tb.children.length) addRow(key);
+    rsRenumber(key);
+    calcAll();
+    markDirty();
+  }
+});
+
+/* ===================== 자동 계산 ===================== */
 
 function setAutoVal(el, v) {
   v = String(v);
-  if (!el.value.trim() || el.value === el.dataset.autoval) { el.value = v; el.dataset.autoval = v; return true; }
+  if (!el || !el.value.trim() || el.value === el.dataset.autoval) {
+    if (el) { el.value = v; el.dataset.autoval = v; }
+    return true;
+  }
   return false;
 }
 
 const AGE_ROWS = [['c_obirth', '계약자', 'c_oja', 'c_ona'], ['c_ibirth', '주피보험자', 'c_ija', 'c_ina']];
 
+/* 계약 표에서 가장 이른 가입일 — 가입연령 계산 기준 */
+function firstJoin() {
+  const js = getRows('contracts').map(function (c) { return normDate(c.join); }).filter(Boolean).sort();
+  return js[0] || '';
+}
+
 function calcAges() {
-  const join = normDate(V('i_join'));
+  const join = firstJoin();
   AGE_ROWS.forEach(function (row) {
     const bd = normDate(V(row[0]));
     if (!bd) return;
@@ -211,17 +336,13 @@ function calcAges() {
     if (r2) setAutoVal($(row[3]), r2.age);
   });
   const ob = normDate(V('c_obirth'));
-  if (ob) {
-    if (!V('e_bm')) $('e_bm').value = +ob.slice(5, 7);
-    if (!V('e_bd')) $('e_bd').value = +ob.slice(8, 10);
-  }
-  syncAge('c_ija');
+  if (ob && !V('p_bday')) $('p_bday').value = ob.slice(5);
   ageMsg();
 }
 
 function ageMsg() {
   const el = $('c_ageMsg');
-  const join = normDate(V('i_join'));
+  const join = firstJoin();
   const out = [];
   AGE_ROWS.forEach(function (row) {
     const bd = normDate(V(row[0]));
@@ -245,93 +366,50 @@ function ageMsg() {
   }
 }
 
-function syncAge(from) {
-  if (from === 'i_age') $('c_ija').value = V('i_age');
-  else if (from === 'c_ija') $('i_age').value = V('c_ija');
-  else if (V('i_age')) $('c_ija').value = V('i_age');
-  else if (V('c_ija')) $('i_age').value = V('c_ija');
-}
-
-function applyAuto(id, v) {
-  const el = $(id);
-  el.value = v; el.dataset.autoval = v;
-  calcTerms();
-}
-window.applyAuto = applyAuto;
-
-function showTerm(msgId, elId, out) {
-  const el = $(elId), msg = $(msgId);
-  const say = function (t, c) { msg.innerHTML = t; msg.style.color = c || ''; };
-  if (!out.value) { say(out.how || '', out.how ? 'var(--org)' : ''); return; }
-  const cur = normDate(el.value);
-  if (cur === out.value) { say(out.how, 'var(--grn)'); return; }
-  if (!el.value.trim() || el.value === el.dataset.autoval) {
-    el.value = out.value; el.dataset.autoval = out.value;
-    say(out.how + ' — 자동으로 넣었습니다.', 'var(--grn)');
-  } else {
-    say('자동 계산은 <b>' + out.value + '</b> 입니다. 직접 넣으신 ' + esc(el.value) + ' 을(를) 유지 중 ' +
-      '<button type="button" class="b b-sub sm" style="padding:1px 8px;font-size:11px" ' +
-      'onclick="applyAuto(\'' + elId + '\',\'' + out.value + '\')">자동값으로 바꾸기</button>', 'var(--org)');
-  }
-}
-
-function hint(id, text, color) {
-  const el = $(id);
-  el.innerHTML = text;
-  el.style.color = color || '';
-}
-
+/* 계약 표의 납입 만료일 · 보험 만기일을 줄마다 자동으로 채웁니다 */
 function calcTerms() {
-  /* 보험 만기일 : 가입일 + 보험기간 */
-  const join = V('i_join'), insterm = V('i_insterm');
-  if (!join && !insterm) hint('i_insendMsg', '가입일과 보험기간을 넣으시면 자동으로 채워집니다.');
-  else if (!join) hint('i_insendMsg', '가입일을 넣으시면 만기일이 자동으로 채워집니다.');
-  else if (!insterm) hint('i_insendMsg', '보험기간을 넣으시면 만기일이 자동으로 채워집니다.');
+  const tb = $('rsb_contracts');
+  if (!tb) return;
+  const msgs = [];
+  const age = V('c_ija') || V('c_oja');
+  [].slice.call(tb.children).forEach(function (tr, i) {
+    const get = function (k) {
+      const el = tr.querySelector('[data-col="' + k + '"]');
+      return el ? String(el.value || '').trim() : '';
+    };
+    const join = normDate(get('join'));
+    if (!join) return;
+    const label = get('prod') || (i + 1) + '번 계약';
+
+    const ins = Calc.calcInsEnd(join, get('insterm'), age);
+    const insEl = tr.querySelector('[data-col="insend"]');
+    if (ins.whole) {
+      if (insEl && (!insEl.value.trim() || insEl.value === insEl.dataset.autoval)) { insEl.value = ''; insEl.dataset.autoval = ''; }
+      msgs.push('<b>' + esc(label) + '</b> 종신 — 만기가 따로 없어 평생 보장됩니다.');
+    } else if (ins.value) {
+      const done = setAutoVal(insEl, ins.value);
+      msgs.push('<b>' + esc(label) + '</b> 보험 만기일 ' + ins.how + (done ? '' : ' <span style="color:var(--org)">— 직접 넣으신 값 유지 중</span>'));
+    } else if (ins.how) {
+      msgs.push('<b>' + esc(label) + '</b> ' + esc(ins.how));
+    }
+
+    const pay = Calc.calcPayEnd(join, get('payterm'), get('insend'));
+    if (pay.value) {
+      const done = setAutoVal(tr.querySelector('[data-col="payend"]'), pay.value);
+      msgs.push('<b>' + esc(label) + '</b> 납입 만료일 ' + pay.how + (done ? '' : ' <span style="color:var(--org)">— 직접 넣으신 값 유지 중</span>'));
+    }
+  });
+  const el = $('rs_contractsMsg');
+  if (!el) return;
+  if (msgs.length) { el.innerHTML = msgs.join('<br>'); el.style.color = 'var(--grn)'; }
   else {
-    const out = Calc.calcInsEnd(join, insterm, V('i_age'));
-    if (out.whole) hint('i_insendMsg', '종신 — 만기가 따로 없어 평생 보장됩니다. 만기일은 비워 두셔도 됩니다.', 'var(--blue)');
-    else showTerm('i_insendMsg', 'i_insend', out);
+    el.innerHTML = '가입일과 납입기간 · 보험기간을 넣으시면 <b>납입 만료일 · 보험 만기일</b>이 자동으로 채워집니다. ' +
+      '날짜는 <b>20030514</b> 처럼 숫자만 넣으셔도 되고, 📅 로 달력에서 고르셔도 됩니다.';
+    el.style.color = '';
   }
-
-  /* 납입 만료일 : 가입일 + 납입기간 (전기납은 보험 만기일) */
-  const payterm = V('i_payterm');
-  if (!join && !payterm) hint('i_payendMsg', '가입일과 납입기간을 넣으시면 자동으로 채워집니다.');
-  else if (!join) hint('i_payendMsg', '가입일을 넣으시면 만료일이 자동으로 채워집니다.');
-  else if (!payterm) hint('i_payendMsg', '납입기간을 넣으시면 만료일이 자동으로 채워집니다.');
-  else showTerm('i_payendMsg', 'i_payend', Calc.calcPayEnd(join, payterm, V('i_insend')));
 }
 
-function calcAll() { calcBMI(); calcAges(); calcTerms(); }
-
-/* ===================== 사고보험금 줄 ===================== */
-
-function addClaim(v) {
-  const d = document.createElement('div');
-  d.className = 'grid g3';
-  d.style.gap = '4px';
-  d.style.marginBottom = '4px';
-  d.innerHTML =
-    '<input class="cl-d" placeholder="병명">' +
-    '<input class="cl-t" data-date>' +
-    '<input class="cl-a" data-money placeholder="수령액">';
-  $('claimBox').appendChild(d);
-  if (v) {
-    d.querySelector('.cl-d').value = v.d || '';
-    d.querySelector('.cl-t').value = v.t || '';
-    d.querySelector('.cl-a').value = commafy(v.a || '');
-  }
-  enhanceDates(d);
-  enhanceMoney(d);
-}
-
-function getClaims() {
-  const ds = [].slice.call(document.querySelectorAll('.cl-d'));
-  const ts = [].slice.call(document.querySelectorAll('.cl-t'));
-  const as = [].slice.call(document.querySelectorAll('.cl-a'));
-  return ds.map(function (e, i) {
-    return { d: e.value.trim(), t: normDate(ts[i].value) || ts[i].value.trim(), a: String(numOf(as[i].value) || '') };
-  }).filter(function (x) { return x.d || x.t || x.a; });
-}
+function calcAll() { calcAges(); calcTerms(); }
 
 /* ===================== 체크리스트 ===================== */
 
@@ -340,7 +418,9 @@ function chkEl(id) { return $('chk_' + id); }
 
 function renderChecks() {
   const row = function (p) {
-    return '<label class="chk" id="lb_' + p.id + '"><input type="checkbox" id="chk_' + p.id + '"><span>' + esc(p.t) + '</span></label>';
+    return '<label class="chk" id="lb_' + p.id + '"><input type="checkbox" id="chk_' + p.id + '">' +
+      '<span>' + esc(p.t) + '</span>' +
+      (p.etc ? '<input class="etc" id="' + p.etc + '" placeholder="직접 적기">' : '') + '</label>';
   };
   $('prepBox').innerHTML = PREPS.map(row).join('');
   $('extraBox').innerHTML = EXTRAS.map(row).join('');
@@ -349,13 +429,11 @@ function renderChecks() {
 /* ===================== 수집 · 적용 ===================== */
 
 function collect() {
-  const o = { id: editId, f: {}, chk: {}, claims: getClaims() };
+  const o = { id: editId, f: {}, chk: {}, rows: allRows() };
   FIELDS.forEach(function (k) {
     const e = $(k);
     if (!e) return;
-    o.f[k] = e.dataset.money !== undefined || e.hasAttribute('data-money')
-      ? String(numOf(e.value) || '')
-      : String(e.value || '').trim();
+    o.f[k] = e.hasAttribute('data-money') ? String(numOf(e.value) || '') : String(e.value || '').trim();
   });
   PREPS.concat(EXTRAS).forEach(function (p) { const e = chkEl(p.id); o.chk[p.id] = !!(e && e.checked); });
   o.money = RES ? RES.money : 0;
@@ -372,9 +450,8 @@ function apply(o) {
     const e = chkEl(p.id);
     if (e) e.checked = !!(o.chk && o.chk[p.id]);
   });
-  $('claimBox').innerHTML = '';
-  const cl = (o.claims && o.claims.length) ? o.claims : [null, null, null];
-  cl.forEach(function (c) { addClaim(c); });
+  const rows = o.rows || {};
+  RSETS.forEach(function (s) { setRows(s.key, rows[s.key]); });
   moneyRefresh();
   calcAll();
   saveDraft();
@@ -388,8 +465,7 @@ function resetAll() {
     const lb = $('lb_' + p.id);
     if (lb) lb.classList.remove('auto');
   });
-  $('claimBox').innerHTML = '';
-  for (let i = 0; i < 3; i++) addClaim();
+  resetRows();
   RES = null; editId = null;
   $('script').value = '';
   $('r_items').innerHTML = ''; $('r_kpi').innerHTML = ''; $('r_sum').innerHTML = ''; $('r_blank').innerHTML = '';
@@ -402,7 +478,7 @@ function initDefaults() {
   let fp = FP_DEFAULT;
   try { if (STORE && STORE.getItem(FP_KEY)) fp = STORE.getItem(FP_KEY); } catch (e) { /* 무시 */ }
   if (!V('h_fp')) $('h_fp').value = fp;
-  if (!V('h_vdate')) $('h_vdate').value = todayStr;
+  if (!V('h_adate')) $('h_adate').value = todayStr;
 }
 
 /* ===================== 진단 ===================== */
@@ -416,15 +492,17 @@ function analyze(silent) {
   if (!V('m_grade')) $('m_grade').value = RES.grade;
   $('m_gradeHint').textContent = '자동 추천 : ' + RES.grade + '등급';
   $('m_hidamt').textContent = won(RES.money);
-  if (!V('m_vdate')) $('m_vdate').value = V('h_vdate');
+  if (!V('m_vdate')) $('m_vdate').value = V('h_adate');
   if (!silent) tab(2);
 }
 
 function renderResult(rec) {
   const R = RES;
-  $('r_head').textContent = R.cust + ' 님 · ' + (V('i_prod') || '상품명 미입력') +
-    ' · 가입일 ' + (ymd(normDate(V('i_join'))) || '-') +
-    ' · 방문예정 ' + (ymd(normDate(V('h_vdate'))) || '-') + ' · FP ' + (V('h_fp') || '-');
+  const prods = R.contracts.map(function (c) { return c.prod; }).filter(Boolean).join(' / ');
+  $('r_head').textContent = R.cust + ' 님 · 계약 ' + R.contracts.length + '건' +
+    (prods ? ' (' + prods + ')' : '') +
+    ' · 첫 가입일 ' + (ymd(R.firstJoin) || '-') +
+    ' · 분석일 ' + (ymd(normDate(V('h_adate'))) || '-') + ' · ' + (V('h_fp') || '-');
 
   const c = function (k) { return R.findings.filter(function (f) { return f.lv === k; }).length; };
   $('r_kpi').innerHTML =
@@ -459,7 +537,7 @@ function renderResult(rec) {
           : '') +
         '</div></div>';
     }).join('')
-    : '<div class="note">입력된 내용이 없습니다. ① 계약 입력 탭에서 O/X 항목을 채워 주세요.</div>';
+    : '<div class="note">입력된 내용이 없습니다. ① 고객 입력 탭에서 계약과 O/X 항목을 채워 주세요.</div>';
 
   $('r_blank').innerHTML = R.blanks.length
     ? '<div class="warn"><b>비어 있는 항목 ' + R.blanks.length + '개</b> — 방문 전 회사 시스템 조회 또는 고객 통화로 확인하세요.' +
@@ -479,16 +557,19 @@ function autoPrep() {
 function fillHidden() {
   if (!RES) { toast('먼저 분석을 실행해 주세요.', true); return; }
   const m = RES.findings.filter(function (f) { return f.lv === 'm'; });
-  $('m_hidden').value = m.length
-    ? m.map(function (f) { return '· ' + f.t; }).join('\n') +
-    '\n\n[발견 예상액 합계] ' + won(RES.money) + '원' +
-    (RES.moneyUnknown ? ' (금액확인 필요 ' + RES.moneyUnknown + '건 별도)' : '')
-    : '해당 없음';
+  if (!m.length) { toast('진단 결과에 숨은보험금 항목이 없습니다.'); return; }
+  const keep = getRows('hiddens');
+  const seen = {};
+  keep.forEach(function (h) { seen[String(h.item || '').trim()] = 1; });
+  const fresh = m.filter(function (f) { return !seen[f.t]; })
+    .map(function (f) { return { code: f.cat, item: f.t, amt: String(f.est || '') }; });
+  setRows('hiddens', keep.concat(fresh));
   $('m_hidamt').textContent = won(RES.money);
   saveDraft();
+  toast('숨은보험금 ' + m.length + '건을 표에 옮겼습니다.');
 }
 
-/* ===================== 저장 (서버) ===================== */
+/* ===================== 저장 ===================== */
 
 /* 저장·불러오기 같은 중요한 안내는 잠시 그대로 두고, 자동보관 문구가 덮지 않게 한다 */
 let noticeUntil = 0;
@@ -510,17 +591,16 @@ async function saveRecord() {
     toast('지금은 저장이 되지 않는 상태입니다. 화면 위 빨간 안내를 봐 주세요.', true);
     return;
   }
-  const j = normDate(V('i_join'));
-  if (j) $('i_join').value = j;
   if (!RES) analyze(true);
   const rec = collect();
+  const prods = (rec.rows.contracts || []).map(function (c) { return c.prod; }).filter(Boolean).join(' / ');
   try {
     const out = await api('/api/contracts', { method: 'POST', body: rec });
     const isNew = !editId;
     editId = out.id;
-    const label = name + ' 님 / ' + (rec.f.i_prod || '상품명 없음');
+    const label = name + ' 님' + (prods ? ' / ' + prods : '');
     setSaveState('저장 완료 · ' + label, 'var(--grn)', true);
-    toast(isNew ? label + ' 계약을 서버에 저장했습니다.' : label + ' 내용을 수정 저장했습니다.');
+    toast(isNew ? label + ' 기록을 저장했습니다.' : label + ' 내용을 수정 저장했습니다.');
     saveDraft();
     DBCACHE = [];
   } catch (e) {
@@ -544,7 +624,7 @@ async function drawDB() {
   }
   DBCACHE = list;
   if (!list.length) {
-    box.innerHTML = '<div class="note">' + (q ? '검색 결과가 없습니다.' : '저장된 계약이 없습니다. ③ 탭 하단의 [이 계약 저장]을 눌러 주세요.') + '</div>';
+    box.innerHTML = '<div class="note">' + (q ? '검색 결과가 없습니다.' : '저장된 기록이 없습니다. ③ 탭 하단의 [이 고객 저장]을 눌러 주세요.') + '</div>';
     return;
   }
   const byCust = {};
@@ -557,17 +637,17 @@ async function drawDB() {
     const rs = byCust[k];
     const sumM = rs.reduce(function (s, r) { return s + (r.money || 0); }, 0);
     h += '<div style="margin-bottom:16px"><div class="custhd">' +
-      '<b style="color:var(--brand);font-size:14px">' + esc(k) + ' <span class="gsub">· 계약 ' + rs.length + '건</span></b>' +
+      '<b style="color:var(--brand);font-size:14px">' + esc(k) + ' <span class="gsub">· 방문기록 ' + rs.length + '건</span></b>' +
       '<span class="hint">발견 예상액 합계 <b style="color:var(--grn)">' + won(sumM) + '원</b></span></div>' +
-      '<table class="dt"><tr><th>저장일</th><th>상품명</th><th>가입일</th><th>보험료</th><th>등급</th>' +
+      '<table class="dt"><tr><th>저장일</th><th>상품명</th><th>계약</th><th>보험료 합계</th><th>등급</th>' +
       '<th>숨은보험금</th><th>후속조치 기한</th><th>차기방문</th><th class="noprint">관리</th></tr>';
     rs.forEach(function (r) {
-      const dl = r.f.m_deadline, d = Calc.dday(dl);
+      const dl = Schema.ledgerValue(r, '_due'), d = Calc.dday(dl);
       h += '<tr>' +
         '<td>' + String(r.savedAt || '').slice(0, 10) + '</td>' +
-        '<td class="l">' + esc(r.f.i_prod || '-') + '</td>' +
-        '<td>' + (ymd(normDate(r.f.i_join)) || esc(r.f.i_join) || '-') + '</td>' +
-        '<td style="text-align:right">' + (r.f.i_prem ? won(r.f.i_prem) : '-') + '</td>' +
+        '<td class="l">' + esc(Schema.ledgerValue(r, '_prod') || '-') + '</td>' +
+        '<td>' + Schema.ledgerValue(r, '_cnt') + '건</td>' +
+        '<td style="text-align:right">' + won(Schema.ledgerValue(r, '_prem')) + '</td>' +
         '<td>' + (r.f.m_grade
           ? '<span class="tag ' + (r.f.m_grade === 'A' ? 't-a' : r.f.m_grade === 'B' ? 't-b' : 't-i') + '">' + esc(r.f.m_grade) + '</span>'
           : '-') + '</td>' +
@@ -593,14 +673,14 @@ async function pick(id) {
     editId = r.id;
     analyze(true);
     $('restoreBar').style.display = 'none';
-    setSaveState('불러옴 · ' + (r.f.h_cust || '') + ' / ' + (r.f.i_prod || ''), 'var(--blue)', true);
-    toast((r.f.h_cust || '') + ' 님 계약을 불러왔습니다. 수정 후 저장하면 같은 건에 덮어쓰기 됩니다.');
+    setSaveState('불러옴 · ' + (r.f.h_cust || ''), 'var(--blue)', true);
+    toast((r.f.h_cust || '') + ' 님 기록을 불러왔습니다. 수정 후 저장하면 같은 건에 덮어쓰기 됩니다.');
     tab(1);
   } catch (e) { toast('불러오지 못했습니다 — ' + e.message, true); }
 }
 
 async function del(id) {
-  if (!confirm('이 계약 기록을 삭제할까요?')) return;
+  if (!confirm('이 방문 기록을 삭제할까요?')) return;
   try {
     await api('/api/contracts/' + id, { method: 'DELETE' });
     if (editId === id) editId = null;
@@ -634,11 +714,11 @@ async function drawStat() {
     return;
   }
   $('s_kpi').innerHTML =
-    '<div><div class="n">' + s.total + '</div><div class="t">누적 계약 분석 건수</div></div>' +
+    '<div><div class="n">' + s.total + '</div><div class="t">누적 방문기록 수</div></div>' +
     '<div><div class="n">' + s.customers + '</div><div class="t">관리 고객 수</div></div>' +
     '<div><div class="n" style="color:var(--grn)">' + s.hidden + '</div><div class="t">숨은보험금 발견 건수</div></div>' +
     '<div><div class="n" style="color:var(--grn)">' + won(s.money) + '<span style="font-size:12px">원</span></div><div class="t">발견 예상액 누계</div></div>' +
-    '<div><div class="n" style="color:var(--org)">' + s.upsell + '</div><div class="t">업셀링 제안 건수</div></div>';
+    '<div><div class="n" style="color:var(--org)">' + s.contracts + '</div><div class="t">관리 계약 건수</div></div>';
 
   const G = s.grades || {};
   const mx = Math.max(1, G.A || 0, G.B || 0, G.C || 0, G[''] || 0);
@@ -679,7 +759,7 @@ async function drawStat() {
     : '<div class="note">방문일 정보가 없습니다.</div>';
 }
 
-/* ===================== 임시 보관 (이 컴퓨터) ===================== */
+/* ===================== 임시 보관 (이 기기) ===================== */
 
 let draftTimer = null;
 function markDirty() { clearTimeout(draftTimer); draftTimer = setTimeout(saveDraft, 500); }
@@ -698,11 +778,13 @@ function saveDraft() {
 }
 
 function draftHasContent(d) {
-  const skip = ['h_vdate', 'm_vdate', 'h_fp'];
-  return Object.keys(d.f || {}).some(function (k) {
+  const skip = ['h_adate', 'm_vdate', 'h_fp'];
+  const hasField = Object.keys(d.f || {}).some(function (k) {
     const v = d.f[k];
     return v && String(v).trim() && skip.indexOf(k) < 0 && v !== '0';
   });
+  if (hasField) return true;
+  return RSETS.some(function (s) { return ((d.rows || {})[s.key] || []).length > 0; });
 }
 
 function restoreDraft() {
@@ -725,7 +807,7 @@ function restoreDraft() {
 }
 
 function newRecord() {
-  if (draftHasContent(collect()) && !confirm('지금 화면의 내용을 비우고 새로 시작할까요?\n\n서버에 저장해 두신 고객 자료는 그대로 남습니다.')) return;
+  if (draftHasContent(collect()) && !confirm('지금 화면의 내용을 비우고 새로 시작할까요?\n\n저장해 두신 고객 자료는 그대로 남습니다.')) return;
   resetAll();
   if (STORE) { try { STORE.removeItem(DRAFT_KEY); } catch (e) { /* 무시 */ } }
   $('restoreBar').style.display = 'none';
@@ -765,7 +847,7 @@ async function importExcel(input) {
 }
 
 async function wipe() {
-  if (!confirm('서버에 저장된 모든 고객 기록을 삭제합니다. 되돌릴 수 없습니다. 계속할까요?')) return;
+  if (!confirm('저장된 모든 고객 기록을 삭제합니다. 되돌릴 수 없습니다. 계속할까요?')) return;
   if (!confirm('정말 삭제할까요? 먼저 [전체 백업 파일 저장]을 하시길 권합니다.')) return;
   try {
     await api('/api/wipe', { method: 'POST' });
@@ -794,20 +876,33 @@ function copyScript() {
 function demo() {
   resetAll();
   const v = {
-    h_cust: '김영수', i_join: '2003-05-14', i_prod: '교보 무배당 실속종신보험',
-    i_prem: '128000', i_age: '32', i_payterm: '20년', i_payend: '2023-05-14', i_insterm: '종신', i_rate: '6.5',
-    c_on: '김영수', c_os: '남', c_obirth: '1971-03-20', c_in: '김영수', c_is: '남', c_ibirth: '1971-03-20',
-    f_std: 'O', f_ht: '174', f_wt: '70', f_smoke: '비흡연', f_hprem: '118000', f_href: '640000',
-    f_disc: 'X', f_comp: '대한기계(주)', f_surg: 'O', f_impl: 'O', f_acc: 'O', f_tooth: 'O',
-    f_c21: 'O', f_ben: 'X', f_polyp: 'O', f_hc: 'X', f_life: '5000', f_hcamt: '8000', f_hcprem: '42000',
-    b_paid: '30720000', b_surr: '27400000', b_lbal: '5000000', b_lrate: '5.9', b_lti: '820000', b_wdavl: '3200000',
-    b_matdt: '2026-05-14', b_matamt: '12000000', b_as: '분할 X', b_am: '만기 X', b_ro: '당사 O', b_rt: '타사 O',
+    h_cust: '김영수', h_adate: todayStr,
+    p_phone: '010-2345-6789', p_job: '기계설비 기술직', p_bday: '03-20', p_anniv: '결혼기념일 05-06',
+    p_addr0: '안양시 동안구 관양동 1234', p_addr1: '안양시 동안구 평촌대로 100, 101동 1502호',
+    c_on: '김영수', c_os: '남', c_obirth: '1971-03-20',
+    c_in: '김영수', c_is: '남', c_ibirth: '1971-03-20',
+    c_bh: '본인', c_uwx: '요추 5년 부담보',
+    f_std: 'O', f_hprem: '118000', f_href: '640000', f_disc: 'X',
+    f_comp: '대한기계(주)', f_surg: 'O', f_impl: 'O', f_acc: 'O', f_tooth: 'O',
+    f_c21: 'O', f_ben: 'X', f_polyp: 'O', f_hc: 'X',
+    b_paid: '30720000', b_surr: '27400000',
+    b_lavl: '9000000', b_ltype: '약대', b_lbal: '5000000', b_lrate: '5.9', b_lmi: '24500', b_lti: '820000',
+    b_wdavl: '3200000',
+    b_matdt: '2026-05-14', b_matamt: '12000000',
+    b_cch: '2019.03 수익자 변경',
     b_crider: '2027-05-14'
   };
   Object.keys(v).forEach(function (k) { if ($(k)) $(k).value = v[k]; });
-  $('claimBox').innerHTML = '';
-  addClaim({ d: '요추 염좌(교통사고)', t: '2023-08-02', a: '1200000' });
-  addClaim(); addClaim();
+  setRows('contracts', [
+    { join: '2003-05-14', prod: '교보 무배당 실속종신보험', prem: '128000', payterm: '20년', insterm: '종신' },
+    { join: '2005-11-02', prod: '21C 넘버원 암치료보험', prem: '46000', payterm: '20년', insterm: '80세' },
+    { join: '2016-08-20', prod: '교보 변액유니버셜통합종신보험', prem: '190000', payterm: '전기납', insterm: '종신' }
+  ]);
+  setRows('claims', [{ c: 'A1023', d: '요추 염좌(교통사고)', t: '2023-08-02', a: '1200000' }]);
+  setRows('funds', [{ name: '가치주식형', ratio: '60' }, { name: '채권안정형', ratio: '40' }]);
+  setRows('talks', [{ date: todayStr, note: '만기보험금 안내 · 대출 상환 계획 상담' }]);
+  setRows('hiddens', []);
+  setRows('follows', [{ what: '치과 초진차트 · 진단서 수령 후 보험금 청구', due: todayStr }]);
   moneyRefresh();
   calcAll();
   saveDraft();
@@ -817,9 +912,10 @@ function demo() {
 /* ===================== 시작 ===================== */
 
 renderChecks();
+renderRowsets();
+resetRows();
 enhanceDates();
 enhanceMoney();
-for (let i = 0; i < 3; i++) addClaim();
 initDefaults();
 calcAll();
 
@@ -828,7 +924,6 @@ $('btnSave2').addEventListener('click', saveRecord);
 $('btnNew').addEventListener('click', newRecord);
 $('btnDemo').addEventListener('click', demo);
 $('btnAnalyze').addEventListener('click', function () { analyze(); });
-$('btnAddClaim').addEventListener('click', function () { addClaim(); });
 $('btnFillHidden').addEventListener('click', fillHidden);
 $('btnCopy').addEventListener('click', copyScript);
 $('btnRebuild').addEventListener('click', function () { analyze(true); toast('스크립트를 다시 만들었습니다.'); });
@@ -849,22 +944,19 @@ $('btnWipe').addEventListener('click', wipe);
 $('h_fp').addEventListener('change', function () {
   if (STORE && V('h_fp')) { try { STORE.setItem(FP_KEY, V('h_fp')); } catch (e) { /* 무시 */ } }
 });
-['f_ht', 'f_wt'].forEach(function (id) { $(id).addEventListener('input', calcBMI); });
-['c_obirth', 'c_ibirth', 'i_join'].forEach(function (id) {
+['c_obirth', 'c_ibirth'].forEach(function (id) {
   $(id).addEventListener('change', calcAll);
   $(id).addEventListener('blur', function () { setTimeout(calcAll, 0); });
 });
-['c_oja', 'c_ona', 'c_ina'].forEach(function (id) { $(id).addEventListener('input', ageMsg); });
-$('i_age').addEventListener('input', function () { syncAge('i_age'); calcTerms(); ageMsg(); });
-$('c_ija').addEventListener('input', function () { syncAge('c_ija'); calcTerms(); ageMsg(); });
-['i_insterm', 'i_payterm'].forEach(function (id) {
-  $(id).addEventListener('input', calcTerms);
-  $(id).addEventListener('blur', calcTerms);
-});
-['i_insend', 'i_payend'].forEach(function (id) {
-  $(id).addEventListener('change', calcTerms);
-  $(id).addEventListener('blur', function () { setTimeout(calcTerms, 0); });
-});
+['c_oja', 'c_ona', 'c_ija', 'c_ina'].forEach(function (id) { $(id).addEventListener('input', ageMsg); });
+
+/* 계약 표의 값이 바뀌면 연령 · 만기일을 다시 계산합니다 */
+document.addEventListener('input', function (e) {
+  if (e.target.closest && e.target.closest('#rsb_contracts')) calcAll();
+}, true);
+document.addEventListener('change', function (e) {
+  if (e.target.closest && e.target.closest('#rsb_contracts')) calcAll();
+}, true);
 
 document.addEventListener('input', markDirty, true);
 document.addEventListener('change', markDirty, true);

@@ -1,8 +1,8 @@
 /*
  * 서버 DB (SQLite)
- * - 고객(customers) : 사람 단위. 같은 고객의 계약이 여러 건이어도 한 번만 관리합니다.
- * - 계약(contracts) : 분석 단위. 항목 컬럼은 shared/schema.js 에서 자동으로 만들어집니다.
- * - 사고보험금(claims) : 계약에 딸린 여러 줄.
+ * - 고객(customers) : 사람 단위. 같은 고객을 여러 번 방문해도 한 번만 관리합니다.
+ * - 방문기록(contracts) : 분석 단위(양식 한 장). 항목 컬럼은 shared/schema.js 에서 자동으로 만들어집니다.
+ * - 여러 줄 표(가입건수 · 사고보험금 · 상담내용 …)는 rows 칸에 JSON 으로 함께 담습니다.
  *
  * shared/schema.js 에 항목을 추가하면 서버가 뜰 때 컬럼이 자동으로 추가됩니다(기존 자료 유지).
  */
@@ -44,6 +44,7 @@ function init() {
       id          INTEGER PRIMARY KEY AUTOINCREMENT,
       customer_id INTEGER NOT NULL REFERENCES customers(id) ON DELETE CASCADE,
       checks      TEXT DEFAULT '{}',
+      rows        TEXT DEFAULT '{}',
       money       INTEGER DEFAULT 0,
       hid_cnt     INTEGER DEFAULT 0,
       created_at  TEXT NOT NULL,
@@ -63,6 +64,7 @@ function init() {
 
   /* 항목 컬럼을 스키마에 맞춰 채워 넣는다 */
   const have = new Set(db.prepare('PRAGMA table_info(contracts)').all().map(function (c) { return c.name; }));
+  if (!have.has('rows')) db.exec('ALTER TABLE contracts ADD COLUMN "rows" TEXT DEFAULT \'{}\'');
   CONTRACT_KEYS.forEach(function (k) {
     if (!have.has(k)) db.exec('ALTER TABLE contracts ADD COLUMN "' + k + '" TEXT DEFAULT \'\'');
   });
@@ -138,13 +140,21 @@ function rowToRecord(row) {
   f.h_cust = row.cust_name || '';
   let chk = {};
   try { chk = JSON.parse(row.checks || '{}'); } catch (e) { chk = {}; }
-  const claims = db.prepare('SELECT d, t, a FROM claims WHERE contract_id = ? ORDER BY seq, id').all(row.id);
+  let rows = {};
+  try { rows = JSON.parse(row.rows || '{}') || {}; } catch (e) { rows = {}; }
+  /* 예전 서식으로 저장된 자료(사고보험금 별도 표)도 그대로 읽어 옵니다 */
+  if (!rows.claims || !rows.claims.length) {
+    try {
+      const legacy = db.prepare('SELECT d, t, a FROM claims WHERE contract_id = ? ORDER BY seq, id').all(row.id);
+      if (legacy.length) rows.claims = legacy;
+    } catch (e) { /* 표가 없으면 무시 */ }
+  }
   return {
     id: row.id,
     customerId: row.customer_id,
     f: f,
     chk: chk,
-    claims: claims,
+    rows: rows,
     money: row.money || 0,
     hidCnt: row.hid_cnt || 0,
     savedAt: row.updated_at,
@@ -165,7 +175,7 @@ function listContracts(opts) {
   opts = opts || {};
   const like = '%' + String(opts.q || '').trim() + '%';
   const rows = db.prepare(CONTRACT_SELECT + `
-    WHERE (? = '%%' OR c.name LIKE ? OR k.i_prod LIKE ?)
+    WHERE (? = '%%' OR c.name LIKE ? OR k.rows LIKE ?)
       AND (? = 0 OR k.customer_id = ?)
     ORDER BY k.updated_at DESC
   `).all(like, like, like, opts.customerId ? 1 : 0, opts.customerId || 0);
@@ -183,6 +193,22 @@ function cleanValue(field, v) {
 
 const FIELD_MAP = Schema.fieldMap();
 
+const RSMAP = Schema.rowsetMap();
+
+/* 여러 줄 표 : 빈 줄을 버리고 날짜·금액을 표준형으로 맞춥니다 */
+function cleanRows(rowsIn) {
+  const src = rowsIn || {};
+  const out = {};
+  Schema.ROWSETS.forEach(function (set) {
+    out[set.key] = Schema.pruneRows(set, src[set.key]).map(function (row) {
+      const o = {};
+      set.cols.forEach(function (c) { o[c.k] = cleanValue(c, row[c.k]); });
+      return o;
+    });
+  });
+  return out;
+}
+
 const saveContract = db.transaction(function (record) {
   const f = (record && record.f) || {};
   const name = String(f.h_cust || '').trim();
@@ -192,7 +218,8 @@ const saveContract = db.transaction(function (record) {
   const birth = f.c_obirth || '';
   const customerId = upsertCustomer(name, f.h_fp, birth);
 
-  const res = Analysis.analyze({ f: f, claims: record.claims || [] });
+  const rows = cleanRows(record.rows);
+  const res = Analysis.analyze({ f: f, rows: rows });
   const t = now();
 
   const cols = [], vals = [];
@@ -204,14 +231,14 @@ const saveContract = db.transaction(function (record) {
   let id = record.id ? Number(record.id) : 0;
   if (id && db.prepare('SELECT 1 FROM contracts WHERE id = ?').get(id)) {
     const sets = cols.map(function (c) { return '"' + c + '" = ?'; });
-    sets.push('customer_id = ?', 'checks = ?', 'money = ?', 'hid_cnt = ?', 'updated_at = ?');
+    sets.push('customer_id = ?', 'checks = ?', 'rows = ?', 'money = ?', 'hid_cnt = ?', 'updated_at = ?');
     const args = vals.concat([
-      customerId, JSON.stringify(record.chk || {}), res.money, res.hidCnt, t, id
+      customerId, JSON.stringify(record.chk || {}), JSON.stringify(rows), res.money, res.hidCnt, t, id
     ]);
     db.prepare('UPDATE contracts SET ' + sets.join(', ') + ' WHERE id = ?').run(...args);
   } else {
-    const allCols = ['customer_id', 'checks', 'money', 'hid_cnt', 'created_at', 'updated_at'].concat(cols);
-    const allVals = [customerId, JSON.stringify(record.chk || {}), res.money, res.hidCnt, t, t].concat(vals);
+    const allCols = ['customer_id', 'checks', 'rows', 'money', 'hid_cnt', 'created_at', 'updated_at'].concat(cols);
+    const allVals = [customerId, JSON.stringify(record.chk || {}), JSON.stringify(rows), res.money, res.hidCnt, t, t].concat(vals);
     const ph = allCols.map(function () { return '?'; }).join(',');
     const r = db.prepare(
       'INSERT INTO contracts (' + allCols.map(function (c) { return '"' + c + '"'; }).join(',') + ') VALUES (' + ph + ')'
@@ -219,12 +246,8 @@ const saveContract = db.transaction(function (record) {
     id = r.lastInsertRowid;
   }
 
+  /* 예전 서식으로 남아 있던 사고보험금 줄은 rows 로 옮겨졌으므로 지웁니다 */
   db.prepare('DELETE FROM claims WHERE contract_id = ?').run(id);
-  const insClaim = db.prepare('INSERT INTO claims (contract_id, seq, d, t, a) VALUES (?,?,?,?,?)');
-  (record.claims || []).forEach(function (c, i) {
-    if (!c || (!c.d && !c.t && !c.a)) return;
-    insClaim.run(id, i, String(c.d || ''), Calc.normDate(c.t || '') || '', String(c.a || ''));
-  });
 
   return { id: id, customerId: customerId, analysis: res };
 });
@@ -240,36 +263,40 @@ function wipeAll() {
 /* ---------- 통계 ---------- */
 
 function stats() {
-  const total = db.prepare('SELECT COUNT(*) n FROM contracts').get().n;
+  const recs = listContracts({});
+  const total = recs.length;
   const custs = db.prepare('SELECT COUNT(*) n FROM customers').get().n;
-  const money = db.prepare('SELECT COALESCE(SUM(money),0) n FROM contracts').get().n;
-  const hid = db.prepare('SELECT COUNT(*) n FROM contracts WHERE money > 0').get().n;
-  const up = db.prepare("SELECT COUNT(*) n FROM contracts WHERE TRIM(COALESCE(m_upsell,'')) <> ''").get().n;
+  const money = recs.reduce(function (a, r) { return a + (r.money || 0); }, 0);
+  const hid = recs.filter(function (r) { return (r.money || 0) > 0; }).length;
+  const contractCnt = recs.reduce(function (a, r) { return a + Schema.rowsOf(r, 'contracts').length; }, 0);
 
   const grades = { A: 0, B: 0, C: 0, '': 0 };
-  db.prepare("SELECT COALESCE(m_grade,'') g, COUNT(*) n FROM contracts GROUP BY g").all()
-    .forEach(function (r) { grades[r.g] = (grades[r.g] || 0) + r.n; });
-
-  const follow = db.prepare(CONTRACT_SELECT + `
-    WHERE TRIM(COALESCE(k.m_deadline,'')) <> '' OR TRIM(COALESCE(k.m_next,'')) <> ''
-    ORDER BY COALESCE(NULLIF(k.m_deadline,''), k.m_next)
-  `).all().map(function (r) {
-    const key = r.m_deadline || r.m_next;
-    return {
-      id: r.id, cust: r.cust_name, prod: r.i_prod, follow: r.m_follow,
-      deadline: r.m_deadline, next: r.m_next, d: Calc.dday(key)
-    };
+  recs.forEach(function (r) {
+    const g = r.f.m_grade || '';
+    grades[g] = (grades[g] || 0) + 1;
   });
 
-  const months = {};
-  db.prepare("SELECT COALESCE(NULLIF(m_vdate,''), NULLIF(h_vdate,''), created_at) d FROM contracts").all()
-    .forEach(function (r) {
-      const k = String(r.d || '').slice(0, 7);
-      if (k) months[k] = (months[k] || 0) + 1;
+  const follow = [];
+  recs.forEach(function (r) {
+    const due = Schema.ledgerValue(r, '_due');
+    const what = Schema.ledgerValue(r, '_follow');
+    if (!due && !what && !r.f.m_next) return;
+    const key = due || r.f.m_next;
+    follow.push({
+      id: r.id, cust: r.f.h_cust, prod: Schema.ledgerValue(r, '_prod'), follow: what,
+      deadline: due, next: r.f.m_next, d: Calc.dday(key)
     });
+  });
+  follow.sort(function (a, b) { return (a.d == null ? 9999 : a.d) - (b.d == null ? 9999 : b.d); });
+
+  const months = {};
+  recs.forEach(function (r) {
+    const k = String(r.f.m_vdate || r.f.h_adate || r.createdAt || '').slice(0, 7);
+    if (k) months[k] = (months[k] || 0) + 1;
+  });
 
   return {
-    total: total, customers: custs, money: money, hidden: hid, upsell: up,
+    total: total, customers: custs, money: money, hidden: hid, contracts: contractCnt,
     grades: grades, follow: follow, months: months
   };
 }

@@ -51,7 +51,7 @@ app.get('/api/schema', function (req, res) {
     sections: Schema.SECTIONS,
     preps: Schema.PREPS,
     extras: Schema.EXTRAS,
-    claimFields: Schema.CLAIM_FIELDS,
+    rowsets: Schema.ROWSETS,
     customerFields: Schema.CUSTOMER_FIELDS
   });
 });
@@ -139,7 +139,7 @@ app.post('/api/restore', function (req, res) {
   recs.forEach(function (r) {
     try {
       if (!r || !r.f || !String(r.f.h_cust || '').trim()) { failed++; return; }
-      store.saveContract({ f: r.f, claims: r.claims || [], chk: r.chk || {} });
+      store.saveContract({ f: r.f, rows: r.rows || (r.claims ? { claims: r.claims } : {}), chk: r.chk || {} });
       added++;
     } catch (e) { failed++; }
   });
@@ -164,7 +164,7 @@ app.get('/api/excel/contract/:id', wrap(async function (req, res) {
   const rec = store.getContract(Number(req.params.id));
   if (!rec) return res.status(404).json({ error: '계약을 찾을 수 없습니다.' });
   const wb = excel.buildWorkbook(rec, { withResult: true });
-  const name = (rec.f.h_cust || '고객') + '_' + (rec.f.i_prod || '계약') + '_평생든든.xlsx';
+  const name = (rec.f.h_cust || '고객') + '_평생든든_' + stamp() + '.xlsx';
   attach(res, name.replace(/[\\/:*?"<>|]/g, '_'), 'Kyobo-Contract-' + rec.id + '-' + stamp() + '.xlsx',
     'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
   await wb.xlsx.write(res);
@@ -205,11 +205,9 @@ app.get('/api/csv', function (req, res) {
   let csv = '﻿' + Schema.LEDGER_COLS.map(function (c) { return c.label; }).join(',') + '\n';
   records.forEach(function (rec) {
     csv += Schema.LEDGER_COLS.map(function (c) {
-      if (c.k === '_savedAt') return esc(String(rec.savedAt || '').slice(0, 19).replace('T', ' '));
-      if (c.k === '_money') return rec.money || 0;
-      if (c.k === '_hidCnt') return rec.hidCnt || 0;
+      const v = Schema.ledgerValue(rec, c.k);
       const fd = FIELD_MAP[c.k];
-      const v = rec.f[c.k];
+      if (typeof v === 'number') return v;
       if (fd && fd.type === 'number' && v) return Calc.numOf(v);
       return esc(v);
     }).join(',') + '\n';
@@ -236,9 +234,17 @@ app.use(function (err, req, res, next) {
 function checkForm() {
   try {
     const html = fs.readFileSync(path.join(__dirname, '..', 'public', 'index.html'), 'utf8');
+    const js = fs.readFileSync(path.join(__dirname, '..', 'public', 'app.js'), 'utf8');
+    /* 준비물 '기타' 칸처럼 화면에서 자동으로 그려지는 항목은 항목 정의 쪽에서 확인한다 */
+    const drawn = {};
+    Schema.PREPS.concat(Schema.EXTRAS).forEach(function (p) { if (p.etc) drawn[p.etc] = 1; });
+    const hasRenderer = js.indexOf("id=\"' + p.etc + '\"") >= 0 || js.indexOf('p.etc') >= 0;
     const missing = Schema.allFields()
       .map(function (f) { return f.k; })
-      .filter(function (k) { return html.indexOf('id="' + k + '"') < 0; });
+      .filter(function (k) {
+        if (drawn[k] && hasRenderer) return false;
+        return html.indexOf('id="' + k + '"') < 0;
+      });
     if (missing.length) {
       console.warn('[확인] 화면에 입력칸이 없는 항목 : ' + missing.join(', '));
     }

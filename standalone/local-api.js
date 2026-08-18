@@ -43,27 +43,39 @@
     return s;
   }
 
+  function cleanRows(rowsIn) {
+    const src = rowsIn || {};
+    const out = {};
+    Schema.ROWSETS.forEach(function (set) {
+      out[set.key] = Schema.pruneRows(set, src[set.key]).map(function (row) {
+        const o = {};
+        set.cols.forEach(function (c) { o[c.k] = cleanValue(c, row[c.k]); });
+        return o;
+      });
+    });
+    return out;
+  }
+
   function saveRecord(rec) {
     const list = loadAll();
     const f = {};
     Schema.allFields().forEach(function (fd) { f[fd.k] = cleanValue(fd, (rec.f || {})[fd.k]); });
     if (!f.h_cust) throw new Error('고객(계약자) 성명을 입력해 주세요.');
 
-    const res = Analysis.analyze({ f: f, claims: rec.claims || [] });
-    const claims = (rec.claims || []).filter(function (c) { return c && (c.d || c.t || c.a); })
-      .map(function (c) { return { d: String(c.d || ''), t: Calc.normDate(c.t || '') || '', a: String(c.a || '') }; });
+    const rows = cleanRows(rec.rows || (rec.claims ? { claims: rec.claims } : {}));
+    const res = Analysis.analyze({ f: f, rows: rows });
     const now = new Date().toISOString();
 
     let saved;
     const idx = rec.id ? list.findIndex(function (x) { return x.id === rec.id; }) : -1;
     if (idx >= 0) {
       saved = list[idx];
-      saved.f = f; saved.chk = rec.chk || {}; saved.claims = claims;
+      saved.f = f; saved.chk = rec.chk || {}; saved.rows = rows;
       saved.money = res.money; saved.hidCnt = res.hidCnt; saved.savedAt = now;
     } else {
       const maxId = list.reduce(function (m, x) { return Math.max(m, Number(x.id) || 0); }, 0);
       saved = {
-        id: maxId + 1, f: f, chk: rec.chk || {}, claims: claims,
+        id: maxId + 1, f: f, chk: rec.chk || {}, rows: rows,
         money: res.money, hidCnt: res.hidCnt, savedAt: now, createdAt: now
       };
       list.push(saved);
@@ -76,7 +88,8 @@
     q = String(q || '').trim();
     return loadAll()
       .filter(function (r) {
-        return !q || String(r.f.h_cust || '').indexOf(q) >= 0 || String(r.f.i_prod || '').indexOf(q) >= 0;
+        return !q || String(r.f.h_cust || '').indexOf(q) >= 0 ||
+          String(Schema.ledgerValue(r, '_prod') || '').indexOf(q) >= 0;
       })
       .sort(function (a, b) { return String(b.savedAt || '').localeCompare(String(a.savedAt || '')); });
   }
@@ -88,19 +101,21 @@
     const grades = { A: 0, B: 0, C: 0, '': 0 };
     list.forEach(function (r) { const g = r.f.m_grade || ''; grades[g] = (grades[g] || 0) + 1; });
 
-    const follow = list.filter(function (r) { return r.f.m_deadline || r.f.m_next; })
-      .map(function (r) {
-        return {
-          id: r.id, cust: r.f.h_cust, prod: r.f.i_prod, follow: r.f.m_follow,
-          deadline: r.f.m_deadline, next: r.f.m_next,
-          d: Calc.dday(r.f.m_deadline || r.f.m_next)
-        };
-      })
-      .sort(function (a, b) { return (a.d == null ? 9999 : a.d) - (b.d == null ? 9999 : b.d); });
+    const follow = [];
+    list.forEach(function (r) {
+      const due = Schema.ledgerValue(r, '_due');
+      const what = Schema.ledgerValue(r, '_follow');
+      if (!due && !what && !r.f.m_next) return;
+      follow.push({
+        id: r.id, cust: r.f.h_cust, prod: Schema.ledgerValue(r, '_prod'), follow: what,
+        deadline: due, next: r.f.m_next, d: Calc.dday(due || r.f.m_next)
+      });
+    });
+    follow.sort(function (a, b) { return (a.d == null ? 9999 : a.d) - (b.d == null ? 9999 : b.d); });
 
     const months = {};
     list.forEach(function (r) {
-      const d = r.f.m_vdate || r.f.h_vdate || r.savedAt || '';
+      const d = r.f.m_vdate || r.f.h_adate || r.savedAt || '';
       const k = String(d).slice(0, 7);
       if (k) months[k] = (months[k] || 0) + 1;
     });
@@ -110,7 +125,7 @@
       customers: Object.keys(custs).length,
       money: list.reduce(function (s, r) { return s + (r.money || 0); }, 0),
       hidden: list.filter(function (r) { return (r.money || 0) > 0; }).length,
-      upsell: list.filter(function (r) { return String(r.f.m_upsell || '').trim(); }).length,
+      contracts: list.reduce(function (s, r) { return s + Schema.rowsOf(r, 'contracts').length; }, 0),
       grades: grades, follow: follow, months: months
     };
   }
@@ -156,7 +171,7 @@
           recs.forEach(function (r) {
             try {
               if (!r || !r.f || !String(r.f.h_cust || '').trim()) { failed++; return; }
-              saveRecord({ f: r.f, claims: r.claims || [], chk: r.chk || {} });
+              saveRecord({ f: r.f, rows: r.rows || (r.claims ? { claims: r.claims } : {}), chk: r.chk || {} });
               added++;
             } catch (e) { failed++; }
           });
@@ -172,13 +187,19 @@
   const S = { title: 1, sec: 2, head: 3, label: 4, val: 5, valNum: 6, hint: 7, group: 8, wrap: 9, bold: 10, auto: 11, num: 12 };
   const LV_STYLE = { m: 13, a: 14, b: 15, i: 16 };
 
-  function titleRows(rows, merges, text, sub) {
+  const COL = 'ABCDEFGHIJKLMN';
+
+  function titleRows(rows, merges, text, sub, width) {
     const r = rows.length;
-    rows.push([{ v: text, s: S.title }, { v: '', s: S.title }, { v: '', s: S.title }, { v: '', s: S.title }]);
-    merges.push('A' + (r + 1) + ':D' + (r + 1));
+    const w = Math.max(2, width || 4);
+    const last = COL[w - 1];
+    const line = [];
+    for (let i = 0; i < w; i++) line.push({ v: i === 0 ? text : '', s: S.title });
+    rows.push(line);
+    merges.push('A' + (r + 1) + ':' + last + (r + 1));
     if (sub) {
       rows.push([{ v: sub, s: 0 }]);
-      merges.push('A' + (r + 2) + ':D' + (r + 2));
+      merges.push('A' + (r + 2) + ':' + last + (r + 2));
     }
   }
 
@@ -189,7 +210,7 @@
   }
 
   function inputSheets(rec) {
-    const f = (rec && rec.f) || {}, claims = (rec && rec.claims) || [], chk = (rec && rec.chk) || {};
+    const f = (rec && rec.f) || {}, rowsIn = (rec && rec.rows) || {}, chk = (rec && rec.chk) || {};
     const sheets = [];
 
     /* 계약입력 */
@@ -229,22 +250,32 @@
     });
     sheets.push({ name: '계약입력', cols: [{ w: 14 }, { w: 34 }, { w: 28 }, { w: 34 }], rows: rows, merges: merges, heights: heights });
 
-    /* 사고보험금 */
-    const crows = [], cmerges = [];
-    titleRows(crows, cmerges, '사고보험금 지급 이력', '과거에 받으신 보험금입니다.');
-    crows.push([]);
-    crows.push([{ v: 'No', s: S.head }, { v: '병명', s: S.head }, { v: '수령일', s: S.head }, { v: '수령액(원)', s: S.head }]);
-    const n = Math.max(10, claims.length + 3);
-    for (let i = 0; i < n; i++) {
-      const c = claims[i];
-      crows.push([
-        { v: i + 1, s: S.label, n: true },
-        { v: c ? (c.d || '') : '', s: S.val },
-        { v: c ? (Calc.normDate(c.t) || c.t || '') : '', s: S.val },
-        { v: c && c.a ? Calc.numOf(c.a) : '', s: S.valNum, n: true }
-      ]);
-    }
-    sheets.push({ name: '사고보험금', cols: [{ w: 6 }, { w: 34 }, { w: 16 }, { w: 18 }], rows: crows, merges: cmerges });
+    /* 여러 줄 표 (가입건수 · 사고보험금 · 상담내용 …) */
+    Schema.ROWSETS.forEach(function (set) {
+      const list = Schema.pruneRows(set, rowsIn[set.key]);
+      const trows = [], tmerges = [];
+      titleRows(trows, tmerges, set.label, set.sub || '', set.cols.length + 1);
+      trows.push([]);
+      trows.push([{ v: 'No', s: S.head }].concat(set.cols.map(function (c) {
+        return { v: c.label + (c.unit ? '(' + c.unit + ')' : ''), s: S.head };
+      })));
+      const n = Math.max((set.rows || 3) + 4, list.length + 3);
+      for (let i = 0; i < n; i++) {
+        const v = list[i];
+        trows.push([{ v: i + 1, s: S.label, n: true }].concat(set.cols.map(function (c) {
+          const raw = v ? v[c.k] : '';
+          const has = raw !== undefined && raw !== null && String(raw).trim() !== '';
+          if (c.type === 'number') return { v: has ? Calc.numOf(raw) : '', s: S.valNum, n: true };
+          if (c.type === 'date') return { v: has ? (Calc.normDate(raw) || String(raw)) : '', s: S.val };
+          return { v: has ? String(raw) : '', s: S.val };
+        })));
+      }
+      sheets.push({
+        name: set.sheet,
+        cols: [{ w: 6 }].concat(set.cols.map(function (c) { return { w: c.w || 18 }; })),
+        rows: trows, merges: tmerges
+      });
+    });
 
     /* 준비물 · 추가점검 */
     const krows = [], kmerges = [];
@@ -337,10 +368,9 @@
     rows.push(Schema.LEDGER_COLS.map(function (c) { return { v: c.label, s: S.head }; }));
     list.forEach(function (rec) {
       rows.push(Schema.LEDGER_COLS.map(function (c) {
-        if (c.k === '_savedAt') return { v: String(rec.savedAt || '').slice(0, 19).replace('T', ' '), s: S.label };
-        if (c.k === '_money') return { v: rec.money || 0, s: S.num, n: true };
-        if (c.k === '_hidCnt') return { v: rec.hidCnt || 0, s: S.num, n: true };
-        const fd = FIELD_MAP[c.k], v = rec.f[c.k];
+        const v = Schema.ledgerValue(rec, c.k);
+        const fd = FIELD_MAP[c.k];
+        if (typeof v === 'number') return { v: v, s: S.num, n: true };
         if (fd && fd.type === 'number' && v) return { v: Calc.numOf(v), s: S.num, n: true };
         return { v: v || '', s: S.label };
       }));
@@ -356,11 +386,11 @@
     titleRows(srows, smerges, '누적 활동 통계', '데이터 시트를 기준으로 집계했습니다.');
     srows.push([]);
     [
-      ['누적 계약 분석 건수', st.total + ' 건'],
+      ['누적 방문기록 수', st.total + ' 건'],
       ['관리 고객 수', st.customers + ' 명'],
       ['숨은보험금 발견 건수', st.hidden + ' 건'],
       ['발견 예상액 누계', Calc.won(st.money) + ' 원'],
-      ['업셀링 제안 건수', st.upsell + ' 건'],
+      ['관리 계약 건수', st.contracts + ' 건'],
       ['A등급 비율', (st.total ? Math.round((st.grades.A || 0) / st.total * 100) : 0) + ' %'],
       ['건당 평균 발견액', Calc.won(st.total ? st.money / st.total : 0) + ' 원']
     ].forEach(function (k) { srows.push([{ v: k[0], s: S.group }, { v: k[1], s: S.label }]); });
@@ -431,10 +461,9 @@
     let csv = '﻿' + Schema.LEDGER_COLS.map(function (c) { return c.label; }).join(',') + '\n';
     listRecords('').forEach(function (rec) {
       csv += Schema.LEDGER_COLS.map(function (c) {
-        if (c.k === '_savedAt') return esc(String(rec.savedAt || '').slice(0, 19).replace('T', ' '));
-        if (c.k === '_money') return rec.money || 0;
-        if (c.k === '_hidCnt') return rec.hidCnt || 0;
-        const fd = FIELD_MAP[c.k], v = rec.f[c.k];
+        const v = Schema.ledgerValue(rec, c.k);
+        const fd = FIELD_MAP[c.k];
+        if (typeof v === 'number') return v;
         if (fd && fd.type === 'number' && v) return Calc.numOf(v);
         return esc(v);
       }).join(',') + '\n';

@@ -80,6 +80,9 @@ table.form th{background:var(--surf1);border:1px solid var(--line);padding:6px;f
 table.form td{border:1px solid var(--line);padding:5px 6px;vertical-align:middle}
 table.form td.gk{background:var(--surf2);font-weight:700;text-align:center;color:var(--brand);width:96px;font-size:12px}
 table.form td.it{width:41%}
+table.form th.wgk{width:96px}
+table.form th.wval{width:26%}
+table.form th.wprep{width:22%}
 table.form input,table.form select{padding:4px 6px;font-size:12.5px}
 /* 짧은 선택칸이 눌려서 글자가 안 보이지 않도록 최소 너비를 준다 */
 table.form select.sx{min-width:60px;padding-left:6px;padding-right:2px}
@@ -96,6 +99,27 @@ table.form .dtbtn{width:28px}
 .tscroll table.form{min-width:920px}
 .tscroll-hint{display:none;margin-top:5px}
 @media(max-width:960px){.tscroll-hint{display:block}}
+/* 인적사항 · 인수조건 표 */
+table.form td.w1{width:110px}
+table.form th.wuw{width:29%}
+.addr{display:flex;gap:7px;align-items:center}
+.addr span{flex:none;font-size:11.5px;color:var(--sub);font-weight:700;width:52px}
+
+/* 여러 줄 표 (가입건수 · 사고보험금 · 상담내용 …) */
+.rsblock{margin-top:14px}
+.rshd{display:flex;align-items:center;gap:10px;flex-wrap:wrap;
+  background:var(--surf1);border:1px solid var(--line);border-bottom:0;
+  border-radius:7px 7px 0 0;padding:7px 11px;font-size:12.5px;color:var(--brand)}
+.rshd .btns{margin-left:auto}
+.rsblock .tscroll table.form{min-width:760px}
+table.form.rs th.rsno,table.form.rs td.rsno{width:34px;text-align:center;color:var(--sub);font-size:11.5px;background:var(--surf2)}
+table.form.rs th.rsx,table.form.rs td.rsx{width:30px;text-align:center;padding:2px}
+button.rsdel{width:22px;height:22px;padding:0;border:1px solid var(--btnline);border-radius:5px;
+  background:var(--card);color:var(--sub);cursor:pointer;font-size:11px;line-height:1}
+button.rsdel:hover{color:var(--red);border-color:var(--red)}
+input.autoval{background:var(--surf2)}
+.chk .etc{flex:1;min-width:0;margin-left:6px;padding:2px 6px;font-size:12px;height:23px}
+
 .prep{font-size:11.5px;color:var(--red);text-align:center;line-height:1.45}
 .hint{font-size:11px;color:var(--sub)}
 .ox{text-align:center}
@@ -156,6 +180,17 @@ textarea#script{height:280px;font-size:12.8px;line-height:1.7;white-space:pre-wr
 .custhd{display:flex;justify-content:space-between;align-items:center;background:var(--surf1);
   border:1px solid var(--line);border-radius:7px 7px 0 0;padding:8px 12px;flex-wrap:wrap;gap:6px}
 @media(max-width:980px){.g6,.g5,.g4,.g3{grid-template-columns:repeat(2,1fr)}.kpi{grid-template-columns:repeat(2,1fr)}}
+/* 태블릿 세로 화면 : 내용 칸이 좁아 금액이 잘리지 않도록 폭을 다시 나눈다 */
+@media(max-width:900px){
+  table.form th.wgk{width:62px}
+  table.form th.it{width:30%}
+  table.form th.wval{width:34%}
+  table.form th.wprep{width:19%}
+  table.form td.gk{width:62px;font-size:11px;padding:4px 2px}
+  table.form td.prep{font-size:10.5px}
+  table.form td.w1{width:82px;font-size:11.5px}
+  .addr span{width:44px}
+}
 @media print{:root{color-scheme:light}body{background:#fff;color:#000}.noprint{display:none!important}
   .pane{display:block!important}.card{break-inside:avoid}
   *{-webkit-print-color-adjust:exact;print-color-adjust:exact}}
@@ -167,9 +202,9 @@ textarea#script{height:280px;font-size:12.8px;line-height:1.7;white-space:pre-wr
 
 <header><div class="wrap">
   <h1>평생든든 방문활동 사전준비 · 자동분석 프로그램</h1>
-  <p>회사 양식(앞면·뒷면)을 그대로 입력하면 → 숨은보험금·할인 대상 자동 판정 → 고객 안내 멘트와 제안 근거 → 준비물 자동 체크 → <b>이 기기에 고객별 누적 저장</b>까지 한 번에 처리합니다. (태블릿용 · 인터넷 연결 없이도 동작)</p>
+  <p>회사 양식(앞면·뒷면)을 그대로 입력하면 → 숨은보험금·할인 대상 자동 판정 → 고객 안내 멘트와 제안 근거 → 준비물 자동 체크 → <b>고객별 누적 저장</b>까지 한 번에 처리합니다.</p>
   <div class="tabs noprint">
-    <button id="tb1" class="on" data-tab="1">① 계약 입력</button>
+    <button id="tb1" class="on" data-tab="1">① 고객 입력</button>
     <button id="tb2" data-tab="2">② 진단 결과</button>
     <button id="tb3" data-tab="3">③ 방문준비 · 상담메모</button>
     <button id="tb4" data-tab="4">④ 고객 누적 DB</button>
@@ -188,55 +223,43 @@ textarea#script{height:280px;font-size:12.8px;line-height:1.7;white-space:pre-wr
 <div class="card">
   <div class="grid g3">
     <div><label>고객(계약자) 성명</label><input id="h_cust" placeholder="홍길동"></div>
-    <div><label>F P</label><input id="h_fp" placeholder="평촌지점 추진이">
+    <div><label>지점 · F P</label><input id="h_fp" placeholder="교보생명 평촌지점 추진이 FP">
       <div class="hint">자동으로 채워집니다. 고쳐 넣으시면 다음부터 그 이름으로 기억합니다.</div></div>
-    <div><label>방문예정일</label><input id="h_vdate" data-date></div>
+    <div><label>분석일</label><input id="h_adate" data-date></div>
   </div>
   <div class="btns noprint" style="margin-top:11px">
-    <button class="b b-main sm" id="btnSave">💾 이 계약 저장</button>
+    <button class="b b-main sm" id="btnSave">💾 이 고객 저장</button>
     <button class="b b-gold sm" data-tab="4">📂 저장된 고객 불러오기</button>
     <button class="b b-sub sm" id="btnNew">🆕 새 고객 시작</button>
     <button class="b b-sub sm" id="btnDemo">예시 입력</button>
     <span class="hint" id="saveState" style="align-self:center"></span>
   </div>
   <div class="hint" style="margin-top:7px">
-    ※ 본 양식은 1인 1계약 분석용입니다. 계약이 여러 건이면 계약 건수만큼 저장하세요.
-    입력하시는 내용은 <b>자동으로 임시 보관</b>되고, [저장]을 누르면 이 기기에 기록됩니다. 주 1회 ④ 탭에서 <b>백업 파일</b>을 남겨 주세요.
+    ※ 한 고객의 가입 계약을 <b>한 장에 모아</b> 적는 양식입니다. 계약은 아래 ②의 [가입건수] 표에 건별로 넣으세요.
+    입력하시는 내용은 <b>이 기기에 자동으로 임시 보관</b>되고, [저장]을 누르면 <b>고객 누적 DB</b>에 기록됩니다.
   </div>
 </div>
 
 <div class="card">
   <h2><span class="no">1</span>인적사항</h2>
-  <p class="sub">계약 기본 정보입니다. 가입일은 <b>2006년 2월 이전 여부</b>를 자동 판정하는 데 쓰이므로 꼭 입력하세요.</p>
-  <div class="grid g6">
-    <div style="grid-column:span 2"><label>가입일 <span class="gsub">(20030514 처럼 숫자만 넣으셔도 됩니다)</span></label>
-      <input id="i_join" data-date>
-      <div class="hint" id="i_joinMsg">숫자로 직접 치시거나, 오른쪽 📅 단추를 눌러 달력에서 고르세요.</div></div>
-    <div style="grid-column:span 2"><label>상품명</label><input id="i_prod"></div>
-    <div><label>보험료 <span class="gsub">(원/월)</span></label><input id="i_prem" data-money placeholder="50000"></div>
-    <div><label>인수조건</label><select id="i_uw">
-      <option value="">해당없음(표준)</option><option>부담보</option><option>할증</option><option>삭감</option></select></div>
-  </div>
-  <div class="grid g6" style="margin-top:9px">
-    <div><label>가입연령 <span class="gsub">(피보험자 · 세)</span></label>
-      <input id="i_age" type="number" min="0" max="100" placeholder="32">
-      <div class="hint">「○○세 만기」 계산에 쓰입니다.</div></div>
-    <div><label>납입기간 <span class="gsub">(예: 20년)</span></label>
-      <input id="i_payterm" placeholder="20년 · 120개월 · 전기납"></div>
-    <div><label>납입 만료일 <span class="gsub">(자동 계산)</span></label><input id="i_payend" data-date>
-      <div class="hint" id="i_payendMsg">가입일과 납입기간을 넣으시면 자동으로 채워집니다.</div></div>
-    <div><label>보험기간 <span class="gsub">(예: 종신/80세)</span></label>
-      <input id="i_insterm" placeholder="종신 · 80세 · 20년만기"></div>
-    <div><label>보험 만기일 <span class="gsub">(자동 계산)</span></label><input id="i_insend" data-date>
-      <div class="hint" id="i_insendMsg">가입일과 보험기간을 넣으시면 자동으로 채워집니다.</div></div>
-    <div><label>예정이율 <span class="gsub">(%)</span></label><input id="i_rate" type="number" step="0.01" placeholder="6.5"></div>
-  </div>
+  <p class="sub">고객 연락 정보입니다. 주소가 바뀌었으면 변경 전·후를 함께 남겨 두세요.</p>
+  <table class="form">
+    <tr><td class="gk w1">전화번호</td><td><input id="p_phone" placeholder="010-0000-0000" inputmode="tel"></td>
+        <td class="gk w1">직 업</td><td><input id="p_job"></td></tr>
+    <tr><td class="gk">고객생일</td><td><input id="p_bday" placeholder="03-20 또는 1971-03-20"></td>
+        <td class="gk">기념일</td><td><input id="p_anniv" placeholder="결혼기념일 05-06"></td></tr>
+    <tr><td class="gk" rowspan="2">주 소</td><td colspan="3"><div class="addr"><span>변경 전 :</span><input id="p_addr0"></div></td></tr>
+    <tr><td colspan="3"><div class="addr"><span>변경 후 :</span><input id="p_addr1"></div></td></tr>
+  </table>
 </div>
 
 <div class="card">
   <h2><span class="no">2</span>계약사항</h2>
-  <p class="sub">계약자 · 주피보험자 · 수익자 정보입니다. 수익자가 비어 있으면 지정 안내 대상으로 자동 분류됩니다.</p>
-  <div class="tscroll">
+  <p class="sub">가입하신 계약을 건별로 적습니다. <b>가입일</b>은 2006년 2월 이전 여부를 자동 판정하는 데 쓰이므로 꼭 넣어 주세요.</p>
+  <div id="rs_contracts"></div>
+  <div class="hint" id="rs_contractsMsg" style="margin-top:7px"></div>
+
+  <div class="tscroll" style="margin-top:14px">
   <table class="form">
     <tr><th colspan="5">계약자</th><th colspan="5">주피보험자</th><th colspan="2">수익자</th></tr>
     <tr><th class="wname">성명</th><th class="wsex">성별</th><th class="wbirth">생년월일</th><th class="wage">가입연령</th><th class="wage">현재연령</th>
@@ -257,42 +280,45 @@ textarea#script{height:280px;font-size:12.8px;line-height:1.7;white-space:pre-wr
   </div>
   <div class="hint tscroll-hint">※ 화면이 좁으면 위 표를 <b>옆으로 밀어서</b> 나머지 칸을 보실 수 있습니다.</div>
   <div class="hint" id="c_ageMsg" style="margin-top:7px">생년월일을 넣으시면 회사 기준(계약일 − 생년월일 → 6개월 미만은 버리고, 6개월 이상이면 한 살 올림)으로 가입연령·현재연령이 자동 계산됩니다.</div>
+
+  <table class="form" style="margin-top:12px">
+    <tr><td class="gk w1" rowspan="2">인수조건</td><th class="wuw">부담보</th><th class="wuw">할증</th><th class="wuw">삭감</th></tr>
+    <tr><td><input id="c_uwx" placeholder="부위 · 기간"></td>
+        <td><input id="c_uwu" placeholder="할증률 · 사유"></td>
+        <td><input id="c_uwc" placeholder="삭감 내용 · 기간"></td></tr>
+  </table>
 </div>
 
 <div class="card">
-  <h2><span class="no">3</span>계약 DB분석 <span class="gsub">— 앞면 : 할인 · 숨은보험금 찾아주기 · 헬스케어</span></h2>
+  <h2><span class="no">3</span>계약 DB분석 <span class="gsub">— 앞면 : 할인 · 숨은보험금 · 헬스케어 · 납입/대출 · 보험금</span></h2>
   <p class="sub">O / X 를 고르시면 아래 ② 진단 결과에서 <b>청구 가능한 숨은보험금과 할인 대상</b>이 자동으로 걸러집니다.</p>
   <table class="form">
-    <tr><th style="width:96px">구분</th><th class="it">항목</th><th style="width:26%">내용</th><th style="width:22%">사전 자료준비</th></tr>
+    <tr><th class="wgk">구분</th><th class="it">항목</th><th class="wval">내용</th><th class="wprep">사전 자료준비</th></tr>
 
     <tr><td class="gk" rowspan="3">건강체<br>할인</td>
       <td>주계약 표준체 / 정상인수 여부</td>
       <td><select id="f_std" class="ox"><option value=""></option><option>O</option><option>X</option></select></td>
-      <td class="prep" rowspan="3">변경후 보험료, 환급금<br>지원담당 문의 / FP.COM<br>BMI 예시표 지참</td></tr>
-    <tr><td>키 / 몸무게 / BMI / 흡연여부 확인 <span class="gsub">(고객)</span></td>
-      <td><div class="grid g4" style="gap:4px">
-        <input id="f_ht" type="number" placeholder="키cm"><input id="f_wt" type="number" placeholder="kg">
-        <input id="f_bmi" placeholder="BMI" readonly style="background:var(--surf2)">
-        <select id="f_smoke"><option value=""></option><option>비흡연</option><option>흡연</option></select></div></td></tr>
+      <td class="prep" rowspan="3">변경후 보험료, 환급금<br>지원담당 문의 / FP.COM</td></tr>
     <tr><td>건강체 변경시 보험료 / 환급금액 <span class="gsub">(총무, FP.com)</span></td>
       <td><div class="grid g2" style="gap:4px"><input id="f_hprem" data-money placeholder="변경후 보험료">
         <input id="f_href" data-money placeholder="환급금액"></div></td></tr>
+    <tr><td>현재 할인 적용 여부</td>
+      <td><select id="f_disc" class="ox"><option value=""></option><option>O</option><option>X</option></select></td></tr>
 
-    <tr><td class="gk" rowspan="2">직장할인</td>
-      <td>현재 할인적용 여부</td>
-      <td><select id="f_disc" class="ox"><option value=""></option><option>O</option><option>X</option></select></td>
-      <td class="prep" rowspan="2">직장 계약 할인표</td></tr>
-    <tr><td>직장명 / 단체명 확인 <span class="gsub">(고객)</span></td><td><input id="f_comp"></td></tr>
+    <tr><td class="gk">직장할인</td>
+      <td>직장명 / 단체명 확인 <span class="gsub">(고객)</span></td>
+      <td><input id="f_comp"></td>
+      <td class="prep">직장 계약 할인표</td></tr>
 
     <tr><td class="gk" rowspan="2">수술급여금<br>찾아주기</td>
       <td>수술특약 가입여부 <span class="gsub">(가입일 2006.02 이전)</span></td>
       <td><select id="f_surg" class="ox"><option value=""></option><option>O</option><option>X</option></select></td>
       <td class="prep" rowspan="2">수술특약 2종 50만원<br>(초진차트, 진단서)</td></tr>
-    <tr><td>임플란트 치조골이식수술 여부 확인</td>
+    <tr><td>임플란트 치조골이식 수술여부 확인</td>
       <td><select id="f_impl" class="ox"><option value=""></option><option>O</option><option>X</option></select></td></tr>
 
     <tr><td class="gk" rowspan="2">치아파절<br>보험금<br>찾아주기</td>
-      <td>재해치료비특약 또는 골절치료특약 가입여부 <span class="gsub">(가입일 2006.02 이전)</span></td>
+      <td>재해치료비 특약 또는 골절치료 특약 가입여부 <span class="gsub">(가입일 2006.02 이전)</span></td>
       <td><select id="f_acc" class="ox"><option value=""></option><option>O</option><option>X</option></select></td>
       <td class="prep" rowspan="2">치아파절도<br>골절로 보험금 지급<br>(초진차트, 진단서)</td></tr>
     <tr><td>치아파절 여부 확인 <span class="gsub">(고객)</span></td>
@@ -302,56 +328,39 @@ textarea#script{height:280px;font-size:12.8px;line-height:1.7;white-space:pre-wr
       <td>21C 넘버원 암치료보험 가입여부 <span class="gsub">(가입시기 체크)</span></td>
       <td><select id="f_c21" class="ox"><option value=""></option><option>O</option><option>X</option></select></td>
       <td class="prep">주계약에서 200만 지급</td></tr>
-    <tr><td>베스트라이프암보험, 굿라이프암치료보험,<br>폰나이스암보험에 양성종양특약 가입여부</td>
+    <tr><td>베스트라이프 암보험, 굿라이프 암치료보험,<br>폰나이스 암보험에 양성종양 특약 가입여부</td>
       <td><select id="f_ben" class="ox"><option value=""></option><option>O</option><option>X</option></select></td>
       <td class="prep">특약에서 100만 지급</td></tr>
     <tr><td>대장용종 수술여부 확인 <span class="gsub">(고객)</span></td>
       <td><select id="f_polyp" class="ox"><option value=""></option><option>O</option><option>X</option></select></td>
-      <td class="prep">수술특약도 보험금 지급</td></tr>
+      <td class="prep">수술특약도 보험금 지급<br>신청서 스캔 누락 확인</td></tr>
 
-    <tr><td class="gk" rowspan="4">헬스케어<br>서비스</td>
-      <td>헬스케어서비스 회원 가입 여부</td>
+    <tr><td class="gk">헬스케어<br>서비스</td>
+      <td>헬스케어서비스 회원가입 여부</td>
       <td><select id="f_hc" class="ox"><option value=""></option><option>O</option><option>X</option></select></td>
-      <td class="prep" rowspan="4">신청서 스캔누락 확인<br>헬스케어바인딩, 업셀링 전단<br>가입설계 출력<br>업셀링 금액확인</td></tr>
-    <tr><td>종신 / CI 주계약 합산 가입금액 <span class="gsub">(02.2 이후 가입, 만원)</span></td>
-      <td><div class="grid g2" style="gap:4px"><input id="f_ci" data-money placeholder="CI"><input id="f_life" data-money placeholder="종신"></div></td></tr>
-    <tr><td>헬스케어 업셀링시 필요 주계약 / 보험료 / 총환산 <span class="gsub">(CI/실속종신)</span></td>
-      <td><div class="grid g3" style="gap:4px"><input id="f_hcamt" data-money placeholder="만원">
-        <input id="f_hcprem" data-money placeholder="보험료"><input id="f_hcconv" data-money placeholder="총환산"></div></td></tr>
-    <tr><td>건강검진 업셀링시 필요 주계약 / 보험료 / 총환산 <span class="gsub">(종신/CI)</span></td>
-      <td><div class="grid g3" style="gap:4px"><input id="f_ckamt" data-money placeholder="만원">
-        <input id="f_ckprem" data-money placeholder="보험료"><input id="f_ckconv" data-money placeholder="총환산"></div></td></tr>
-  </table>
-</div>
-
-<div class="card">
-  <h2><span class="no">3</span>계약 DB분석 <span class="gsub">— 뒷면 : 납입 · 대출 · 보험금 · 계약관리</span></h2>
-  <p class="sub">금액은 원 단위로 입력하세요. 날짜가 들어가면 만기·수령 시점 도래 여부를 자동으로 계산합니다.</p>
-  <table class="form">
-    <tr><th style="width:96px">구분</th><th class="it">항목</th><th style="width:26%">내용</th><th style="width:22%">사전 자료준비</th></tr>
+      <td class="prep">헬스케어 바인딩 ·<br>안내전단지</td></tr>
 
     <tr><td class="gk">납입관련</td><td>기납입보험료 / 해약환급금</td>
       <td><div class="grid g2" style="gap:4px"><input id="b_paid" data-money placeholder="기납입">
         <input id="b_surr" data-money placeholder="해약환급금"></div></td><td class="prep">-</td></tr>
 
-    <tr><td class="gk" rowspan="2">대출</td>
-      <td>종류 / 기대출금 / 대출가능금액</td>
-      <td><div class="grid g3" style="gap:4px"><select id="b_ltype"><option value=""></option><option>신용</option><option>약대</option></select>
-        <input id="b_lbal" data-money placeholder="기대출금"><input id="b_lavl" data-money placeholder="가능금액"></div></td>
-      <td class="prep" rowspan="2">-</td></tr>
-    <tr><td>대출이율 / 월 납입이자 / 총납입이자</td>
-      <td><div class="grid g3" style="gap:4px"><input id="b_lrate" type="number" step="0.01" placeholder="%">
-        <input id="b_lmi" data-money placeholder="월이자"><input id="b_lti" data-money placeholder="총이자"></div></td></tr>
+    <tr><td class="gk" rowspan="4">대출</td>
+      <td>대출가능금액</td>
+      <td><input id="b_lavl" data-money placeholder="대출가능금액"></td>
+      <td class="prep" rowspan="4">-</td></tr>
+    <tr><td>현재 대출액 <span class="gsub">(신용 / 약대)</span></td>
+      <td><div class="grid g2" style="gap:4px">
+        <select id="b_ltype"><option value=""></option><option>신용</option><option>약대</option></select>
+        <input id="b_lbal" data-money placeholder="현재 대출액"></div></td></tr>
+    <tr><td>대출이율 <span class="gsub">(%)</span></td>
+      <td><input id="b_lrate" type="number" step="0.01" placeholder="5.9"></td></tr>
+    <tr><td>월 납입이자 / 총 납입이자</td>
+      <td><div class="grid g2" style="gap:4px"><input id="b_lmi" data-money placeholder="월이자">
+        <input id="b_lti" data-money placeholder="총이자"></div></td></tr>
 
     <tr><td class="gk">중도인출</td><td>기인출금액 / 인출가능금액</td>
       <td><div class="grid g2" style="gap:4px"><input id="b_wd" data-money placeholder="기인출">
         <input id="b_wdavl" data-money placeholder="인출가능"></div></td><td class="prep">-</td></tr>
-
-    <tr><td class="gk">사고보험금</td>
-      <td>병명 / 수령일 / 수령액
-        <div class="btns noprint" style="margin-top:5px"><button class="b b-sub sm" id="btnAddClaim">＋ 줄 추가</button></div></td>
-      <td><div id="claimBox"></div></td>
-      <td class="prep">보험금 청구서 지참</td></tr>
 
     <tr><td class="gk" rowspan="2">생존보험금</td>
       <td>중도보험금 : 수령예정일 / 금액</td>
@@ -360,31 +369,34 @@ textarea#script{height:280px;font-size:12.8px;line-height:1.7;white-space:pre-wr
     <tr><td>만기보험금 : 만기일 / 금액</td>
       <td><div class="grid g2" style="gap:4px"><input id="b_matdt" data-date><input id="b_matamt" data-money placeholder="금액"></div></td></tr>
 
-    <tr><td class="gk">자동송금</td><td>자동송금 등록여부 (분할 / 만기)</td>
-      <td><div class="grid g2" style="gap:4px">
-        <select id="b_as"><option value="">분할</option><option>분할 O</option><option>분할 X</option></select>
-        <select id="b_am"><option value="">만기</option><option>만기 O</option><option>만기 X</option></select></div></td>
-      <td class="prep">자동송금신청서 지참</td></tr>
-
     <tr><td class="gk">계약변경</td><td>수금자 변경이력 / 계약사항 변경이력</td>
       <td><div class="grid g2" style="gap:4px"><input id="b_pch" placeholder="수금자 변경"><input id="b_cch" placeholder="계약사항 변경"></div></td>
-      <td class="prep">-</td></tr>
+      <td class="prep">계약사항 변경신청서</td></tr>
+  </table>
+</div>
 
-    <tr><td class="gk">실손보험</td><td>실손보험 가입여부 / 타사가입여부 확인</td>
-      <td><div class="grid g2" style="gap:4px">
-        <select id="b_ro"><option value="">당사</option><option>당사 O</option><option>당사 X</option></select>
-        <select id="b_rt"><option value="">타사</option><option>타사 O</option><option>타사 X</option></select></div></td>
-      <td class="prep">실손 손해율표 지참</td></tr>
+<div class="card">
+  <h2><span class="no">3</span>계약 DB분석 <span class="gsub">— 뒷면 : 사고보험금 · 변액 · 보장만기</span></h2>
+  <p class="sub">과거 지급이력과 펀드 내역, 보장이 끝나는 시점입니다. 날짜를 넣으면 만기 도래 여부를 자동으로 계산합니다.</p>
 
-    <tr><td class="gk">변액안내</td><td>펀드가입내역 / 적립비율</td>
-      <td><div class="grid g2" style="gap:4px"><input id="b_fund" placeholder="펀드명"><input id="b_fratio" type="number" step="0.1" placeholder="적립률 %"></div></td>
-      <td class="prep">펀드수익률표<br>(FP.COM 출력)</td></tr>
+  <div class="rsblock">
+    <div class="rshd"><b>사고보험금</b><span class="gsub">보험금 청구서 지참</span></div>
+    <div id="rs_claims"></div>
+  </div>
 
-    <tr><td class="gk">보장 만기</td><td>주요보장급부 만기시점 (주계약 / 특약)</td>
-      <td><div class="grid g2" style="gap:4px"><input id="b_cmain" data-date title="주계약 만기">
-        <input id="b_crider" data-date title="특약 만기"></div>
-        <div class="hint">왼쪽 주계약 / 오른쪽 특약</div></td>
-      <td class="prep">보장분석으로 대체가능</td></tr>
+  <div class="rsblock">
+    <div class="rshd"><b>변액안내</b><span class="gsub">펀드수익률표 · 펀드가입내역/적립비율 (FP.COM 출력)</span></div>
+    <div id="rs_funds"></div>
+  </div>
+
+  <table class="form" style="margin-top:14px">
+    <tr><th class="wgk">구분</th><th class="it">항목</th><th class="wval">내용</th><th class="wprep">사전 자료준비</th></tr>
+    <tr><td class="gk" rowspan="2">보장만기</td>
+      <td>주요보장 급부 만기시점 — <b>주계약</b></td>
+      <td><input id="b_cmain" data-date></td>
+      <td class="prep" rowspan="2">보장분석으로 대체 가능</td></tr>
+    <tr><td>주요보장 급부 만기시점 — <b>특약</b></td>
+      <td><input id="b_crider" data-date></td></tr>
   </table>
 
   <div class="btns noprint" style="margin-top:14px;justify-content:center">
@@ -428,43 +440,50 @@ textarea#script{height:280px;font-size:12.8px;line-height:1.7;white-space:pre-wr
     <h2><span class="no">4</span>방문 전 준비물 체크</h2>
     <p class="sub">진단 결과에 따라 <b style="color:var(--gold)">노란색으로 자동 체크</b>된 항목은 이번 방문에 반드시 챙기셔야 할 자료입니다.</p>
     <div class="grid g4" id="prepBox"></div>
-    <div style="margin-top:9px"><label>기타 준비물</label><input id="pr_etc"></div>
   </div>
 
   <div class="card">
     <h2><span class="no">5</span>상담 메모 및 후속조치</h2>
-    <table class="form">
-      <tr><td class="gk">고객 요청사항</td><td colspan="3"><textarea id="m_req" rows="2"></textarea></td></tr>
-      <tr><td class="gk">상담 내용</td><td colspan="3"><textarea id="m_note" rows="3"></textarea></td></tr>
-      <tr><td class="gk">숨은보험금 발견</td><td colspan="3">
-        <textarea id="m_hidden" rows="2"></textarea>
-        <div class="btns noprint" style="margin-top:5px"><button class="b b-sub sm" id="btnFillHidden">진단 결과에서 자동으로 채우기</button>
-        <span class="hint" style="align-self:center">발견 예상액 합계 : <b id="m_hidamt">0</b> 원</span></div></td></tr>
-      <tr><td class="gk">업셀링 제안</td><td colspan="3"><textarea id="m_upsell" rows="2"></textarea></td></tr>
-      <tr><td class="gk">후속조치 / 처리기한</td>
-        <td><input id="m_follow" placeholder="후속조치 내용"></td>
-        <td class="gk" style="width:80px">처리기한</td><td style="width:170px"><input id="m_deadline" data-date></td></tr>
-      <tr><td class="gk">방문결과 등급</td>
+
+    <div class="rsblock">
+      <div class="rshd"><b>상담내용</b></div>
+      <div id="rs_talks"></div>
+    </div>
+
+    <div class="rsblock">
+      <div class="rshd"><b>숨은보험금 발견</b>
+        <span class="btns noprint"><button class="b b-sub sm" id="btnFillHidden">진단 결과에서 자동으로 채우기</button></span>
+        <span class="hint">발견 예상액 합계 : <b id="m_hidamt">0</b> 원</span></div>
+      <div id="rs_hiddens"></div>
+    </div>
+
+    <table class="form" style="margin-top:14px">
+      <tr><td class="gk w1">고객 요청사항</td><td colspan="3"><textarea id="m_req" rows="2"></textarea></td></tr>
+    </table>
+
+    <div class="rsblock">
+      <div class="rshd"><b>후속조치</b><span class="gsub">처리기한을 넣으면 ⑤ 통계 탭에서 기한 관리가 됩니다</span></div>
+      <div id="rs_follows"></div>
+    </div>
+
+    <table class="form" style="margin-top:14px">
+      <tr><td class="gk w1">방문결과 등급</td>
         <td><select id="m_grade">
           <option value="">선택</option>
           <option value="A">A (즉시 제안 가능)</option>
           <option value="B">B (추후 재접촉)</option>
           <option value="C">C (유지관리)</option></select>
           <div class="hint" id="m_gradeHint"></div></td>
-        <td class="gk" style="width:80px">재접촉 사유</td><td><input id="m_reason"></td></tr>
-      <tr><td class="gk">방문일 / 차기방문</td>
+        <td class="gk w1">재접촉 사유</td><td><input id="m_reason"></td></tr>
+      <tr><td class="gk">방문일</td>
         <td><input id="m_vdate" data-date title="방문일"></td>
-        <td class="gk" style="width:80px">차기 방문<br>예정일</td><td><input id="m_next" data-date></td></tr>
+        <td class="gk">차기 방문예정일</td><td><input id="m_next" data-date></td></tr>
     </table>
   </div>
 
   <div class="card">
     <h2><span class="no">6</span>추가 점검사항 <span class="gsub">— 고객관리 · 놓치기 쉬운 항목</span></h2>
     <div class="grid g2" id="extraBox"></div>
-    <div class="grid g4" style="margin-top:9px">
-      <div><label>고객 생일 (월)</label><input id="e_bm" type="number" min="1" max="12"></div>
-      <div><label>고객 생일 (일)</label><input id="e_bd" type="number" min="1" max="31"></div>
-    </div>
   </div>
 
   <div class="card">
@@ -479,10 +498,10 @@ textarea#script{height:280px;font-size:12.8px;line-height:1.7;white-space:pre-wr
 
   <div class="card noprint" style="text-align:center">
     <div class="btns" style="justify-content:center">
-      <button class="b b-main" id="btnSave2" style="padding:12px 36px;font-size:15px">💾 이 계약 저장</button>
+      <button class="b b-main" id="btnSave2" style="padding:12px 36px;font-size:15px">💾 이 고객 저장 (누적 DB에 기록)</button>
       <button class="b b-sub" id="btnPrint3">🖨 인쇄 / PDF</button>
     </div>
-    <div class="hint" style="margin-top:8px">저장하면 ④ 고객 누적 DB에 쌓입니다. 같은 고객의 다른 계약도 이어서 저장하세요.</div>
+    <div class="hint" style="margin-top:8px">저장하면 ④ 고객 누적 DB에 쌓입니다. 같은 고객을 다시 방문하시면 불러와서 이어 쓰세요.</div>
   </div>
 </div>
 
@@ -490,8 +509,8 @@ textarea#script{height:280px;font-size:12.8px;line-height:1.7;white-space:pre-wr
 <!-- ================= TAB 4 : 고객 DB ================= -->
 <div class="pane" id="p4">
   <div class="card">
-    <h2><span class="no">8</span>고객 누적 DB <span class="gsub">— 이 기기에 저장</span></h2>
-    <p class="sub">저장한 계약이 고객별로 이 기기에 쌓입니다.</p>
+    <h2><span class="no">8</span>고객 누적 DB</h2>
+    <p class="sub">저장한 방문기록이 고객별로 쌓입니다.</p>
     <div class="btns noprint" style="margin-bottom:11px">
       <input id="q" placeholder="고객명 · 상품명 검색" style="max-width:240px">
       <button class="b b-sub sm" id="btnReload">🔄 새로고침</button>
@@ -512,12 +531,12 @@ textarea#script{height:280px;font-size:12.8px;line-height:1.7;white-space:pre-wr
       </div>
       <div class="hint" style="margin-top:7px">
         컴퓨터가 없는 자리에서는 <b>빈 서식</b>을 인쇄해 손으로 적어 오신 뒤, 사무실에서 엑셀에 옮겨 <b>[작성한 서식 올리기]</b>로 한 번에 등록하실 수 있습니다.
-        각 계약의 <b>[엑셀]</b> 단추를 누르면 진단 결과와 상담 스크립트까지 담긴 파일이 만들어집니다.
+        각 고객의 <b>[엑셀]</b> 단추를 누르면 진단 결과와 상담 스크립트까지 담긴 파일이 만들어집니다.
       </div>
     </div>
 
     <div class="warn noprint" style="margin-bottom:12px">
-      <b>보관 안내</b> · 자료는 서버 DB(<span id="dbPathHint">data/kyobo.db</span>)에 저장됩니다.
+      <b>보관 안내</b> · 자료는 <span id="dbPathHint">data/kyobo.db</span> 에 저장됩니다.
       고객 개인정보가 담기므로 <b>주 1회 정도 [전체 백업 파일 저장]</b>으로 파일을 따로 남겨 두시고, 회사 보안 규정에 따라 관리해 주세요.
     </div>
     <div id="dbBox"></div>
@@ -529,7 +548,7 @@ textarea#script{height:280px;font-size:12.8px;line-height:1.7;white-space:pre-wr
 <div class="pane" id="p5">
   <div class="card">
     <h2><span class="no">9</span>누적 활동 통계</h2>
-    <p class="sub">저장된 전체 계약을 기준으로 집계합니다.</p>
+    <p class="sub">저장된 전체 방문기록을 기준으로 집계합니다.</p>
     <div class="kpi" id="s_kpi"></div>
   </div>
   <div class="card">
@@ -737,6 +756,7 @@ textarea#script{height:280px;font-size:12.8px;line-height:1.7;white-space:pre-wr
 /* ===== shared/schema.js ===== */
 /*
  * 항목 정의 — 이 파일 하나가 기준입니다.
+ * 회사 양식 「평생든든 방문활동 사전준비」(개정판, 앞면/뒷면 2장)의 칸을 그대로 옮겨 놓은 것입니다.
  * 여기에 항목을 추가하면 서버 DB 컬럼 · 엑셀 서식 · CSV 내보내기가 함께 따라옵니다.
  * (웹 입력화면은 회사 양식 배치를 그대로 살리기 위해 public/index.html 에서 직접 그리며,
  *  입력칸 id 는 아래 k 값과 1:1 로 맞춰져 있습니다. 서버가 기동할 때 누락 여부를 검사합니다.)
@@ -752,29 +772,25 @@ textarea#script{height:280px;font-size:12.8px;line-height:1.7;white-space:pre-wr
       desc: '누구를, 언제 방문하는지에 대한 기본 정보입니다.',
       fields: [
         { k: 'h_cust', label: '고객(계약자) 성명', type: 'text', required: true },
-        { k: 'h_fp', label: 'FP', type: 'text' },
-        { k: 'h_vdate', label: '방문예정일', type: 'date' }
+        { k: 'h_fp', label: '지점 · FP', type: 'text', ph: '평촌지점 추진이' },
+        { k: 'h_adate', label: '분석일', type: 'date' }
       ]
     },
     {
       key: 'person', no: 1, title: '인적사항',
-      desc: '계약 기본 정보입니다. 가입일은 2006년 2월 이전 여부를 판정하는 데 쓰입니다.',
+      desc: '고객 연락 정보입니다. 주소는 바뀐 경우에만 변경 전/후를 함께 적으세요.',
       fields: [
-        { k: 'i_join', label: '가입일', type: 'date' },
-        { k: 'i_prod', label: '상품명', type: 'text' },
-        { k: 'i_prem', label: '보험료', type: 'number', unit: '원/월' },
-        { k: 'i_uw', label: '인수조건', type: 'select', options: ['부담보', '할증', '삭감'], blank: '해당없음(표준)' },
-        { k: 'i_age', label: '가입연령', type: 'number', unit: '세' },
-        { k: 'i_payterm', label: '납입기간', type: 'text', ph: '20년 · 120개월 · 전기납' },
-        { k: 'i_payend', label: '납입 만료일', type: 'date', auto: true },
-        { k: 'i_insterm', label: '보험기간', type: 'text', ph: '종신 · 80세 · 20년만기' },
-        { k: 'i_insend', label: '보험 만기일', type: 'date', auto: true },
-        { k: 'i_rate', label: '예정이율', type: 'number', unit: '%' }
+        { k: 'p_phone', label: '전화번호', type: 'text', ph: '010-0000-0000' },
+        { k: 'p_job', label: '직업', type: 'text' },
+        { k: 'p_bday', label: '고객생일', type: 'text', ph: '03-20 또는 1971-03-20' },
+        { k: 'p_anniv', label: '기념일', type: 'text', ph: '결혼기념일 05-06' },
+        { k: 'p_addr0', label: '주소 (변경 전)', type: 'text' },
+        { k: 'p_addr1', label: '주소 (변경 후)', type: 'text' }
       ]
     },
     {
       key: 'contract', no: 2, title: '계약사항',
-      desc: '계약자 · 주피보험자 · 수익자 정보입니다.',
+      desc: '계약자 · 주피보험자 · 수익자와 인수조건입니다. 가입 계약은 아래 [가입건수] 표에 건별로 적습니다.',
       fields: [
         { k: 'c_on', label: '계약자 성명', type: 'text' },
         { k: 'c_os', label: '계약자 성별', type: 'select', options: ['남', '여'] },
@@ -786,125 +802,184 @@ textarea#script{height:280px;font-size:12.8px;line-height:1.7;white-space:pre-wr
         { k: 'c_ibirth', label: '주피보험자 생년월일', type: 'date' },
         { k: 'c_ija', label: '주피보험자 가입연령', type: 'number', auto: true },
         { k: 'c_ina', label: '주피보험자 현재연령', type: 'number', auto: true },
-        { k: 'c_bh', label: '수익자(입원시)', type: 'text', ph: '예: 본인' },
-        { k: 'c_bd', label: '수익자(사망시)', type: 'text', ph: '예: 배우자' }
+        { k: 'c_bh', label: '수익자 (입원시)', type: 'text', ph: '본인' },
+        { k: 'c_bd', label: '수익자 (사망시)', type: 'text', ph: '배우자' },
+        { k: 'c_uwx', label: '인수조건 — 부담보', type: 'text', ph: '부위 · 기간' },
+        { k: 'c_uwu', label: '인수조건 — 할증', type: 'text', ph: '할증률 · 사유' },
+        { k: 'c_uwc', label: '인수조건 — 삭감', type: 'text', ph: '삭감 내용 · 기간' }
       ]
     },
     {
       key: 'front', no: 3, title: '계약 DB분석 — 앞면',
-      desc: '할인 · 숨은보험금 찾아주기 · 헬스케어',
+      desc: '할인 · 숨은보험금 · 헬스케어 · 납입/대출 · 보험금',
       fields: [
         { k: 'f_std', label: '주계약 표준체 / 정상인수 여부', type: 'select', options: OX, group: '건강체 할인' },
-        { k: 'f_ht', label: '키', type: 'number', unit: 'cm', group: '건강체 할인' },
-        { k: 'f_wt', label: '몸무게', type: 'number', unit: 'kg', group: '건강체 할인' },
-        { k: 'f_bmi', label: 'BMI', type: 'number', auto: true, group: '건강체 할인' },
-        { k: 'f_smoke', label: '흡연여부', type: 'select', options: ['비흡연', '흡연'], group: '건강체 할인' },
-        { k: 'f_hprem', label: '건강체 변경후 보험료', type: 'number', unit: '원', group: '건강체 할인' },
-        { k: 'f_href', label: '건강체 환급금액', type: 'number', unit: '원', group: '건강체 할인' },
-        { k: 'f_disc', label: '직장할인 현재 적용여부', type: 'select', options: OX, group: '직장할인' },
-        { k: 'f_comp', label: '직장명 / 단체명', type: 'text', group: '직장할인' },
-        { k: 'f_surg', label: '수술특약 가입여부', type: 'select', options: OX, group: '수술급여금', hint: '가입일 2006.02 이전' },
-        { k: 'f_impl', label: '임플란트 치조골이식수술 여부', type: 'select', options: OX, group: '수술급여금' },
-        { k: 'f_acc', label: '재해치료비/골절치료특약 가입여부', type: 'select', options: OX, group: '치아파절', hint: '가입일 2006.02 이전' },
-        { k: 'f_tooth', label: '치아파절 여부', type: 'select', options: OX, group: '치아파절' },
-        { k: 'f_c21', label: '21C 넘버원 암치료보험 가입여부', type: 'select', options: OX, group: '대장용종' },
-        { k: 'f_ben', label: '양성종양특약 가입여부', type: 'select', options: OX, group: '대장용종' },
-        { k: 'f_polyp', label: '대장용종 수술여부', type: 'select', options: OX, group: '대장용종' },
-        { k: 'f_hc', label: '헬스케어서비스 회원 가입여부', type: 'select', options: OX, group: '헬스케어' },
-        { k: 'f_ci', label: 'CI 주계약 가입금액', type: 'number', unit: '만원', group: '헬스케어' },
-        { k: 'f_life', label: '종신 주계약 가입금액', type: 'number', unit: '만원', group: '헬스케어' },
-        { k: 'f_hcamt', label: '헬스케어 업셀링 필요 주계약', type: 'number', unit: '만원', group: '헬스케어' },
-        { k: 'f_hcprem', label: '헬스케어 업셀링 보험료', type: 'number', unit: '원', group: '헬스케어' },
-        { k: 'f_hcconv', label: '헬스케어 업셀링 총환산', type: 'number', group: '헬스케어' },
-        { k: 'f_ckamt', label: '건강검진 업셀링 필요 주계약', type: 'number', unit: '만원', group: '헬스케어' },
-        { k: 'f_ckprem', label: '건강검진 업셀링 보험료', type: 'number', unit: '원', group: '헬스케어' },
-        { k: 'f_ckconv', label: '건강검진 업셀링 총환산', type: 'number', group: '헬스케어' }
-      ]
-    },
-    {
-      key: 'back', no: 3, title: '계약 DB분석 — 뒷면',
-      desc: '납입 · 대출 · 보험금 · 계약관리 (금액은 원 단위)',
-      fields: [
+        { k: 'f_hprem', label: '건강체 변경시 보험료', type: 'number', unit: '원', group: '건강체 할인', hint: '총무 · FP.com 확인' },
+        { k: 'f_href', label: '건강체 변경시 환급금액', type: 'number', unit: '원', group: '건강체 할인' },
+        { k: 'f_disc', label: '현재 할인 적용 여부', type: 'select', options: OX, group: '건강체 할인' },
+        { k: 'f_comp', label: '직장명 / 단체명 확인 (고객)', type: 'text', group: '직장할인' },
+        { k: 'f_surg', label: '수술특약 가입여부', type: 'select', options: OX, group: '수술급여금 찾아주기', hint: '가입일 2006.02 이전' },
+        { k: 'f_impl', label: '임플란트 치조골이식 수술여부 확인', type: 'select', options: OX, group: '수술급여금 찾아주기' },
+        { k: 'f_acc', label: '재해치료비 특약 또는 골절치료 특약 가입여부', type: 'select', options: OX, group: '치아파절 보험금 찾아주기', hint: '가입일 2006.02 이전' },
+        { k: 'f_tooth', label: '치아파절 여부 확인 (고객)', type: 'select', options: OX, group: '치아파절 보험금 찾아주기' },
+        { k: 'f_c21', label: '21C 넘버원 암치료보험 가입여부', type: 'select', options: OX, group: '대장용종 보험금 찾아주기', hint: '가입시기 체크' },
+        { k: 'f_ben', label: '양성종양 특약 가입여부', type: 'select', options: OX, group: '대장용종 보험금 찾아주기', hint: '베스트라이프 · 굿라이프 · 폰나이스 암보험' },
+        { k: 'f_polyp', label: '대장용종 수술여부 확인 (고객)', type: 'select', options: OX, group: '대장용종 보험금 찾아주기' },
+        { k: 'f_hc', label: '헬스케어서비스 회원가입 여부', type: 'select', options: OX, group: '헬스케어 서비스' },
         { k: 'b_paid', label: '기납입보험료', type: 'number', unit: '원', group: '납입관련' },
         { k: 'b_surr', label: '해약환급금', type: 'number', unit: '원', group: '납입관련' },
-        { k: 'b_ltype', label: '대출종류', type: 'select', options: ['신용', '약대'], group: '대출' },
-        { k: 'b_lbal', label: '기대출금', type: 'number', unit: '원', group: '대출' },
         { k: 'b_lavl', label: '대출가능금액', type: 'number', unit: '원', group: '대출' },
+        { k: 'b_ltype', label: '대출 종류', type: 'select', options: ['신용', '약대'], group: '대출' },
+        { k: 'b_lbal', label: '현재 대출액', type: 'number', unit: '원', group: '대출' },
         { k: 'b_lrate', label: '대출이율', type: 'number', unit: '%', group: '대출' },
         { k: 'b_lmi', label: '월 납입이자', type: 'number', unit: '원', group: '대출' },
         { k: 'b_lti', label: '총 납입이자', type: 'number', unit: '원', group: '대출' },
         { k: 'b_wd', label: '기인출금액', type: 'number', unit: '원', group: '중도인출' },
         { k: 'b_wdavl', label: '인출가능금액', type: 'number', unit: '원', group: '중도인출' },
         { k: 'b_middt', label: '중도보험금 수령예정일', type: 'date', group: '생존보험금' },
-        { k: 'b_midamt', label: '중도보험금액', type: 'number', unit: '원', group: '생존보험금' },
+        { k: 'b_midamt', label: '중도보험금 금액', type: 'number', unit: '원', group: '생존보험금' },
         { k: 'b_matdt', label: '만기보험금 만기일', type: 'date', group: '생존보험금' },
-        { k: 'b_matamt', label: '만기보험금액', type: 'number', unit: '원', group: '생존보험금' },
-        { k: 'b_as', label: '자동송금(분할) 등록여부', type: 'select', options: ['분할 O', '분할 X'], group: '자동송금' },
-        { k: 'b_am', label: '자동송금(만기) 등록여부', type: 'select', options: ['만기 O', '만기 X'], group: '자동송금' },
+        { k: 'b_matamt', label: '만기보험금 금액', type: 'number', unit: '원', group: '생존보험금' },
         { k: 'b_pch', label: '수금자 변경이력', type: 'text', group: '계약변경' },
-        { k: 'b_cch', label: '계약사항 변경이력', type: 'text', group: '계약변경' },
-        { k: 'b_ro', label: '실손보험 당사 가입여부', type: 'select', options: ['당사 O', '당사 X'], group: '실손보험' },
-        { k: 'b_rt', label: '실손보험 타사 가입여부', type: 'select', options: ['타사 O', '타사 X'], group: '실손보험' },
-        { k: 'b_fund', label: '펀드가입내역', type: 'text', group: '변액안내' },
-        { k: 'b_fratio', label: '적립비율', type: 'number', unit: '%', group: '변액안내' },
-        { k: 'b_cmain', label: '주계약 보장 만기시점', type: 'date', group: '보장 만기' },
-        { k: 'b_crider', label: '특약 보장 만기시점', type: 'date', group: '보장 만기' }
+        { k: 'b_cch', label: '계약사항 변경이력', type: 'text', group: '계약변경' }
+      ]
+    },
+    {
+      key: 'back', no: 3, title: '계약 DB분석 — 뒷면',
+      desc: '사고보험금 · 변액 · 보장만기',
+      fields: [
+        { k: 'b_cmain', label: '주계약 보장 만기시점', type: 'date', group: '보장만기' },
+        { k: 'b_crider', label: '특약 보장 만기시점', type: 'date', group: '보장만기' }
       ]
     },
     {
       key: 'memo', no: 5, title: '상담 메모 및 후속조치',
       desc: '방문 결과와 다음에 할 일을 남깁니다.',
       fields: [
-        { k: 'pr_etc', label: '기타 준비물', type: 'text' },
+        { k: 'pr_etc1', label: '준비물 기타 1', type: 'text' },
+        { k: 'pr_etc2', label: '준비물 기타 2', type: 'text' },
+        { k: 'pr_etc3', label: '준비물 기타 3', type: 'text' },
         { k: 'm_req', label: '고객 요청사항', type: 'textarea' },
-        { k: 'm_note', label: '상담 내용', type: 'textarea' },
-        { k: 'm_hidden', label: '숨은보험금 발견', type: 'textarea' },
-        { k: 'm_upsell', label: '업셀링 제안', type: 'textarea' },
-        { k: 'm_follow', label: '후속조치', type: 'text' },
-        { k: 'm_deadline', label: '처리기한', type: 'date' },
         { k: 'm_grade', label: '방문결과 등급', type: 'select', options: ['A', 'B', 'C'] },
         { k: 'm_reason', label: '재접촉 사유', type: 'text' },
         { k: 'm_vdate', label: '방문일', type: 'date' },
-        { k: 'm_next', label: '차기 방문예정일', type: 'date' },
-        { k: 'e_bm', label: '고객 생일 (월)', type: 'number' },
-        { k: 'e_bd', label: '고객 생일 (일)', type: 'number' }
+        { k: 'm_next', label: '차기 방문예정일', type: 'date' }
       ]
     }
   ];
 
-  /* 방문 전 준비물 체크리스트 */
-  const PREPS = [
-    { id: 'p1', t: '보장분석서' }, { id: 'p2', t: '가입설계서(업셀링)' },
-    { id: 'p3', t: '보험금 청구서' }, { id: 'p4', t: '생존보험금 신청서' },
-    { id: 'p5', t: '자동송금 신청서' }, { id: 'p6', t: '실손 손해율표' },
-    { id: 'p7', t: '펀드수익률표' }, { id: 'p8', t: 'BMI 예시표' },
-    { id: 'p9', t: '직장 계약 할인표' }, { id: 'p10', t: '헬스케어 안내전단' },
-    { id: 'p11', t: '계약사항 변경신청서' }, { id: 'p12', t: '초진차트 · 진단서' }
+  /*
+   * 여러 줄로 적는 표들.
+   * 화면 · 엑셀 · 저장소가 모두 이 정의 하나를 보고 만들어집니다.
+   */
+  const ROWSETS = [
+    {
+      key: 'contracts', label: '가입건수', sheet: '계약사항',
+      sub: '가입하신 계약을 건별로 적습니다. 가입일은 2006년 2월 이전 여부 판정에 쓰입니다.',
+      rows: 3, addLabel: '＋ 계약 추가',
+      cols: [
+        { k: 'join', label: '가입일', type: 'date', w: 15 },
+        { k: 'prod', label: '상품명', type: 'text', w: 30 },
+        { k: 'prem', label: '보험료', type: 'number', unit: '원', w: 14 },
+        { k: 'payterm', label: '납입기간', type: 'text', ph: '20년 · 전기납', w: 14 },
+        { k: 'payend', label: '납입 만료일', type: 'date', auto: true, w: 15 },
+        { k: 'insterm', label: '보험기간', type: 'text', ph: '종신 · 80세', w: 14 },
+        { k: 'insend', label: '보험 만기일', type: 'date', auto: true, w: 15 }
+      ]
+    },
+    {
+      key: 'claims', label: '사고보험금', sheet: '사고보험금',
+      sub: '과거에 받으신 보험금 이력입니다. 추가 청구 가능 여부를 함께 판정합니다.',
+      rows: 3, addLabel: '＋ 줄 추가',
+      cols: [
+        { k: 'c', label: '코드번호', type: 'text', w: 14 },
+        { k: 'd', label: '병명', type: 'text', w: 30 },
+        { k: 't', label: '수령일', type: 'date', w: 15 },
+        { k: 'a', label: '수령액', type: 'number', unit: '원', w: 16 }
+      ]
+    },
+    {
+      key: 'funds', label: '변액안내', sheet: '변액펀드',
+      sub: '펀드 가입내역과 적립비율입니다. (FP.COM 출력)',
+      rows: 2, addLabel: '＋ 펀드 추가',
+      cols: [
+        { k: 'name', label: '펀드 가입내역', type: 'text', w: 34 },
+        { k: 'ratio', label: '적립비율', type: 'number', unit: '%', w: 14 }
+      ]
+    },
+    {
+      key: 'talks', label: '상담내용', sheet: '상담메모',
+      sub: '상담일자별로 나눈 이야기를 적습니다.',
+      rows: 2, addLabel: '＋ 상담 추가',
+      cols: [
+        { k: 'date', label: '상담일자', type: 'date', w: 15 },
+        { k: 'note', label: '내용', type: 'text', w: 52 }
+      ]
+    },
+    {
+      key: 'hiddens', label: '숨은보험금 발견', sheet: '숨은보험금',
+      sub: '이번 방문에서 찾아드린 보험금입니다. [진단 결과에서 자동으로 채우기]로 옮길 수 있습니다.',
+      rows: 3, addLabel: '＋ 줄 추가',
+      cols: [
+        { k: 'code', label: '코드번호', type: 'text', w: 14 },
+        { k: 'item', label: '보장내역', type: 'text', w: 40 },
+        { k: 'amt', label: '보장금액', type: 'number', unit: '원', w: 16 }
+      ]
+    },
+    {
+      key: 'follows', label: '후속조치', sheet: '후속조치',
+      sub: '처리기한이 있는 일은 여기에 적으면 ⑤ 통계 탭에서 기한 관리가 됩니다.',
+      rows: 2, addLabel: '＋ 줄 추가',
+      cols: [
+        { k: 'what', label: '후속조치 내용', type: 'text', w: 46 },
+        { k: 'due', label: '처리기한', type: 'date', w: 15 }
+      ]
+    }
   ];
 
-  /* 놓치기 쉬운 추가 점검사항 */
+  function rowsetMap() {
+    const m = {};
+    ROWSETS.forEach(function (r) { m[r.key] = r; });
+    return m;
+  }
+
+  /* 빈 값만 남은 줄은 버립니다 */
+  function pruneRows(set, list) {
+    return (list || []).filter(function (row) {
+      return row && set.cols.some(function (c) { return String(row[c.k] == null ? '' : row[c.k]).trim(); });
+    });
+  }
+
+  /* 방문 전 준비물 체크리스트 (양식 4번) */
+  const PREPS = [
+    { id: 'p1', t: '보장분석서' },
+    { id: 'p2', t: '가입설계서 (업셀링)' },
+    { id: 'p3', t: '보험금 청구서' },
+    { id: 'p4', t: '생존보험금 신청서' },
+    { id: 'p5', t: '펀드수익률표' },
+    { id: 'p6', t: '명함 · 사은품' },
+    { id: 'p7', t: '직장 계약 할인표' },
+    { id: 'p8', t: '헬스케어 안내전단지' },
+    { id: 'p9', t: '계약사항 변경신청서' },
+    { id: 'p10', t: '기타', etc: 'pr_etc1' },
+    { id: 'p11', t: '기타', etc: 'pr_etc2' },
+    { id: 'p12', t: '기타', etc: 'pr_etc3' }
+  ];
+
+  /* 추가 점검사항 — 고객관리 · 놓치기 쉬운 항목 (양식 6번) */
   const EXTRAS = [
-    { id: 'e1', t: '연락처 / 주소 / 이메일 최신화' },
+    { id: 'e1', t: '연락처 · 주소 · 이메일 최신화' },
     { id: 'e2', t: '보험료 납입방법(계좌·카드) 및 이체일 확인' },
-    { id: 'e3', t: '미납 / 실효 · 부활 대상 여부' },
+    { id: 'e3', t: '미납 · 실효 · 부활 대상 여부' },
     { id: 'e4', t: '숨은보험금 · 휴면보험금 조회 결과' },
     { id: 'e5', t: '보장성보험료 세액공제 증명서 안내' },
-    { id: 'e6', t: '수익자 지정 적정성 (상속·유족 청구 편의)' },
+    { id: 'e6', t: '수익자 지정 적정성 (상속 · 유족청구 편의)' },
     { id: 'e7', t: '교보생명 앱 · 알림톡 가입 안내' },
     { id: 'e8', t: '가족 보장현황 확인 및 소개 요청' },
-    { id: 'e9', t: '계약 전 알릴의무 / 고지 관련 유의사항 안내' },
-    { id: 'e10', t: '개인정보 활용 동의 여부 확인' },
-    { id: 'e11', t: '고객 생일 · 기념일 확인' },
-    { id: 'e12', t: '직업 · 취미 변경 여부 (위험직군 통지의무)' },
-    { id: 'e13', t: '연금전환 · 중도인출 등 자금활용 니즈 파악' },
-    { id: 'e14', t: '만기 · 갱신 도래 계약 사전 안내' }
-  ];
-
-  /* 사고보험금 지급이력 (여러 줄) */
-  const CLAIM_FIELDS = [
-    { k: 'd', label: '병명', type: 'text' },
-    { k: 't', label: '수령일', type: 'date' },
-    { k: 'a', label: '수령액', type: 'number', unit: '원' }
+    { id: 'e9', t: '직업 · 취미 변경 여부 (위험직군 통지의무)' },
+    { id: 'e10', t: '만기 · 갱신 도래 계약 사전 안내' },
+    { id: 'e11', t: '연금전환 · 중도인출 등 자금활용 니즈 파악' },
+    { id: 'e12', t: '계약 전 알릴의무 · 고지사항 안내' }
   ];
 
   /* 고객 마스터에 올라가는 항목 (계약이 여러 건이어도 한 번만 관리) */
@@ -935,44 +1010,81 @@ textarea#script{height:280px;font-size:12.8px;line-height:1.7;white-space:pre-wr
     return allFields().filter(function (f) { return f.k !== 'h_cust'; });
   }
 
-  /* CSV / 누적대장 열 순서 */
+  /* CSV / 누적대장 열 순서 — '_' 로 시작하는 것은 계산 항목입니다 */
   const LEDGER_COLS = [
     { k: '_savedAt', label: '저장일시' },
     { k: 'h_cust', label: '고객명' },
-    { k: 'h_fp', label: 'FP' },
-    { k: 'h_vdate', label: '방문예정일' },
-    { k: 'i_join', label: '가입일' }, { k: 'i_prod', label: '상품명' },
-    { k: 'i_prem', label: '보험료' }, { k: 'i_payterm', label: '납입기간' },
-    { k: 'i_insterm', label: '보험기간' }, { k: 'i_rate', label: '예정이율' },
-    { k: 'i_uw', label: '인수조건' },
-    { k: 'c_ona', label: '계약자현재연령' }, { k: 'c_in', label: '주피보험자' },
-    { k: 'c_ina', label: '피보험자현재연령' },
+    { k: 'h_fp', label: '지점·FP' },
+    { k: 'h_adate', label: '분석일' },
+    { k: 'p_phone', label: '전화번호' }, { k: 'p_job', label: '직업' },
+    { k: '_cnt', label: '가입건수' },
+    { k: '_join', label: '가입일(첫 계약)' }, { k: '_prod', label: '상품명(첫 계약)' },
+    { k: '_prem', label: '보험료합계' },
+    { k: 'c_on', label: '계약자' }, { k: 'c_ona', label: '계약자현재연령' },
+    { k: 'c_in', label: '주피보험자' }, { k: 'c_ina', label: '피보험자현재연령' },
     { k: 'c_bh', label: '수익자(입원)' }, { k: 'c_bd', label: '수익자(사망)' },
-    { k: 'f_std', label: '표준체' }, { k: 'f_bmi', label: 'BMI' }, { k: 'f_smoke', label: '흡연' },
-    { k: 'f_disc', label: '직장할인' }, { k: 'f_comp', label: '직장명' },
+    { k: 'f_std', label: '표준체' }, { k: 'f_disc', label: '할인적용' }, { k: 'f_comp', label: '직장명' },
     { k: 'f_surg', label: '수술특약' }, { k: 'f_impl', label: '임플란트' },
     { k: 'f_acc', label: '재해치료비특약' }, { k: 'f_tooth', label: '치아파절' },
     { k: 'f_c21', label: '21C넘버원' }, { k: 'f_ben', label: '양성종양특약' },
     { k: 'f_polyp', label: '대장용종' }, { k: 'f_hc', label: '헬스케어회원' },
     { k: 'b_paid', label: '기납입' }, { k: 'b_surr', label: '해약환급금' },
-    { k: 'b_lbal', label: '대출잔액' }, { k: 'b_wdavl', label: '인출가능' },
+    { k: 'b_lbal', label: '대출잔액' }, { k: 'b_lrate', label: '대출이율' },
+    { k: 'b_wdavl', label: '인출가능' },
     { k: 'b_middt', label: '중도보험금일' }, { k: 'b_midamt', label: '중도보험금액' },
     { k: 'b_matdt', label: '만기일' }, { k: 'b_matamt', label: '만기보험금' },
-    { k: 'b_as', label: '자동송금분할' }, { k: 'b_am', label: '자동송금만기' },
-    { k: 'b_ro', label: '실손당사' }, { k: 'b_rt', label: '실손타사' },
     { k: 'b_cmain', label: '주계약만기' }, { k: 'b_crider', label: '특약만기' },
+    { k: '_claims', label: '사고보험금건수' }, { k: '_funds', label: '펀드건수' },
     { k: 'm_grade', label: '방문등급' }, { k: 'm_reason', label: '재접촉사유' },
-    { k: 'm_hidden', label: '숨은보험금발견' }, { k: 'm_upsell', label: '업셀링제안' },
-    { k: 'm_follow', label: '후속조치' }, { k: 'm_deadline', label: '처리기한' },
+    { k: '_hidden', label: '숨은보험금발견' }, { k: '_hiddenAmt', label: '발견보장금액' },
+    { k: '_follow', label: '후속조치' }, { k: '_due', label: '처리기한' },
     { k: 'm_vdate', label: '방문일' }, { k: 'm_next', label: '차기방문' },
     { k: '_money', label: '발견예상액' }, { k: '_hidCnt', label: '숨은보험금건수' }
   ];
 
+  /* 여러 줄 표에서 뽑아 쓰는 값 — 화면 · 엑셀 · CSV 가 같은 규칙을 씁니다 */
+  function rowsOf(rec, key) {
+    const r = (rec && rec.rows) || {};
+    return (r[key] || []).filter(function (x) { return x; });
+  }
+
+  function sumNum(list, key) {
+    return list.reduce(function (s, x) {
+      const n = parseFloat(String(x[key] == null ? '' : x[key]).replace(/[^0-9.\-]/g, ''));
+      return s + (isFinite(n) ? n : 0);
+    }, 0);
+  }
+
+  function ledgerValue(rec, key) {
+    const f = (rec && rec.f) || {};
+    const ct = rowsOf(rec, 'contracts');
+    switch (key) {
+      case '_savedAt': return String(rec.savedAt || '').slice(0, 19).replace('T', ' ');
+      case '_money': return rec.money || 0;
+      case '_hidCnt': return rec.hidCnt || 0;
+      case '_cnt': return ct.length;
+      case '_join': return (ct[0] && ct[0].join) || '';
+      case '_prod': return ct.map(function (c) { return c.prod; }).filter(Boolean).join(' / ');
+      case '_prem': return sumNum(ct, 'prem');
+      case '_claims': return rowsOf(rec, 'claims').length;
+      case '_funds': return rowsOf(rec, 'funds').length;
+      case '_hidden': return rowsOf(rec, 'hiddens').map(function (h) { return h.item; }).filter(Boolean).join(' / ');
+      case '_hiddenAmt': return sumNum(rowsOf(rec, 'hiddens'), 'amt');
+      case '_follow': return rowsOf(rec, 'follows').map(function (x) { return x.what; }).filter(Boolean).join(' / ');
+      case '_due': {
+        const d = rowsOf(rec, 'follows').map(function (x) { return x.due; }).filter(Boolean).sort();
+        return d[0] || '';
+      }
+      default: return f[key] == null ? '' : f[key];
+    }
+  }
+
   const Schema = {
-    SECTIONS: SECTIONS, PREPS: PREPS, EXTRAS: EXTRAS,
-    CLAIM_FIELDS: CLAIM_FIELDS, CUSTOMER_FIELDS: CUSTOMER_FIELDS,
-    LEDGER_COLS: LEDGER_COLS,
-    allFields: allFields, fieldMap: fieldMap, contractFields: contractFields
+    SECTIONS: SECTIONS, ROWSETS: ROWSETS, PREPS: PREPS, EXTRAS: EXTRAS,
+    CUSTOMER_FIELDS: CUSTOMER_FIELDS, LEDGER_COLS: LEDGER_COLS,
+    allFields: allFields, fieldMap: fieldMap, contractFields: contractFields,
+    rowsetMap: rowsetMap, pruneRows: pruneRows, rowsOf: rowsOf,
+    ledgerValue: ledgerValue, sumNum: sumNum
   };
 
   if (typeof module !== 'undefined' && module.exports) module.exports = Schema;
@@ -986,7 +1098,7 @@ textarea#script{height:280px;font-size:12.8px;line-height:1.7;white-space:pre-wr
  * 진단 엔진 — 입력값을 받아 숨은보험금 · 즉시조치 · 제안 항목을 판정합니다.
  * 서버와 브라우저가 같은 코드를 쓰므로 화면과 엑셀 결과가 항상 일치합니다.
  *
- * 판정 기준은 회사 양식 「평생든든 방문활동 사전준비」에 적힌 내용을 옮긴 것이며,
+ * 판정 기준은 회사 양식 「평생든든 방문활동 사전준비」(개정판)에 적힌 내용을 옮긴 것이며,
  * 실제 지급 여부와 금액은 약관과 회사 시스템에서 최종 확인해야 합니다.
  *
  * lv : 'm' 숨은보험금·환급(돈) / 'a' 즉시조치 / 'b' 보완·제안 / 'i' 참고
@@ -996,23 +1108,43 @@ textarea#script{height:280px;font-size:12.8px;line-height:1.7;white-space:pre-wr
 
   const isNode = (typeof module !== 'undefined' && module.exports);
   const Calc = isNode ? require('./calc.js') : global.KB.Calc;
+  const Schema = isNode ? require('./schema.js') : global.KB.Schema;
 
   const numOf = Calc.numOf, won = Calc.won, normDate = Calc.normDate, ymd = Calc.ymd;
+
+  const CUT_2006 = '2006-02-01';
 
   function analyze(record, opts) {
     opts = opts || {};
     const today = opts.today || Calc.todayStr();
     const f = (record && record.f) || {};
-    const claims = ((record && record.claims) || []).filter(function (c) {
-      return c && (c.d || c.t || c.a);
-    });
+    const rows = (record && record.rows) || {};
+    const RS = Schema.rowsetMap();
+
+    const list = function (key) { return Schema.pruneRows(RS[key], rows[key]); };
+    const contracts = list('contracts');
+    const claims = list('claims');
+    const funds = list('funds');
+    const hiddens = list('hiddens');
+    const follows = list('follows');
+
     const V = function (k) { return String(f[k] == null ? '' : f[k]).trim(); };
     const N = function (k) { return numOf(V(k)); };
     const dd = function (v) { return Calc.dday(v, today); };
 
     const cust = V('h_cust') || '고객';
-    const joinDate = normDate(V('i_join'));
-    const old2006 = joinDate ? (joinDate < '2006-02-01') : null;
+
+    /* 계약 표에서 뽑아 쓰는 값 */
+    const joins = contracts.map(function (c) { return normDate(c.join); }).filter(Boolean).sort();
+    const firstJoin = joins[0] || '';
+    const oldRows = contracts.filter(function (c) {
+      const j = normDate(c.join);
+      return j && j < CUT_2006;
+    });
+    const old2006 = joins.length ? oldRows.length > 0 : null;
+    const oldNames = oldRows.map(function (c) { return c.prod || ymd(normDate(c.join)); }).filter(Boolean);
+    const oldLabel = oldNames.length ? '(' + oldNames.join(', ') + ')' : '';
+    const premSum = Schema.sumNum(contracts, 'prem');
 
     const F2 = [];
     const prep = [];
@@ -1023,60 +1155,89 @@ textarea#script{height:280px;font-size:12.8px;line-height:1.7;white-space:pre-wr
     const bl = function (t) { blanks.push(t); };
     const need = function (id) { if (prep.indexOf(id) < 0) prep.push(id); };
 
+    /* ---------- 0. 계약 표 ---------- */
+    if (!contracts.length) bl('계약사항 표 (가입일 · 상품명 · 보험료 · 납입기간 · 보험기간)');
+    contracts.forEach(function (c, i) {
+      if (!normDate(c.join)) bl('가입건수 ' + (i + 1) + ' 의 가입일' + (c.join ? ' (형식을 알아볼 수 없음 — 20030514 처럼 입력)' : ''));
+      if (!String(c.prod || '').trim()) bl('가입건수 ' + (i + 1) + ' 의 상품명');
+    });
+    if (!V('p_phone')) bl('전화번호');
+
     /* ---------- 1. 건강체 할인 ---------- */
-    const bmi = N('f_bmi');
     if (V('f_std') === '') bl('주계약 표준체 / 정상인수 여부 (O/X)');
-    if (!V('f_smoke') || !V('f_bmi')) bl('키 / 몸무게 / BMI / 흡연여부 (고객 확인)');
-    if (V('f_std') === 'O' && V('f_smoke') === '비흡연' && bmi >= 18.5 && bmi <= 25) {
-      need('p8');
-      const ref = N('f_href'), hp = N('f_hprem'), cp = N('i_prem');
+    if (V('f_disc') === '') bl('현재 할인 적용 여부 (O/X)');
+
+    if (V('f_std') === 'O' && V('f_disc') === 'X') {
+      const ref = N('f_href'), hp = N('f_hprem');
       if (ref > 0) money += ref; else moneyUnknown++;
       add({
-        lv: 'm', pri: 95, cat: '건강체 할인', t: '건강체 할인 전환 대상입니다',
-        ment: cust + ' 님, 지금 담배를 안 피우시고 키·몸무게(BMI ' + V('f_bmi') + ')도 기준 안에 들어오십니다. ' +
-          '이런 분들은 \'건강체 할인\'(건강 상태가 좋은 분께 보험료를 깎아드리는 제도)을 받으실 수 있습니다. ' +
+        lv: 'm', pri: 95, cat: '건강체 할인', t: '건강체 할인 미적용 — 지금 신청하면 보험료가 줄고 차액을 돌려받습니다',
+        ment: cust + ' 님, 이 계약은 건강상 별도 조건 없이 정상으로 가입되신 건데, 지금 \'건강체 할인\'(건강 상태가 좋은 분께 보험료를 깎아드리는 제도)이 들어가 있지 않습니다. ' +
           '제가 신청해 드리면 앞으로 낼 보험료가 줄어들고, 그동안 더 내신 부분은 돌려받으실 수 있습니다.' +
-          (hp > 0 && cp > 0 ? ' 지금 ' + won(cp) + '원에서 ' + won(hp) + '원으로 매달 ' + won(cp - hp) + '원이 줄어듭니다.' : '') +
-          (ref > 0 ? ' 그리고 지금까지 더 내신 ' + won(ref) + '원이 환급됩니다.' : ' 환급금은 제가 확인해서 알려드리겠습니다.'),
+          (hp > 0 && premSum > 0 ? ' 지금 ' + won(premSum) + '원에서 ' + won(hp) + '원으로 매달 ' + won(premSum - hp) + '원이 줄어듭니다.' : '') +
+          (ref > 0 ? ' 그리고 지금까지 더 내신 ' + won(ref) + '원이 환급됩니다.' : ' 환급금은 총무 · FP.COM 에서 확인해서 알려드리겠습니다.'),
         basis: [
           '건강체 할인은 신청하지 않으면 자동으로 적용되지 않습니다. 조건이 되어도 모르고 계신 고객이 많습니다.',
-          '판정 기준 : 주계약 표준체(건강상 별도 조건 없이 정상 가입) + 비흡연 + BMI 18.5~25.',
+          '판정 기준 : 주계약 표준체(건강상 별도 조건 없이 정상 가입) + 현재 할인 미적용.',
           '소급 적용되어 이미 납입한 보험료 중 차액을 환급받을 수 있습니다.',
-          '신청 전 지원담당 문의 또는 FP.COM에서 변경 후 보험료·환급금을 먼저 확인하세요.'
+          '신청 전 지원담당 문의 또는 FP.COM 에서 변경 후 보험료 · 환급금을 먼저 확인하세요.'
         ],
-        prep: ['BMI 예시표'], est: ref
+        prep: ['변경후 보험료 · 환급금 조회분'], est: ref
       });
-    } else if (V('f_std') === 'O' && V('f_smoke') === '흡연') {
+    } else if (V('f_std') === 'O' && V('f_disc') === 'O') {
       add({
-        lv: 'i', pri: 30, cat: '건강체 할인', t: '현재는 건강체 할인 대상이 아닙니다 (흡연)',
-        ment: cust + ' 님, 지금은 흡연 때문에 건강체 할인 대상이 아니십니다. 다만 금연하신 지 1년이 지나면 다시 신청하실 수 있으니, 그때 꼭 저에게 말씀해 주세요.',
-        basis: ['금연 후 일정 기간이 지나면 건강체 재심사를 신청할 수 있습니다.', '재심사 시점을 미리 안내해 두면 고객이 스스로 챙기실 수 있습니다.'],
+        lv: 'i', pri: 26, cat: '건강체 할인', t: '건강체 할인 적용 중 — 유지 안내',
+        ment: cust + ' 님은 건강체 할인을 이미 받고 계십니다. 같은 조건이 계속 유지되는지 오늘 함께 확인해 드리겠습니다.',
+        basis: [
+          '할인 적용 사실을 고객이 모르고 계신 경우가 많아, 알려드리는 것만으로 만족도가 올라갑니다.',
+          '건강 상태나 직업이 바뀌면 조건이 달라질 수 있어 정기 확인이 필요합니다.'
+        ],
         prep: []
       });
-    }
-    if (V('i_uw')) {
+    } else if (V('f_std') === 'X') {
       add({
-        lv: 'b', pri: 70, cat: '인수조건', t: '인수조건 \'' + V('i_uw') + '\' 해제 가능 여부 검토 대상',
-        ment: cust + ' 님, 이 계약은 가입하실 때 건강상 이유로 ' + V('i_uw') + ' 조건이 붙어 있습니다. ' +
-          (V('i_uw') === '부담보' ? '부담보(특정 부위나 질병은 일정 기간 보장하지 않는 조건)' : '조건부 인수') +
-          '는 정해진 기간이 지나면 풀리는 경우가 있어, 지금 상태를 확인해 보겠습니다. 조건이 풀렸다면 보장 범위가 그만큼 넓어집니다.',
+        lv: 'b', pri: 71, cat: '건강체 할인', t: '표준체가 아닌 계약 — 재심사로 조건 완화 가능 여부 검토',
+        ment: cust + ' 님, 이 계약은 가입하실 때 건강상 이유로 조건이 붙어 있습니다. ' +
+          '조건이 붙은 계약도 시간이 지나 건강이 좋아지면 다시 심사받아 조건을 풀거나 낮출 수 있는 경우가 있습니다. 제가 확인해 보겠습니다.',
         basis: [
-          '부담보는 통상 정해진 기간(예: 1~5년)이 지나면 자동으로 해제되어 보장이 시작됩니다.',
           '할증(보험료를 더 내는 조건)은 건강 상태가 좋아지면 재심사로 낮출 수 있는 경우가 있습니다.',
-          '고객이 조건 해제 사실을 모르면, 보장이 되는데도 청구하지 않고 넘어가게 됩니다.'
+          '부담보(특정 부위나 질병을 일정 기간 보장하지 않는 조건)는 기간이 지나면 자동 해제되는 경우가 많습니다.',
+          '조건 해제 사실을 모르면 보장이 되는데도 청구하지 않고 넘어가게 됩니다.'
         ],
         prep: []
       });
     }
 
-    /* ---------- 2. 직장 할인 ---------- */
-    if (V('f_disc') === '') bl('직장할인 현재 할인적용 여부 (O/X)');
-    if (V('f_disc') === 'X') {
-      need('p9'); moneyUnknown++;
+    /* ---------- 2. 인수조건 ---------- */
+    const uw = [
+      V('c_uwx') ? '부담보(' + V('c_uwx') + ')' : '',
+      V('c_uwu') ? '할증(' + V('c_uwu') + ')' : '',
+      V('c_uwc') ? '삭감(' + V('c_uwc') + ')' : ''
+    ].filter(Boolean);
+    if (uw.length) {
+      need('p9');
       add({
-        lv: 'm', pri: 88, cat: '직장 할인', t: '직장(단체) 할인 미적용 상태입니다',
-        ment: cust + ' 님, 다니시는 직장이 저희와 단체 할인 협약이 되어 있으면 보험료를 깎아드릴 수 있는데, 지금은 그 할인이 안 들어가 있습니다. ' +
-          (V('f_comp') ? V('f_comp') + ' 로 확인해 보고' : '직장명만 알려주시면 확인해서') + ' 해당되면 바로 신청해 드리겠습니다.',
+        lv: 'b', pri: 70, cat: '인수조건', t: '인수조건 ' + uw.join(' · ') + ' — 해제 가능 여부 확인 대상',
+        ment: cust + ' 님, 이 계약에는 ' + uw.join(', ') + ' 조건이 붙어 있습니다. ' +
+          '이런 조건은 정해진 기간이 지나면 풀리는 경우가 있어, 지금 상태가 어떤지 확인해 보겠습니다. 조건이 풀렸다면 보장 범위가 그만큼 넓어집니다.',
+        basis: [
+          '부담보는 통상 정해진 기간(예: 1~5년)이 지나면 자동으로 해제되어 보장이 시작됩니다.',
+          '할증은 건강 상태 개선 시 재심사로 낮출 수 있습니다.',
+          '삭감 기간이 끝났는지 확인해야 보험금 지급액이 달라집니다.',
+          '필요 서류 : 계약사항 변경신청서.'
+        ],
+        prep: ['계약사항 변경신청서']
+      });
+    }
+
+    /* ---------- 3. 직장 할인 ---------- */
+    if (!V('f_comp')) bl('직장명 / 단체명 (고객 확인)');
+    else {
+      need('p7'); moneyUnknown++;
+      add({
+        lv: 'm', pri: 88, cat: '직장 할인', t: '직장(단체) 할인 대상 여부 확인 — ' + V('f_comp'),
+        ment: cust + ' 님, 다니시는 ' + V('f_comp') + ' 가 저희와 단체 할인 협약이 되어 있으면 보험료를 깎아드릴 수 있습니다. ' +
+          '직장 계약 할인표에서 확인해 보고 해당되면 바로 신청해 드리겠습니다.',
         basis: [
           '직장(단체)할인은 협약된 직장에 근무 중이면 적용되지만, 신청해야만 반영됩니다.',
           '이직하신 경우에도 새 직장이 협약 대상이면 다시 신청할 수 있습니다.',
@@ -1085,18 +1246,18 @@ textarea#script{height:280px;font-size:12.8px;line-height:1.7;white-space:pre-wr
         prep: ['직장 계약 할인표']
       });
     }
-    if (V('f_disc') === 'X' && !V('f_comp')) bl('직장명 / 단체명 (고객 확인)');
 
-    /* ---------- 3. 수술급여금 찾아주기 ---------- */
+    /* ---------- 4. 수술급여금 찾아주기 ---------- */
     if (old2006 === null) bl('가입일 (2006.02 이전 여부 판정에 필요)');
     if (V('f_surg') === '') bl('수술특약 가입여부 (O/X)');
-    if (V('f_impl') === '') bl('임플란트 치조골이식수술 여부 (고객 확인)');
+    if (V('f_impl') === '') bl('임플란트 치조골이식 수술여부 (고객 확인)');
+
     if (old2006 && V('f_surg') === 'O' && V('f_impl') === 'O') {
-      need('p3'); need('p12'); money += 500000;
+      need('p3'); money += 500000;
       add({
         lv: 'm', pri: 100, cat: '수술급여금', t: '임플란트 치조골이식수술 — 수술급여금 청구 가능 (50만원)',
         ment: cust + ' 님, 임플란트 하실 때 잇몸뼈를 채워 넣는 수술(치조골이식술)을 받으셨다고 하셨죠. ' +
-          '이 계약은 2006년 2월 이전에 가입하신 것이라 그 수술도 보험금이 나옵니다. 수술특약 2종으로 50만원이 지급됩니다. ' +
+          '이 계약은 2006년 2월 이전에 가입하신 것' + (oldLabel ? ' ' + oldLabel : '') + '이라 그 수술도 보험금이 나옵니다. 수술특약 2종으로 50만원이 지급됩니다. ' +
           '치과에서 처음 진료받은 기록(초진차트)과 진단서만 떼어 주시면 제가 청구까지 다 해드리겠습니다.',
         basis: [
           '가입일 2006년 2월 이전 계약의 수술특약은 치조골이식술을 수술 2종으로 인정하여 50만원을 지급합니다.',
@@ -1104,9 +1265,10 @@ textarea#script{height:280px;font-size:12.8px;line-height:1.7;white-space:pre-wr
           '보험금 청구권의 소멸시효(청구할 수 있는 기한)는 3년입니다. 3년이 지난 건은 청구할 수 없습니다.',
           '필요 서류 : 초진차트, 진단서, 보험금 청구서.'
         ],
-        prep: ['보험금 청구서', '초진차트·진단서'], est: 500000
+        prep: ['보험금 청구서', '초진차트 · 진단서'], est: 500000
       });
     } else if (old2006 && V('f_surg') === 'O' && V('f_impl') === '') {
+      need('p3');
       add({
         lv: 'a', pri: 80, cat: '수술급여금', t: '임플란트 수술 여부를 고객께 꼭 여쭤보세요',
         ment: cust + ' 님, 혹시 임플란트 하신 적 있으신가요? 잇몸뼈가 부족해서 뼈를 채우는 수술을 함께 받으셨다면 보험금이 나올 수 있습니다. 오래된 계약이라 이런 부분이 보장되거든요.',
@@ -1118,24 +1280,26 @@ textarea#script{height:280px;font-size:12.8px;line-height:1.7;white-space:pre-wr
       });
     }
 
-    /* ---------- 4. 치아파절 ---------- */
-    if (V('f_acc') === '') bl('재해치료비특약 또는 골절치료특약 가입여부 (O/X)');
+    /* ---------- 5. 치아파절 ---------- */
+    if (V('f_acc') === '') bl('재해치료비 특약 또는 골절치료 특약 가입여부 (O/X)');
     if (V('f_tooth') === '') bl('치아파절 여부 (고객 확인)');
+
     if (old2006 && V('f_acc') === 'O' && V('f_tooth') === 'O') {
-      need('p3'); need('p12'); moneyUnknown++;
+      need('p3'); moneyUnknown++;
       add({
         lv: 'm', pri: 98, cat: '치아파절 보험금', t: '치아파절 — 골절 보험금 청구 가능',
         ment: cust + ' 님, 넘어지시거나 부딪혀서 이가 부러진 적이 있으시죠. 이가 부러진 것도 \'골절\'(뼈가 부러진 것)로 봅니다. ' +
           '이 계약에 재해치료비특약이 들어 있어서 보험금이 나옵니다. 치과 초진차트와 진단서만 준비해 주시면 제가 청구해 드리겠습니다.',
         basis: [
-          '치아파절은 재해치료비특약·골절치료특약에서 골절로 인정되어 보험금이 지급됩니다.',
+          '치아파절은 재해치료비특약 · 골절치료특약에서 골절로 인정되어 보험금이 지급됩니다.',
           '가입일 2006년 2월 이전 계약이 대상입니다.',
           '"치과는 보험이 안 된다"는 오해 때문에 가장 많이 놓치는 항목 중 하나입니다.',
           '청구 기한(소멸시효)은 3년이므로 지난 사고부터 빠르게 확인해야 합니다.'
         ],
-        prep: ['보험금 청구서', '초진차트·진단서']
+        prep: ['보험금 청구서', '초진차트 · 진단서']
       });
     } else if (old2006 && V('f_acc') === 'O' && V('f_tooth') === '') {
+      need('p3');
       add({
         lv: 'a', pri: 78, cat: '치아파절 보험금', t: '치아가 부러진 적 있는지 꼭 여쭤보세요',
         ment: cust + ' 님, 혹시 넘어지시거나 무엇을 씹다가 이가 부러진 적 있으신가요? 이가 부러진 것도 골절로 보고 보험금이 나옵니다.',
@@ -1147,7 +1311,7 @@ textarea#script{height:280px;font-size:12.8px;line-height:1.7;white-space:pre-wr
       });
     }
 
-    /* ---------- 5. 대장용종 ---------- */
+    /* ---------- 6. 대장용종 ---------- */
     if (V('f_polyp') === '') bl('대장용종 수술여부 (고객 확인)');
     if (V('f_polyp') === 'O') {
       let sum = 0; const lines = [];
@@ -1155,7 +1319,7 @@ textarea#script{height:280px;font-size:12.8px;line-height:1.7;white-space:pre-wr
       if (V('f_ben') === 'O') { sum += 1000000; lines.push('양성종양특약에서 100만원'); }
       if (V('f_surg') === 'O') { lines.push('수술특약에서 수술급여금'); moneyUnknown++; }
       if (lines.length) {
-        need('p3'); need('p12'); money += sum;
+        need('p3'); money += sum;
         add({
           lv: 'm', pri: 99, cat: '대장용종 보험금',
           t: '대장용종 절제 — 보험금 청구 가능' + (sum ? ' (약 ' + won(sum) + '원)' : ''),
@@ -1167,12 +1331,14 @@ textarea#script{height:280px;font-size:12.8px;line-height:1.7;white-space:pre-wr
             '21C 넘버원 암치료보험 : 주계약에서 200만원 지급.',
             '베스트라이프암보험 · 굿라이프암치료보험 · 폰나이스암보험의 양성종양특약 : 100만원 지급.',
             '수술특약이 함께 있으면 수술급여금도 별도로 지급됩니다.',
+            '신청서 스캔 누락이 있으면 특약 가입 사실이 확인되지 않으니 함께 점검하세요.',
             '"건강검진 중에 뗀 것이라 안 된다"고 오해하여 청구하지 않는 대표적인 항목입니다.'
           ],
-          prep: ['보험금 청구서', '초진차트·진단서'], est: sum
+          prep: ['보험금 청구서', '초진차트 · 진단서'], est: sum
         });
       }
     } else if (V('f_polyp') === '' && (V('f_c21') === 'O' || V('f_ben') === 'O')) {
+      need('p3');
       add({
         lv: 'a', pri: 85, cat: '대장용종 보험금', t: '대장 내시경에서 용종 떼신 적 있는지 꼭 여쭤보세요',
         ment: cust + ' 님, 대장 내시경 받으시면서 용종(대장에 생긴 작은 혹) 떼어내신 적 있으신가요? 있으시면 보험금이 나옵니다. 검진 중에 뗀 것도 해당됩니다.',
@@ -1185,30 +1351,26 @@ textarea#script{height:280px;font-size:12.8px;line-height:1.7;white-space:pre-wr
       });
     }
 
-    /* ---------- 6. 헬스케어 ---------- */
-    if (V('f_hc') === '') bl('헬스케어서비스 회원 가입 여부 (O/X)');
+    /* ---------- 7. 헬스케어 ---------- */
+    if (V('f_hc') === '') bl('헬스케어서비스 회원가입 여부 (O/X)');
     if (V('f_hc') === 'X') {
-      need('p10'); need('p2');
-      const cur = N('f_ci') + N('f_life');
-      const needAmt = N('f_hcamt'), np = N('f_hcprem');
+      need('p8'); need('p2');
       add({
         lv: 'b', pri: 72, cat: '헬스케어 서비스', t: '헬스케어서비스 미가입 — 안내 및 업셀링 대상',
         ment: cust + ' 님, 저희 헬스케어서비스는 아직 가입이 안 되어 있으십니다. ' +
           '이건 아프신 다음에 보험금만 드리는 게 아니라, 아프기 전에 건강검진이나 병원 연계 같은 도움을 받으실 수 있는 서비스입니다. ' +
-          (cur > 0 ? '지금 종신·CI 합산 가입금액이 ' + won(cur) + '만원이신데, ' : '') +
-          (needAmt > 0
-            ? won(needAmt) + '만원까지 채우시면 서비스 대상이 되십니다. 매달 ' + won(np) + '원 정도 추가되는 부분인데, 어떤 혜택이 있는지 먼저 보여드릴게요.'
-            : '대상이 되시는지 제가 확인해서 안내해 드리겠습니다.'),
+          '어떤 혜택이 있는지 전단지로 먼저 보여드리고, 대상이 되시는지 확인해 드리겠습니다.',
         basis: [
-          '헬스케어서비스는 종신·CI 주계약 합산 가입금액이 기준 이상일 때 제공됩니다 (02.2 이후 가입 계약 기준).',
+          '헬스케어서비스는 주계약 가입금액이 기준 이상일 때 제공됩니다.',
           '기준에 조금 못 미치는 고객은 소액 증액만으로 대상이 되므로 제안 성공률이 높습니다.',
           '보험금 지급이 아닌 "건강관리 혜택"으로 접근하면 고객 거부감이 낮습니다.',
-          '방문 전 확인 : 신청서 스캔 누락 여부, 헬스케어 바인딩, 업셀링 전단, 가입설계 출력.'
+          '방문 전 확인 : 헬스케어 바인딩 · 안내전단지, 가입설계서 출력.'
         ],
-        prep: ['헬스케어 안내전단', '가입설계서(업셀링)']
+        prep: ['헬스케어 안내전단지', '가입설계서(업셀링)']
       });
     }
     if (V('f_hc') === 'O') {
+      need('p8');
       add({
         lv: 'i', pri: 25, cat: '헬스케어 서비스', t: '헬스케어서비스 가입 상태 — 활용 안내 대상',
         ment: cust + ' 님은 헬스케어서비스에 이미 가입되어 계십니다. 그런데 실제로 써보신 적은 없으시죠? 건강검진 예약이나 상담을 무료로 받으실 수 있으니, 오늘 이용 방법을 알려드리겠습니다.',
@@ -1216,25 +1378,12 @@ textarea#script{height:280px;font-size:12.8px;line-height:1.7;white-space:pre-wr
           '가입만 되어 있고 이용하지 않는 고객이 많아, 활용 안내만으로도 만족도가 크게 올라갑니다.',
           '이용 경험이 있는 고객은 계약 유지율이 높습니다.'
         ],
-        prep: ['헬스케어 안내전단']
+        prep: ['헬스케어 안내전단지']
       });
     }
 
-    /* ---------- 7. 납입 · 예정이율 ---------- */
-    const paid = N('b_paid'), surr = N('b_surr'), rate = N('i_rate');
-    if (rate >= 4.5) {
-      add({
-        lv: 'a', pri: 90, cat: '계약 유지', t: '예정이율 ' + rate + '% — 반드시 지켜야 할 고금리 계약',
-        ment: cust + ' 님, 이 계약은 예정이율(가입할 때 정해진 이자율)이 ' + rate + '%입니다. 요즘 새로 가입하는 상품에서는 나올 수 없는 조건입니다. ' +
-          '혹시라도 보험료가 부담되셔서 해지를 생각하시게 되면, 절대 그냥 해지하지 마시고 저에게 먼저 말씀해 주세요. 해지하지 않고 유지하는 방법이 여러 가지 있습니다.',
-        basis: [
-          '예정이율이 높은 계약은 해지하면 같은 조건으로 다시 가입할 수 없습니다.',
-          '해지 대신 감액완납(보장금액을 줄이는 대신 앞으로 보험료를 내지 않는 방법), 납입 일시중지, 중도인출, 보험계약대출 등으로 유지할 수 있습니다.',
-          '고금리 계약 유지는 고객 이익이자 회사 신뢰로 직결되는 항목입니다.'
-        ],
-        prep: []
-      });
-    }
+    /* ---------- 8. 납입관련 ---------- */
+    const paid = N('b_paid'), surr = N('b_surr');
     if (paid > 0 && surr > 0) {
       const r = surr / paid * 100;
       add({
@@ -1253,17 +1402,20 @@ textarea#script{height:280px;font-size:12.8px;line-height:1.7;white-space:pre-wr
     }
     if (!V('b_paid') || !V('b_surr')) bl('기납입보험료 / 해약환급금');
 
-    /* ---------- 8. 대출 · 중도인출 ---------- */
-    const lbal = N('b_lbal'), lrate = N('b_lrate'), lti = N('b_lti');
+    /* ---------- 9. 대출 · 중도인출 ---------- */
+    const lbal = N('b_lbal'), lrate = N('b_lrate'), lti = N('b_lti'), lmi = N('b_lmi');
     if (lbal > 0) {
       add({
         lv: 'a', pri: 76, cat: '대출',
         t: '보험계약대출 ' + won(lbal) + '원 이용 중' + (lrate ? ' (이율 ' + lrate + '%)' : ''),
-        ment: cust + ' 님, 지금 보험에서 ' + won(lbal) + '원을 대출받아 쓰고 계십니다. 이율은 ' + lrate + '% 이고, 지금까지 낸 이자가 ' + won(lti) + '원입니다. ' +
+        ment: cust + ' 님, 지금 보험에서 ' + won(lbal) + '원을 대출받아 쓰고 계십니다. ' +
+          (lrate ? '이율은 ' + lrate + '% 이고, ' : '') +
+          (lmi ? '매달 이자가 ' + won(lmi) + '원, ' : '') +
+          (lti ? '지금까지 낸 이자가 ' + won(lti) + '원입니다. ' : '') +
           '이자가 계속 쌓이면 나중에 받으실 보험금이나 환급금에서 그만큼 빠집니다. 여유가 생기실 때 조금씩이라도 갚아나가시는 게 좋고, 필요하시면 중도인출 같은 다른 방법도 비교해 드리겠습니다.',
         basis: [
           '보험계약대출 이자는 자동으로 원금에 더해져 복리로 늘어납니다.',
-          '대출 원리금은 보험금·해약환급금 지급 시 먼저 차감되므로, 정작 필요할 때 받는 금액이 줄어듭니다.',
+          '대출 원리금은 보험금 · 해약환급금 지급 시 먼저 차감되므로, 정작 필요할 때 받는 금액이 줄어듭니다.',
           '중도인출은 이자가 붙지 않는 대신 적립금이 줄어드는 방식이라, 어느 쪽이 유리한지 비교해 드려야 합니다.'
         ],
         prep: []
@@ -1283,36 +1435,6 @@ textarea#script{height:280px;font-size:12.8px;line-height:1.7;white-space:pre-wr
       });
     }
 
-    /* ---------- 9. 사고보험금 ---------- */
-    if (claims.length) {
-      need('p3');
-      add({
-        lv: 'a', pri: 82, cat: '사고보험금', t: '과거 지급 이력 ' + claims.length + '건 — 추가 청구 가능 여부 확인',
-        ment: cust + ' 님, 예전에 ' + claims.map(function (c) { return c.d; }).filter(Boolean).join(', ') + ' (으)로 보험금을 받으신 기록이 있습니다. ' +
-          '같은 병으로 그 뒤에도 병원에 다니셨다면 추가로 청구할 수 있는 부분이 있는지 확인해 보겠습니다. ' +
-          '그리고 치료가 끝난 뒤 몸에 불편함이 남으셨다면 후유장해(치료 후에도 계속 남는 몸의 손상)로 따로 청구되는 경우도 있습니다.',
-        basis: [
-          '진단비는 한 번 받았어도, 입원·수술·통원은 건별로 반복 청구가 가능합니다.',
-          '치료 종결 후 남은 장해는 후유장해로 별도 청구 대상이 될 수 있습니다.',
-          '기존 지급 이력은 고객이 청구에 익숙하다는 뜻이므로, 미청구 건 발굴 성공률이 높습니다.'
-        ],
-        prep: ['보험금 청구서']
-      });
-    } else {
-      need('p3');
-      add({
-        lv: 'a', pri: 86, cat: '사고보험금', t: '최근 3년 내 병원 이력 — 반드시 질문하세요',
-        ment: cust + ' 님, 최근 3년 안에 입원하시거나 수술받으신 적, 아니면 다치셔서 병원에 다니신 적 있으신가요? ' +
-          '작은 것이라도 말씀해 주세요. 청구가 되는지 안 되는지는 제가 판단해 드리겠습니다. 안 되는 건 어쩔 수 없지만, 되는 걸 모르고 넘어가면 그건 너무 아깝습니다.',
-        basis: [
-          '보험금 청구권의 소멸시효는 3년입니다. 그 기간이 지나면 권리가 사라집니다.',
-          '미청구 보험금 확인·청구 대행은 평생든든서비스의 핵심 기능입니다.',
-          '통원·골절·치과·안과처럼 고객이 "안 될 것 같다"고 넘긴 건에서 실제 지급 사례가 많습니다.'
-        ],
-        prep: ['보험금 청구서']
-      });
-    }
-
     /* ---------- 10. 생존보험금 ---------- */
     const midD = dd(V('b_middt')), matD = dd(V('b_matdt'));
     const midA = N('b_midamt'), matA = N('b_matamt');
@@ -1326,10 +1448,10 @@ textarea#script{height:280px;font-size:12.8px;line-height:1.7;white-space:pre-wr
           : '중도보험금 수령 예정 (D-' + midD + ')',
         ment: midD < 0
           ? cust + ' 님, ' + ymd(normDate(V('b_middt'))) + '에 받으실 수 있는 중도보험금 ' + won(midA) + '원이 있는데 아직 찾아가지 않으신 것 같습니다. 이건 이미 ' + cust + ' 님 돈입니다. 신청만 하시면 바로 나가니까 오늘 같이 처리해 드리겠습니다.'
-          : cust + ' 님, ' + ymd(normDate(V('b_middt'))) + '에 중도보험금 ' + won(midA) + '원이 나옵니다. 잊지 않으시도록 미리 말씀드리고, 자동으로 통장에 들어오게 등록해 드리겠습니다.',
+          : cust + ' 님, ' + ymd(normDate(V('b_middt'))) + '에 중도보험금 ' + won(midA) + '원이 나옵니다. 잊지 않으시도록 미리 말씀드립니다. 오늘 신청서를 미리 써 두시면 그날 바로 받으실 수 있습니다.',
         basis: [
           '중도보험금은 신청하지 않으면 지급되지 않고 그대로 남아 있게 됩니다 (숨은보험금의 대표 유형).',
-          '자동송금을 등록해 두면 이후에는 신청 없이 지정 계좌로 자동 입금됩니다.',
+          '수령 예정일을 미리 알려드리는 것만으로도 신뢰가 크게 올라갑니다.',
           '필요 서류 : 생존보험금 신청서.'
         ],
         prep: ['생존보험금 신청서'], est: midD < 0 ? midA : 0
@@ -1349,75 +1471,83 @@ textarea#script{height:280px;font-size:12.8px;line-height:1.7;white-space:pre-wr
         basis: [
           '만기보험금 역시 청구해야 지급되며, 미청구 상태로 남는 경우가 많습니다.',
           '만기일 이후에는 보장이 즉시 종료되어 무보험 기간이 생깁니다. 만기 전 보장 연결 설계가 필요합니다.',
-          '만기 시점은 재설계·업셀링을 자연스럽게 제안할 수 있는 최적 시점입니다.'
+          '만기 시점은 재설계 · 업셀링을 자연스럽게 제안할 수 있는 최적 시점입니다.'
         ],
         prep: ['생존보험금 신청서', '보장분석서'], est: matD < 0 ? matA : 0
       });
     }
-    if (V('b_as') === '분할 X' || V('b_am') === '만기 X') {
+
+    /* ---------- 11. 계약변경 이력 ---------- */
+    if (V('b_pch') || V('b_cch')) {
+      need('p9');
+      add({
+        lv: 'i', pri: 30, cat: '계약변경',
+        t: '계약 변경이력 확인 (' + [V('b_pch'), V('b_cch')].filter(Boolean).join(' / ') + ')',
+        ment: cust + ' 님, 그동안 바뀐 내용이 있어서 지금 상태가 맞는지 함께 확인해 보겠습니다. ' +
+          '수금하는 계좌나 계약 내용이 예전 그대로면 다시 맞춰 드리겠습니다.',
+        basis: [
+          '수금자 · 계좌 정보가 옛날 것으로 남아 있으면 보험료 미납으로 실효될 수 있습니다.',
+          '변경이력이 있는 계약은 서류 누락 여부를 함께 점검해야 합니다.',
+          '필요 서류 : 계약사항 변경신청서.'
+        ],
+        prep: ['계약사항 변경신청서']
+      });
+    }
+
+    /* ---------- 12. 사고보험금 ---------- */
+    if (claims.length) {
+      need('p3');
+      const names = claims.map(function (c) { return c.d; }).filter(Boolean).join(', ');
+      add({
+        lv: 'a', pri: 82, cat: '사고보험금', t: '과거 지급 이력 ' + claims.length + '건 — 추가 청구 가능 여부 확인',
+        ment: cust + ' 님, 예전에 ' + (names || '보험금을 받으신 기록') + ' (으)로 보험금을 받으신 기록이 있습니다. ' +
+          '같은 병으로 그 뒤에도 병원에 다니셨다면 추가로 청구할 수 있는 부분이 있는지 확인해 보겠습니다. ' +
+          '그리고 치료가 끝난 뒤 몸에 불편함이 남으셨다면 후유장해(치료 후에도 계속 남는 몸의 손상)로 따로 청구되는 경우도 있습니다.',
+        basis: [
+          '진단비는 한 번 받았어도, 입원 · 수술 · 통원은 건별로 반복 청구가 가능합니다.',
+          '치료 종결 후 남은 장해는 후유장해로 별도 청구 대상이 될 수 있습니다.',
+          '기존 지급 이력은 고객이 청구에 익숙하다는 뜻이므로, 미청구 건 발굴 성공률이 높습니다.'
+        ],
+        prep: ['보험금 청구서']
+      });
+    } else {
+      need('p3');
+      add({
+        lv: 'a', pri: 86, cat: '사고보험금', t: '최근 3년 내 병원 이력 — 반드시 질문하세요',
+        ment: cust + ' 님, 최근 3년 안에 입원하시거나 수술받으신 적, 아니면 다치셔서 병원에 다니신 적 있으신가요? ' +
+          '작은 것이라도 말씀해 주세요. 청구가 되는지 안 되는지는 제가 판단해 드리겠습니다. 안 되는 건 어쩔 수 없지만, 되는 걸 모르고 넘어가면 그건 너무 아깝습니다.',
+        basis: [
+          '보험금 청구권의 소멸시효는 3년입니다. 그 기간이 지나면 권리가 사라집니다.',
+          '미청구 보험금 확인 · 청구 대행은 평생든든서비스의 핵심 기능입니다.',
+          '통원 · 골절 · 치과 · 안과처럼 고객이 "안 될 것 같다"고 넘긴 건에서 실제 지급 사례가 많습니다.'
+        ],
+        prep: ['보험금 청구서']
+      });
+    }
+
+    /* ---------- 13. 변액안내 ---------- */
+    if (funds.length) {
       need('p5');
+      const names = funds.map(function (x) {
+        return String(x.name || '').trim() + (x.ratio ? ' ' + numOf(x.ratio) + '%' : '');
+      }).filter(function (s) { return s.trim(); }).join(', ');
+      const lowRatio = funds.some(function (x) { return x.ratio && numOf(x.ratio) < 80; });
       add({
-        lv: 'a', pri: 68, cat: '자동송금', t: '자동송금 미등록 — 등록 권유 대상',
-        ment: cust + ' 님, 보험금이 나올 때 자동으로 통장에 들어오게 등록해 드릴까요? 지금은 등록이 안 되어 있어서, 나오는 돈이 있어도 신청하셔야 받으실 수 있습니다. 한 번만 등록해 두시면 그다음부터는 신경 안 쓰셔도 됩니다.',
-        basis: [
-          '자동송금 미등록이 숨은보험금이 생기는 가장 흔한 원인입니다.',
-          '한 번 등록하면 이후 중도·만기보험금이 지정 계좌로 자동 입금됩니다.',
-          '필요 서류 : 자동송금 신청서.'
-        ],
-        prep: ['자동송금 신청서']
-      });
-    }
-
-    /* ---------- 11. 실손 ---------- */
-    if (!V('b_ro') || !V('b_rt')) bl('실손보험 당사 / 타사 가입여부');
-    if (V('b_ro') === '당사 X' && V('b_rt') === '타사 X') {
-      need('p6'); need('p1');
-      add({
-        lv: 'b', pri: 94, cat: '실손보험', t: '실손의료비 미가입 — 최우선 보완 대상',
-        ment: cust + ' 님, 실손의료비(병원에 실제로 낸 돈을 돌려받는 보험)가 지금 하나도 없으십니다. ' +
-          '이건 다른 어떤 보장보다 먼저 준비하셔야 하는 기본입니다. 진단비나 수술비가 아무리 많아도, 병원비를 그때그때 돌려받는 건 실손밖에 없습니다.',
-        basis: [
-          '실손의료비는 실제 지출한 병원비를 보상하는 유일한 담보로, 다른 보장으로 대체할 수 없습니다.',
-          '건강 상태가 나빠지면 가입 자체가 어려워지므로 가능한 빨리 준비해야 합니다.',
-          '방문 시 실손 손해율표를 지참해 보험료 인상 구조를 함께 설명하세요.'
-        ],
-        prep: ['실손 손해율표', '보장분석서']
-      });
-    } else if (V('b_ro') === '당사 O' && V('b_rt') === '타사 O') {
-      need('p6');
-      add({
-        lv: 'a', pri: 80, cat: '실손보험', t: '실손 중복 가입 — 보험료가 새고 있습니다',
-        ment: cust + ' 님, 실손의료비가 저희 회사와 다른 회사 두 군데에 들어 있습니다. ' +
-          '그런데 실손은 두 개를 넣어도 실제 낸 병원비보다 더 받을 수는 없습니다. 즉 보험료만 두 번 내고 계신 겁니다. ' +
-          '어느 쪽을 남기는 게 유리한지 비교해 드릴 테니, 하나를 정리하고 그 돈을 비어 있는 보장으로 옮기시는 게 좋겠습니다.',
-        basis: [
-          '실손의료비는 여러 건 가입해도 실제 손해액을 초과해 지급되지 않는 비례보상 방식입니다.',
-          '중복 가입 시 보험료만 이중으로 부담하게 됩니다.',
-          '정리 시에는 보장 범위·자기부담금·갱신주기를 비교해 유리한 쪽을 남겨야 합니다.',
-          '절감된 보험료를 부족한 보장으로 이전하면 고객 만족과 실적을 동시에 얻을 수 있습니다.'
-        ],
-        prep: ['실손 손해율표']
-      });
-    }
-
-    /* ---------- 12. 변액 ---------- */
-    if (V('b_fund')) {
-      need('p7');
-      add({
-        lv: 'i', pri: 40, cat: '변액안내',
-        t: '펀드 점검 대상 (' + V('b_fund') + (V('b_fratio') ? ' · 적립률 ' + V('b_fratio') + '%' : '') + ')',
+        lv: lowRatio ? 'b' : 'i', pri: lowRatio ? 62 : 40, cat: '변액안내',
+        t: '펀드 점검 대상 (' + (names || funds.length + '건') + ')',
         ment: cust + ' 님, 이 계약은 펀드로 운용되는 상품이라 어디에 투자되고 있는지 가끔 확인해 보셔야 합니다. ' +
-          '지금은 ' + V('b_fund') + '에 들어가 있는데, 수익률을 함께 보시고 필요하면 다른 펀드로 옮기는 것(펀드 변경)도 무료로 해드릴 수 있습니다.',
+          '지금은 ' + (names || '가입하신 펀드') + '에 들어가 있는데, 수익률을 함께 보시고 필요하면 다른 펀드로 옮기는 것(펀드 변경)도 무료로 해드릴 수 있습니다.' +
+          (lowRatio ? ' 적립비율이 낮은 펀드가 있어 오늘 함께 조정해 보시는 걸 권합니다.' : ''),
         basis: [
           '변액상품은 펀드 변경이 연 일정 횟수까지 무료이나, 활용하지 않는 고객이 대부분입니다.',
           '정기적인 펀드 점검은 계약 유지율을 높이고 민원을 예방합니다.',
-          '방문 전 FP.COM에서 펀드수익률표를 출력해 지참하세요.'
+          '방문 전 FP.COM 에서 펀드 가입내역 · 적립비율과 펀드수익률표를 출력해 지참하세요.'
         ],
         prep: ['펀드수익률표']
       });
     }
 
-    /* ---------- 13. 보장 만기 · 납입 만료 ---------- */
+    /* ---------- 14. 보장 만기 ---------- */
     [['b_cmain', '주계약'], ['b_crider', '특약']].forEach(function (pair) {
       const k = pair[0], nm = pair[1];
       const d = dd(V(k));
@@ -1435,30 +1565,37 @@ textarea#script{height:280px;font-size:12.8px;line-height:1.7;white-space:pre-wr
             '만기 이후에는 보장이 즉시 종료되어 무보험 상태가 됩니다.',
             '만기 도래 안내는 평생든든서비스의 정규 안내 항목입니다.',
             '나이가 오른 뒤 새로 가입하면 보험료가 크게 오르므로, 만기 전 대비가 유리합니다.',
-            '보장분석서를 지참해 없어지는 보장을 눈으로 보여드리면 설득력이 높아집니다.'
+            '주요보장 급부 만기시점은 보장분석서로 대체해 설명할 수 있습니다.'
           ],
           prep: ['보장분석서']
         });
       }
     });
-    const payD = dd(V('i_payend'));
-    if (V('i_payend') && payD !== null && payD <= 365 && payD >= 0) {
+
+    /* ---------- 15. 납입 만료 (계약 표에서 자동 계산) ---------- */
+    contracts.forEach(function (c, i) {
+      const j = normDate(c.join);
+      if (!j || !String(c.payterm || '').trim()) return;
+      const out = Calc.calcPayEnd(j, c.payterm, '');
+      const d = dd(out.value);
+      if (!out.value || d === null || d > 365 || d < 0) return;
       add({
         lv: 'i', pri: 45, cat: '납입만료',
-        t: '보험료 납입 만료 임박 (' + ymd(normDate(V('i_payend'))) + ' · D-' + payD + ')',
-        ment: cust + ' 님, ' + ymd(normDate(V('i_payend'))) + '이면 이 계약의 보험료 납입이 끝납니다. 그 뒤로는 돈은 안 내시는데 보장은 계속됩니다. ' +
+        t: (c.prod || '가입건수 ' + (i + 1)) + ' 보험료 납입 만료 임박 (' + ymd(out.value) + ' · D-' + d + ')',
+        ment: cust + ' 님, ' + ymd(out.value) + '이면 ' + (c.prod || '이 계약') + '의 보험료 납입이 끝납니다. 그 뒤로는 돈은 안 내시는데 보장은 계속됩니다. ' +
           '그때 여유가 생기시니, 지금 비어 있는 보장을 그 시점에 맞춰 채우시는 것도 좋은 방법입니다.',
         basis: [
           '납입 만료 시점은 고객의 가처분 소득이 늘어나는 시점으로, 추가 제안 성공률이 높습니다.',
-          '납입이 끝나도 보장은 유지된다는 점을 명확히 안내해야 불필요한 해지를 막을 수 있습니다.'
+          '납입이 끝나도 보장은 유지된다는 점을 명확히 안내해야 불필요한 해지를 막을 수 있습니다.',
+          '계산 근거 : ' + out.how
         ],
         prep: []
       });
-    }
+    });
 
-    /* ---------- 14. 수익자 ---------- */
+    /* ---------- 16. 수익자 ---------- */
     if (!V('c_bh') || !V('c_bd')) {
-      need('p11');
+      need('p9');
       add({
         lv: 'a', pri: 64, cat: '수익자', t: '수익자 지정 확인 필요',
         ment: cust + ' 님, 보험금을 받으실 분(수익자)이 누구로 되어 있는지 함께 확인해 보시겠습니다. ' +
@@ -1466,7 +1603,7 @@ textarea#script{height:280px;font-size:12.8px;line-height:1.7;white-space:pre-wr
         basis: [
           '수익자가 실제 의도와 다르게 지정되어 있으면 지급 지연이나 가족 간 분쟁이 발생합니다.',
           '수익자 변경은 계약자가 생존해 계실 때만 자유롭게 가능합니다.',
-          '상속·증여세 문제와도 직접 연결되는 항목입니다.',
+          '상속 · 증여세 문제와도 직접 연결되는 항목입니다.',
           '필요 서류 : 계약사항 변경신청서.'
         ],
         prep: ['계약사항 변경신청서']
@@ -1474,21 +1611,36 @@ textarea#script{height:280px;font-size:12.8px;line-height:1.7;white-space:pre-wr
     }
     if (!V('c_bh')) bl('수익자 (입원시)');
     if (!V('c_bd')) bl('수익자 (사망시)');
-    if (!joinDate) bl(V('i_join') ? '가입일 (형식을 알아볼 수 없음 — 20030514 처럼 입력)' : '가입일');
-    if (!V('i_prod')) bl('상품명');
+
+    /* ---------- 17. 고객 관리 ---------- */
+    if (V('p_bday') || V('p_anniv')) {
+      need('p6');
+      add({
+        lv: 'i', pri: 15, cat: '고객관리',
+        t: '기념일 관리 대상 (' + [V('p_bday') ? '생일 ' + V('p_bday') : '', V('p_anniv') ? '기념일 ' + V('p_anniv') : ''].filter(Boolean).join(' · ') + ')',
+        ment: cust + ' 님, 생일이나 기념일에 제가 잊지 않고 연락드리겠습니다. 오늘 알려주신 날짜로 기록해 두겠습니다.',
+        basis: [
+          '기념일 연락은 재접촉의 가장 자연스러운 명분이 됩니다.',
+          '명함 · 사은품을 함께 준비하면 소개 요청으로 이어지기 쉽습니다.'
+        ],
+        prep: ['명함 · 사은품']
+      });
+    }
+    if (V('p_addr0') && !V('p_addr1')) bl('주소 (변경 후) — 변경 전만 적혀 있습니다');
 
     /* ---------- 정렬 · 등급 ---------- */
     F2.sort(function (a, b) { return b.pri - a.pri; });
     const grade =
-      (F2.some(function (x) { return x.lv === 'b' && x.pri >= 70; }) ||
-        F2.some(function (x) { return x.cat === '헬스케어 서비스' && x.lv === 'b'; })) ? 'A'
-        : F2.some(function (x) { return x.lv === 'm'; }) ? 'A'
+      F2.some(function (x) { return x.lv === 'm'; }) ? 'A'
+        : F2.some(function (x) { return x.lv === 'b' && x.pri >= 70; }) ? 'A'
           : F2.some(function (x) { return x.lv === 'a'; }) ? 'B' : 'C';
 
     return {
       cust: cust, findings: F2, prep: prep, blanks: blanks,
       money: money, moneyUnknown: moneyUnknown, grade: grade,
       hidCnt: F2.filter(function (x) { return x.lv === 'm'; }).length,
+      contracts: contracts, firstJoin: firstJoin, premSum: premSum,
+      hiddens: hiddens, follows: follows,
       today: today
     };
   }
@@ -1499,11 +1651,12 @@ textarea#script{height:280px;font-size:12.8px;line-height:1.7;white-space:pre-wr
     const V = function (k) { return String(f[k] == null ? '' : f[k]).trim(); };
     const strip = function (s) { return String(s).replace(/<[^>]+>/g, ''); };
     const cust = res.cust;
+    const prods = res.contracts.map(function (c) { return c.prod; }).filter(Boolean).join(' / ');
     let s = '';
     s += '━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n';
     s += ' 평생든든 방문 상담 스크립트\n';
-    s += ' ' + cust + ' 님 · ' + (V('i_prod') || '') + ' · 방문예정 ' + (ymd(normDate(V('h_vdate'))) || '') + '\n';
-    s += ' FP ' + (V('h_fp') || '') + '\n';
+    s += ' ' + cust + ' 님 · ' + (prods || '계약 ' + res.contracts.length + '건') + '\n';
+    s += ' ' + (V('h_fp') || '') + ' · 분석일 ' + (ymd(normDate(V('h_adate'))) || '') + '\n';
     s += '━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n\n';
 
     s += '【1. 인사 · 방문 목적】\n';
@@ -1899,27 +2052,39 @@ textarea#script{height:280px;font-size:12.8px;line-height:1.7;white-space:pre-wr
     return s;
   }
 
+  function cleanRows(rowsIn) {
+    const src = rowsIn || {};
+    const out = {};
+    Schema.ROWSETS.forEach(function (set) {
+      out[set.key] = Schema.pruneRows(set, src[set.key]).map(function (row) {
+        const o = {};
+        set.cols.forEach(function (c) { o[c.k] = cleanValue(c, row[c.k]); });
+        return o;
+      });
+    });
+    return out;
+  }
+
   function saveRecord(rec) {
     const list = loadAll();
     const f = {};
     Schema.allFields().forEach(function (fd) { f[fd.k] = cleanValue(fd, (rec.f || {})[fd.k]); });
     if (!f.h_cust) throw new Error('고객(계약자) 성명을 입력해 주세요.');
 
-    const res = Analysis.analyze({ f: f, claims: rec.claims || [] });
-    const claims = (rec.claims || []).filter(function (c) { return c && (c.d || c.t || c.a); })
-      .map(function (c) { return { d: String(c.d || ''), t: Calc.normDate(c.t || '') || '', a: String(c.a || '') }; });
+    const rows = cleanRows(rec.rows || (rec.claims ? { claims: rec.claims } : {}));
+    const res = Analysis.analyze({ f: f, rows: rows });
     const now = new Date().toISOString();
 
     let saved;
     const idx = rec.id ? list.findIndex(function (x) { return x.id === rec.id; }) : -1;
     if (idx >= 0) {
       saved = list[idx];
-      saved.f = f; saved.chk = rec.chk || {}; saved.claims = claims;
+      saved.f = f; saved.chk = rec.chk || {}; saved.rows = rows;
       saved.money = res.money; saved.hidCnt = res.hidCnt; saved.savedAt = now;
     } else {
       const maxId = list.reduce(function (m, x) { return Math.max(m, Number(x.id) || 0); }, 0);
       saved = {
-        id: maxId + 1, f: f, chk: rec.chk || {}, claims: claims,
+        id: maxId + 1, f: f, chk: rec.chk || {}, rows: rows,
         money: res.money, hidCnt: res.hidCnt, savedAt: now, createdAt: now
       };
       list.push(saved);
@@ -1932,7 +2097,8 @@ textarea#script{height:280px;font-size:12.8px;line-height:1.7;white-space:pre-wr
     q = String(q || '').trim();
     return loadAll()
       .filter(function (r) {
-        return !q || String(r.f.h_cust || '').indexOf(q) >= 0 || String(r.f.i_prod || '').indexOf(q) >= 0;
+        return !q || String(r.f.h_cust || '').indexOf(q) >= 0 ||
+          String(Schema.ledgerValue(r, '_prod') || '').indexOf(q) >= 0;
       })
       .sort(function (a, b) { return String(b.savedAt || '').localeCompare(String(a.savedAt || '')); });
   }
@@ -1944,19 +2110,21 @@ textarea#script{height:280px;font-size:12.8px;line-height:1.7;white-space:pre-wr
     const grades = { A: 0, B: 0, C: 0, '': 0 };
     list.forEach(function (r) { const g = r.f.m_grade || ''; grades[g] = (grades[g] || 0) + 1; });
 
-    const follow = list.filter(function (r) { return r.f.m_deadline || r.f.m_next; })
-      .map(function (r) {
-        return {
-          id: r.id, cust: r.f.h_cust, prod: r.f.i_prod, follow: r.f.m_follow,
-          deadline: r.f.m_deadline, next: r.f.m_next,
-          d: Calc.dday(r.f.m_deadline || r.f.m_next)
-        };
-      })
-      .sort(function (a, b) { return (a.d == null ? 9999 : a.d) - (b.d == null ? 9999 : b.d); });
+    const follow = [];
+    list.forEach(function (r) {
+      const due = Schema.ledgerValue(r, '_due');
+      const what = Schema.ledgerValue(r, '_follow');
+      if (!due && !what && !r.f.m_next) return;
+      follow.push({
+        id: r.id, cust: r.f.h_cust, prod: Schema.ledgerValue(r, '_prod'), follow: what,
+        deadline: due, next: r.f.m_next, d: Calc.dday(due || r.f.m_next)
+      });
+    });
+    follow.sort(function (a, b) { return (a.d == null ? 9999 : a.d) - (b.d == null ? 9999 : b.d); });
 
     const months = {};
     list.forEach(function (r) {
-      const d = r.f.m_vdate || r.f.h_vdate || r.savedAt || '';
+      const d = r.f.m_vdate || r.f.h_adate || r.savedAt || '';
       const k = String(d).slice(0, 7);
       if (k) months[k] = (months[k] || 0) + 1;
     });
@@ -1966,7 +2134,7 @@ textarea#script{height:280px;font-size:12.8px;line-height:1.7;white-space:pre-wr
       customers: Object.keys(custs).length,
       money: list.reduce(function (s, r) { return s + (r.money || 0); }, 0),
       hidden: list.filter(function (r) { return (r.money || 0) > 0; }).length,
-      upsell: list.filter(function (r) { return String(r.f.m_upsell || '').trim(); }).length,
+      contracts: list.reduce(function (s, r) { return s + Schema.rowsOf(r, 'contracts').length; }, 0),
       grades: grades, follow: follow, months: months
     };
   }
@@ -2012,7 +2180,7 @@ textarea#script{height:280px;font-size:12.8px;line-height:1.7;white-space:pre-wr
           recs.forEach(function (r) {
             try {
               if (!r || !r.f || !String(r.f.h_cust || '').trim()) { failed++; return; }
-              saveRecord({ f: r.f, claims: r.claims || [], chk: r.chk || {} });
+              saveRecord({ f: r.f, rows: r.rows || (r.claims ? { claims: r.claims } : {}), chk: r.chk || {} });
               added++;
             } catch (e) { failed++; }
           });
@@ -2028,13 +2196,19 @@ textarea#script{height:280px;font-size:12.8px;line-height:1.7;white-space:pre-wr
   const S = { title: 1, sec: 2, head: 3, label: 4, val: 5, valNum: 6, hint: 7, group: 8, wrap: 9, bold: 10, auto: 11, num: 12 };
   const LV_STYLE = { m: 13, a: 14, b: 15, i: 16 };
 
-  function titleRows(rows, merges, text, sub) {
+  const COL = 'ABCDEFGHIJKLMN';
+
+  function titleRows(rows, merges, text, sub, width) {
     const r = rows.length;
-    rows.push([{ v: text, s: S.title }, { v: '', s: S.title }, { v: '', s: S.title }, { v: '', s: S.title }]);
-    merges.push('A' + (r + 1) + ':D' + (r + 1));
+    const w = Math.max(2, width || 4);
+    const last = COL[w - 1];
+    const line = [];
+    for (let i = 0; i < w; i++) line.push({ v: i === 0 ? text : '', s: S.title });
+    rows.push(line);
+    merges.push('A' + (r + 1) + ':' + last + (r + 1));
     if (sub) {
       rows.push([{ v: sub, s: 0 }]);
-      merges.push('A' + (r + 2) + ':D' + (r + 2));
+      merges.push('A' + (r + 2) + ':' + last + (r + 2));
     }
   }
 
@@ -2045,7 +2219,7 @@ textarea#script{height:280px;font-size:12.8px;line-height:1.7;white-space:pre-wr
   }
 
   function inputSheets(rec) {
-    const f = (rec && rec.f) || {}, claims = (rec && rec.claims) || [], chk = (rec && rec.chk) || {};
+    const f = (rec && rec.f) || {}, rowsIn = (rec && rec.rows) || {}, chk = (rec && rec.chk) || {};
     const sheets = [];
 
     /* 계약입력 */
@@ -2085,22 +2259,32 @@ textarea#script{height:280px;font-size:12.8px;line-height:1.7;white-space:pre-wr
     });
     sheets.push({ name: '계약입력', cols: [{ w: 14 }, { w: 34 }, { w: 28 }, { w: 34 }], rows: rows, merges: merges, heights: heights });
 
-    /* 사고보험금 */
-    const crows = [], cmerges = [];
-    titleRows(crows, cmerges, '사고보험금 지급 이력', '과거에 받으신 보험금입니다.');
-    crows.push([]);
-    crows.push([{ v: 'No', s: S.head }, { v: '병명', s: S.head }, { v: '수령일', s: S.head }, { v: '수령액(원)', s: S.head }]);
-    const n = Math.max(10, claims.length + 3);
-    for (let i = 0; i < n; i++) {
-      const c = claims[i];
-      crows.push([
-        { v: i + 1, s: S.label, n: true },
-        { v: c ? (c.d || '') : '', s: S.val },
-        { v: c ? (Calc.normDate(c.t) || c.t || '') : '', s: S.val },
-        { v: c && c.a ? Calc.numOf(c.a) : '', s: S.valNum, n: true }
-      ]);
-    }
-    sheets.push({ name: '사고보험금', cols: [{ w: 6 }, { w: 34 }, { w: 16 }, { w: 18 }], rows: crows, merges: cmerges });
+    /* 여러 줄 표 (가입건수 · 사고보험금 · 상담내용 …) */
+    Schema.ROWSETS.forEach(function (set) {
+      const list = Schema.pruneRows(set, rowsIn[set.key]);
+      const trows = [], tmerges = [];
+      titleRows(trows, tmerges, set.label, set.sub || '', set.cols.length + 1);
+      trows.push([]);
+      trows.push([{ v: 'No', s: S.head }].concat(set.cols.map(function (c) {
+        return { v: c.label + (c.unit ? '(' + c.unit + ')' : ''), s: S.head };
+      })));
+      const n = Math.max((set.rows || 3) + 4, list.length + 3);
+      for (let i = 0; i < n; i++) {
+        const v = list[i];
+        trows.push([{ v: i + 1, s: S.label, n: true }].concat(set.cols.map(function (c) {
+          const raw = v ? v[c.k] : '';
+          const has = raw !== undefined && raw !== null && String(raw).trim() !== '';
+          if (c.type === 'number') return { v: has ? Calc.numOf(raw) : '', s: S.valNum, n: true };
+          if (c.type === 'date') return { v: has ? (Calc.normDate(raw) || String(raw)) : '', s: S.val };
+          return { v: has ? String(raw) : '', s: S.val };
+        })));
+      }
+      sheets.push({
+        name: set.sheet,
+        cols: [{ w: 6 }].concat(set.cols.map(function (c) { return { w: c.w || 18 }; })),
+        rows: trows, merges: tmerges
+      });
+    });
 
     /* 준비물 · 추가점검 */
     const krows = [], kmerges = [];
@@ -2193,10 +2377,9 @@ textarea#script{height:280px;font-size:12.8px;line-height:1.7;white-space:pre-wr
     rows.push(Schema.LEDGER_COLS.map(function (c) { return { v: c.label, s: S.head }; }));
     list.forEach(function (rec) {
       rows.push(Schema.LEDGER_COLS.map(function (c) {
-        if (c.k === '_savedAt') return { v: String(rec.savedAt || '').slice(0, 19).replace('T', ' '), s: S.label };
-        if (c.k === '_money') return { v: rec.money || 0, s: S.num, n: true };
-        if (c.k === '_hidCnt') return { v: rec.hidCnt || 0, s: S.num, n: true };
-        const fd = FIELD_MAP[c.k], v = rec.f[c.k];
+        const v = Schema.ledgerValue(rec, c.k);
+        const fd = FIELD_MAP[c.k];
+        if (typeof v === 'number') return { v: v, s: S.num, n: true };
         if (fd && fd.type === 'number' && v) return { v: Calc.numOf(v), s: S.num, n: true };
         return { v: v || '', s: S.label };
       }));
@@ -2212,11 +2395,11 @@ textarea#script{height:280px;font-size:12.8px;line-height:1.7;white-space:pre-wr
     titleRows(srows, smerges, '누적 활동 통계', '데이터 시트를 기준으로 집계했습니다.');
     srows.push([]);
     [
-      ['누적 계약 분석 건수', st.total + ' 건'],
+      ['누적 방문기록 수', st.total + ' 건'],
       ['관리 고객 수', st.customers + ' 명'],
       ['숨은보험금 발견 건수', st.hidden + ' 건'],
       ['발견 예상액 누계', Calc.won(st.money) + ' 원'],
-      ['업셀링 제안 건수', st.upsell + ' 건'],
+      ['관리 계약 건수', st.contracts + ' 건'],
       ['A등급 비율', (st.total ? Math.round((st.grades.A || 0) / st.total * 100) : 0) + ' %'],
       ['건당 평균 발견액', Calc.won(st.total ? st.money / st.total : 0) + ' 원']
     ].forEach(function (k) { srows.push([{ v: k[0], s: S.group }, { v: k[1], s: S.label }]); });
@@ -2287,10 +2470,9 @@ textarea#script{height:280px;font-size:12.8px;line-height:1.7;white-space:pre-wr
     let csv = '﻿' + Schema.LEDGER_COLS.map(function (c) { return c.label; }).join(',') + '\n';
     listRecords('').forEach(function (rec) {
       csv += Schema.LEDGER_COLS.map(function (c) {
-        if (c.k === '_savedAt') return esc(String(rec.savedAt || '').slice(0, 19).replace('T', ' '));
-        if (c.k === '_money') return rec.money || 0;
-        if (c.k === '_hidCnt') return rec.hidCnt || 0;
-        const fd = FIELD_MAP[c.k], v = rec.f[c.k];
+        const v = Schema.ledgerValue(rec, c.k);
+        const fd = FIELD_MAP[c.k];
+        if (typeof v === 'number') return v;
         if (fd && fd.type === 'number' && v) return Calc.numOf(v);
         return esc(v);
       }).join(',') + '\n';
@@ -2381,7 +2563,7 @@ textarea#script{height:280px;font-size:12.8px;line-height:1.7;white-space:pre-wr
 <script>
 /* ===== public/app.js ===== */
 /*
- * 화면 동작 — 입력 · 자동계산 · 진단 · 서버 저장 · 엑셀
+ * 화면 동작 — 입력 · 자동계산 · 진단 · 저장 · 엑셀
  * 진단 로직은 서버와 같은 파일(/shared/analysis.js)을 씁니다.
  */
 'use strict';
@@ -2395,12 +2577,13 @@ const todayStr = Calc.todayStr();
 
 const FIELDS = Schema.allFields().map(function (f) { return f.k; });
 const PREPS = Schema.PREPS, EXTRAS = Schema.EXTRAS;
-const DRAFT_KEY = 'kyobo_draft_v2';
+const RSETS = Schema.ROWSETS, RSMAP = Schema.rowsetMap();
+const DRAFT_KEY = 'kyobo_draft_v3';
 const FP_KEY = 'kyobo_fp_v1';
-const FP_DEFAULT = '평촌지점 추진이';
+const FP_DEFAULT = '교보생명 평촌지점 추진이 FP';
 
 let RES = null;        // 최근 분석 결과
-let editId = null;     // 서버에 저장된 계약 id (수정 중일 때)
+let editId = null;     // 저장된 기록 id (수정 중일 때)
 let DBCACHE = [];      // ④ 탭 목록
 
 /* ===================== 공통 ===================== */
@@ -2423,7 +2606,7 @@ function netError(msg) {
   const el = $('netWarn');
   el.style.display = 'block';
   el.innerHTML = '<b>서버와 연결하지 못했습니다.</b> ' + msg +
-    '<br>입력하신 내용은 이 컴퓨터에 임시 보관되어 있으니, 서버가 살아나면 [저장]을 다시 눌러 주세요.';
+    '<br>입력하신 내용은 이 기기에 임시 보관되어 있으니, 서버가 살아나면 [저장]을 다시 눌러 주세요.';
 }
 
 async function api(url, opts) {
@@ -2520,71 +2703,195 @@ function commafy(digits) {
   return digits.replace(/\B(?=(\d{3})+(?!\d))/g, ',');
 }
 
-/* 값을 다시 꾸미고, 커서는 '앞에 있던 숫자 개수' 기준으로 제자리에 둔다 */
 function formatMoneyLive(el) {
-  const raw = el.value;
-  let caret = el.selectionEnd;
-  if (caret === null || caret === undefined) caret = raw.length;
-  const before = raw.slice(0, caret).replace(/[^0-9]/g, '').length;
-  const out = commafy(raw);
-  if (out === raw) return;
+  const before = el.value.slice(0, el.selectionStart == null ? el.value.length : el.selectionStart);
+  const digitsBefore = before.replace(/[^0-9]/g, '').length;
+  const out = commafy(el.value);
+  if (out === el.value) return;
   el.value = out;
-  let pos = 0, seen = 0;
-  while (pos < out.length && seen < before) {
-    if (out.charCodeAt(pos) >= 48 && out.charCodeAt(pos) <= 57) seen++;
-    pos++;
+  let pos = out.length, seen = 0;
+  for (let i = 0; i < out.length; i++) {
+    if (/[0-9]/.test(out[i])) seen++;
+    if (seen === digitsBefore) { pos = i + 1; break; }
+    if (digitsBefore === 0) { pos = 0; break; }
   }
-  try { el.setSelectionRange(pos, pos); } catch (e) { /* 커서를 못 옮기는 칸은 그냥 둔다 */ }
+  try { el.setSelectionRange(pos, pos); } catch (e) { /* 무시 */ }
 }
 
 function enhanceMoney(root) {
   (root || document).querySelectorAll('input[data-money]').forEach(function (el) {
-    if (el.dataset.enhanced) return;
-    el.dataset.enhanced = '1';
+    if (el.dataset.moneyOn) return;
+    el.dataset.moneyOn = '1';
     el.setAttribute('inputmode', 'numeric');
-    el.style.textAlign = 'right';
+    el.classList.add('num');
 
-    /* 쉼표 바로 뒤에서 지우기를 누르면, 쉼표가 아니라 그 앞의 숫자가 지워지게 한다 */
-    el.addEventListener('beforeinput', function (e) {
-      if (e.inputType !== 'deleteContentBackward') return;
-      const p = el.selectionStart;
-      if (p !== el.selectionEnd || p < 2 || el.value.charAt(p - 1) !== ',') return;
-      e.preventDefault();
-      el.value = el.value.slice(0, p - 2) + el.value.slice(p);
-      try { el.setSelectionRange(p - 2, p - 2); } catch (err) { /* 무시 */ }
-      formatMoneyLive(el);
-      el.dispatchEvent(new Event('input', { bubbles: true }));
+    /* 쉼표 바로 뒤에서 지우면 쉼표가 아니라 그 앞 숫자가 지워지도록 */
+    el.addEventListener('beforeinput', function (ev) {
+      if (ev.inputType !== 'deleteContentBackward') return;
+      const s = el.selectionStart, e2 = el.selectionEnd;
+      if (s !== e2 || s === 0) return;
+      if (el.value[s - 1] === ',') {
+        ev.preventDefault();
+        el.value = el.value.slice(0, s - 2) + el.value.slice(s);
+        try { el.setSelectionRange(s - 2, s - 2); } catch (err) { /* 무시 */ }
+        formatMoneyLive(el);
+        el.dispatchEvent(new Event('input', { bubbles: true }));
+      }
     });
-
     el.addEventListener('input', function () { formatMoneyLive(el); });
-    el.addEventListener('blur', function () { formatMoneyLive(el); });
+    el.addEventListener('blur', function () { el.value = commafy(el.value); });
   });
 }
 
-function moneyRefresh() {
-  document.querySelectorAll('input[data-money]').forEach(function (el) {
-    if (document.activeElement === el) return;
+function moneyRefresh(root) {
+  (root || document).querySelectorAll('input[data-money]').forEach(function (el) {
     el.value = commafy(el.value);
   });
 }
 
-/* ===================== 자동 계산 ===================== */
+/* ===================== 여러 줄 표 (계약사항 · 사고보험금 …) ===================== */
 
-function calcBMI() {
-  const v = Calc.bmi(V('f_ht'), V('f_wt'));
-  $('f_bmi').value = v;
+function rsInput(set, col) {
+  const attr = [];
+  let cls = 'rsi';
+  if (col.type === 'date') attr.push('data-date');
+  if (col.type === 'number') {
+    if (col.unit === '%') attr.push('type="number"', 'step="0.1"');
+    else attr.push('data-money');
+  }
+  if (col.auto) cls += ' autoval';
+  if (col.ph) attr.push('placeholder="' + esc(col.ph) + '"');
+  return '<input class="' + cls + '" data-rs="' + set.key + '" data-col="' + col.k + '" ' + attr.join(' ') + '>';
 }
+
+function renderRowsets() {
+  RSETS.forEach(function (set) {
+    const box = $('rs_' + set.key);
+    if (!box) return;
+    box.innerHTML =
+      '<div class="tscroll"><table class="form rs" id="rst_' + set.key + '">' +
+      '<thead><tr><th class="rsno">No</th>' +
+      set.cols.map(function (c) {
+        return '<th' + (c.w ? ' style="width:' + (c.w * 9) + 'px"' : '') + '>' + esc(c.label) +
+          (c.unit ? ' <span class="gsub">(' + esc(c.unit) + ')</span>' : '') +
+          (c.auto ? ' <span class="gsub">자동</span>' : '') + '</th>';
+      }).join('') +
+      '<th class="rsx noprint"></th></tr></thead>' +
+      '<tbody id="rsb_' + set.key + '"></tbody></table></div>' +
+      (set.sub ? '<div class="hint">' + esc(set.sub) + '</div>' : '') +
+      '<div class="btns noprint" style="margin-top:6px">' +
+      '<button type="button" class="b b-sub sm" data-rsadd="' + set.key + '">' + esc(set.addLabel || '＋ 줄 추가') + '</button></div>';
+  });
+}
+
+function rsRenumber(key) {
+  const tb = $('rsb_' + key);
+  if (!tb) return;
+  [].slice.call(tb.children).forEach(function (tr, i) {
+    const c = tr.querySelector('.rsno');
+    if (c) c.textContent = i + 1;
+  });
+}
+
+function addRow(key, v) {
+  const set = RSMAP[key];
+  const tb = $('rsb_' + key);
+  if (!set || !tb) return null;
+  const tr = document.createElement('tr');
+  tr.innerHTML = '<td class="rsno"></td>' +
+    set.cols.map(function (c) { return '<td>' + rsInput(set, c) + '</td>'; }).join('') +
+    '<td class="rsx noprint"><button type="button" class="rsdel" title="이 줄 지우기">✕</button></td>';
+  tb.appendChild(tr);
+  if (v) {
+    set.cols.forEach(function (c) {
+      const el = tr.querySelector('[data-col="' + c.k + '"]');
+      if (!el) return;
+      const raw = v[c.k] == null ? '' : String(v[c.k]);
+      el.value = (c.type === 'number' && c.unit === '원') ? commafy(raw) : raw;
+    });
+  }
+  enhanceDates(tr);
+  enhanceMoney(tr);
+  rsRenumber(key);
+  return tr;
+}
+
+function getRows(key) {
+  const set = RSMAP[key];
+  const tb = $('rsb_' + key);
+  if (!set || !tb) return [];
+  const out = [];
+  [].slice.call(tb.children).forEach(function (tr) {
+    const o = {};
+    set.cols.forEach(function (c) {
+      const el = tr.querySelector('[data-col="' + c.k + '"]');
+      let v = el ? String(el.value || '').trim() : '';
+      if (c.type === 'date') v = normDate(v) || v;
+      if (c.type === 'number') v = String(numOf(v) || '');
+      o[c.k] = v;
+    });
+    out.push(o);
+  });
+  return Schema.pruneRows(set, out);
+}
+
+function allRows() {
+  const o = {};
+  RSETS.forEach(function (s) { o[s.key] = getRows(s.key); });
+  return o;
+}
+
+function setRows(key, listIn) {
+  const set = RSMAP[key];
+  const tb = $('rsb_' + key);
+  if (!set || !tb) return;
+  tb.innerHTML = '';
+  const list = (listIn || []).slice();
+  const n = Math.max(set.rows || 1, list.length);
+  for (let i = 0; i < n; i++) addRow(key, list[i]);
+}
+
+function resetRows() {
+  RSETS.forEach(function (s) { setRows(s.key, []); });
+}
+
+document.addEventListener('click', function (e) {
+  const a = e.target.closest('[data-rsadd]');
+  if (a) { e.preventDefault(); addRow(a.dataset.rsadd); markDirty(); return; }
+  const d = e.target.closest('.rsdel');
+  if (d) {
+    e.preventDefault();
+    const tr = d.closest('tr'), tb = tr.parentNode;
+    const key = tb.id.replace('rsb_', '');
+    tr.remove();
+    if (!tb.children.length) addRow(key);
+    rsRenumber(key);
+    calcAll();
+    markDirty();
+  }
+});
+
+/* ===================== 자동 계산 ===================== */
 
 function setAutoVal(el, v) {
   v = String(v);
-  if (!el.value.trim() || el.value === el.dataset.autoval) { el.value = v; el.dataset.autoval = v; return true; }
+  if (!el || !el.value.trim() || el.value === el.dataset.autoval) {
+    if (el) { el.value = v; el.dataset.autoval = v; }
+    return true;
+  }
   return false;
 }
 
 const AGE_ROWS = [['c_obirth', '계약자', 'c_oja', 'c_ona'], ['c_ibirth', '주피보험자', 'c_ija', 'c_ina']];
 
+/* 계약 표에서 가장 이른 가입일 — 가입연령 계산 기준 */
+function firstJoin() {
+  const js = getRows('contracts').map(function (c) { return normDate(c.join); }).filter(Boolean).sort();
+  return js[0] || '';
+}
+
 function calcAges() {
-  const join = normDate(V('i_join'));
+  const join = firstJoin();
   AGE_ROWS.forEach(function (row) {
     const bd = normDate(V(row[0]));
     if (!bd) return;
@@ -2593,17 +2900,13 @@ function calcAges() {
     if (r2) setAutoVal($(row[3]), r2.age);
   });
   const ob = normDate(V('c_obirth'));
-  if (ob) {
-    if (!V('e_bm')) $('e_bm').value = +ob.slice(5, 7);
-    if (!V('e_bd')) $('e_bd').value = +ob.slice(8, 10);
-  }
-  syncAge('c_ija');
+  if (ob && !V('p_bday')) $('p_bday').value = ob.slice(5);
   ageMsg();
 }
 
 function ageMsg() {
   const el = $('c_ageMsg');
-  const join = normDate(V('i_join'));
+  const join = firstJoin();
   const out = [];
   AGE_ROWS.forEach(function (row) {
     const bd = normDate(V(row[0]));
@@ -2627,93 +2930,50 @@ function ageMsg() {
   }
 }
 
-function syncAge(from) {
-  if (from === 'i_age') $('c_ija').value = V('i_age');
-  else if (from === 'c_ija') $('i_age').value = V('c_ija');
-  else if (V('i_age')) $('c_ija').value = V('i_age');
-  else if (V('c_ija')) $('i_age').value = V('c_ija');
-}
-
-function applyAuto(id, v) {
-  const el = $(id);
-  el.value = v; el.dataset.autoval = v;
-  calcTerms();
-}
-window.applyAuto = applyAuto;
-
-function showTerm(msgId, elId, out) {
-  const el = $(elId), msg = $(msgId);
-  const say = function (t, c) { msg.innerHTML = t; msg.style.color = c || ''; };
-  if (!out.value) { say(out.how || '', out.how ? 'var(--org)' : ''); return; }
-  const cur = normDate(el.value);
-  if (cur === out.value) { say(out.how, 'var(--grn)'); return; }
-  if (!el.value.trim() || el.value === el.dataset.autoval) {
-    el.value = out.value; el.dataset.autoval = out.value;
-    say(out.how + ' — 자동으로 넣었습니다.', 'var(--grn)');
-  } else {
-    say('자동 계산은 <b>' + out.value + '</b> 입니다. 직접 넣으신 ' + esc(el.value) + ' 을(를) 유지 중 ' +
-      '<button type="button" class="b b-sub sm" style="padding:1px 8px;font-size:11px" ' +
-      'onclick="applyAuto(\'' + elId + '\',\'' + out.value + '\')">자동값으로 바꾸기</button>', 'var(--org)');
-  }
-}
-
-function hint(id, text, color) {
-  const el = $(id);
-  el.innerHTML = text;
-  el.style.color = color || '';
-}
-
+/* 계약 표의 납입 만료일 · 보험 만기일을 줄마다 자동으로 채웁니다 */
 function calcTerms() {
-  /* 보험 만기일 : 가입일 + 보험기간 */
-  const join = V('i_join'), insterm = V('i_insterm');
-  if (!join && !insterm) hint('i_insendMsg', '가입일과 보험기간을 넣으시면 자동으로 채워집니다.');
-  else if (!join) hint('i_insendMsg', '가입일을 넣으시면 만기일이 자동으로 채워집니다.');
-  else if (!insterm) hint('i_insendMsg', '보험기간을 넣으시면 만기일이 자동으로 채워집니다.');
+  const tb = $('rsb_contracts');
+  if (!tb) return;
+  const msgs = [];
+  const age = V('c_ija') || V('c_oja');
+  [].slice.call(tb.children).forEach(function (tr, i) {
+    const get = function (k) {
+      const el = tr.querySelector('[data-col="' + k + '"]');
+      return el ? String(el.value || '').trim() : '';
+    };
+    const join = normDate(get('join'));
+    if (!join) return;
+    const label = get('prod') || (i + 1) + '번 계약';
+
+    const ins = Calc.calcInsEnd(join, get('insterm'), age);
+    const insEl = tr.querySelector('[data-col="insend"]');
+    if (ins.whole) {
+      if (insEl && (!insEl.value.trim() || insEl.value === insEl.dataset.autoval)) { insEl.value = ''; insEl.dataset.autoval = ''; }
+      msgs.push('<b>' + esc(label) + '</b> 종신 — 만기가 따로 없어 평생 보장됩니다.');
+    } else if (ins.value) {
+      const done = setAutoVal(insEl, ins.value);
+      msgs.push('<b>' + esc(label) + '</b> 보험 만기일 ' + ins.how + (done ? '' : ' <span style="color:var(--org)">— 직접 넣으신 값 유지 중</span>'));
+    } else if (ins.how) {
+      msgs.push('<b>' + esc(label) + '</b> ' + esc(ins.how));
+    }
+
+    const pay = Calc.calcPayEnd(join, get('payterm'), get('insend'));
+    if (pay.value) {
+      const done = setAutoVal(tr.querySelector('[data-col="payend"]'), pay.value);
+      msgs.push('<b>' + esc(label) + '</b> 납입 만료일 ' + pay.how + (done ? '' : ' <span style="color:var(--org)">— 직접 넣으신 값 유지 중</span>'));
+    }
+  });
+  const el = $('rs_contractsMsg');
+  if (!el) return;
+  if (msgs.length) { el.innerHTML = msgs.join('<br>'); el.style.color = 'var(--grn)'; }
   else {
-    const out = Calc.calcInsEnd(join, insterm, V('i_age'));
-    if (out.whole) hint('i_insendMsg', '종신 — 만기가 따로 없어 평생 보장됩니다. 만기일은 비워 두셔도 됩니다.', 'var(--blue)');
-    else showTerm('i_insendMsg', 'i_insend', out);
+    el.innerHTML = '가입일과 납입기간 · 보험기간을 넣으시면 <b>납입 만료일 · 보험 만기일</b>이 자동으로 채워집니다. ' +
+      '날짜는 <b>20030514</b> 처럼 숫자만 넣으셔도 되고, 📅 로 달력에서 고르셔도 됩니다.';
+    el.style.color = '';
   }
-
-  /* 납입 만료일 : 가입일 + 납입기간 (전기납은 보험 만기일) */
-  const payterm = V('i_payterm');
-  if (!join && !payterm) hint('i_payendMsg', '가입일과 납입기간을 넣으시면 자동으로 채워집니다.');
-  else if (!join) hint('i_payendMsg', '가입일을 넣으시면 만료일이 자동으로 채워집니다.');
-  else if (!payterm) hint('i_payendMsg', '납입기간을 넣으시면 만료일이 자동으로 채워집니다.');
-  else showTerm('i_payendMsg', 'i_payend', Calc.calcPayEnd(join, payterm, V('i_insend')));
 }
 
-function calcAll() { calcBMI(); calcAges(); calcTerms(); }
-
-/* ===================== 사고보험금 줄 ===================== */
-
-function addClaim(v) {
-  const d = document.createElement('div');
-  d.className = 'grid g3';
-  d.style.gap = '4px';
-  d.style.marginBottom = '4px';
-  d.innerHTML =
-    '<input class="cl-d" placeholder="병명">' +
-    '<input class="cl-t" data-date>' +
-    '<input class="cl-a" data-money placeholder="수령액">';
-  $('claimBox').appendChild(d);
-  if (v) {
-    d.querySelector('.cl-d').value = v.d || '';
-    d.querySelector('.cl-t').value = v.t || '';
-    d.querySelector('.cl-a').value = commafy(v.a || '');
-  }
-  enhanceDates(d);
-  enhanceMoney(d);
-}
-
-function getClaims() {
-  const ds = [].slice.call(document.querySelectorAll('.cl-d'));
-  const ts = [].slice.call(document.querySelectorAll('.cl-t'));
-  const as = [].slice.call(document.querySelectorAll('.cl-a'));
-  return ds.map(function (e, i) {
-    return { d: e.value.trim(), t: normDate(ts[i].value) || ts[i].value.trim(), a: String(numOf(as[i].value) || '') };
-  }).filter(function (x) { return x.d || x.t || x.a; });
-}
+function calcAll() { calcAges(); calcTerms(); }
 
 /* ===================== 체크리스트 ===================== */
 
@@ -2722,7 +2982,9 @@ function chkEl(id) { return $('chk_' + id); }
 
 function renderChecks() {
   const row = function (p) {
-    return '<label class="chk" id="lb_' + p.id + '"><input type="checkbox" id="chk_' + p.id + '"><span>' + esc(p.t) + '</span></label>';
+    return '<label class="chk" id="lb_' + p.id + '"><input type="checkbox" id="chk_' + p.id + '">' +
+      '<span>' + esc(p.t) + '</span>' +
+      (p.etc ? '<input class="etc" id="' + p.etc + '" placeholder="직접 적기">' : '') + '</label>';
   };
   $('prepBox').innerHTML = PREPS.map(row).join('');
   $('extraBox').innerHTML = EXTRAS.map(row).join('');
@@ -2731,13 +2993,11 @@ function renderChecks() {
 /* ===================== 수집 · 적용 ===================== */
 
 function collect() {
-  const o = { id: editId, f: {}, chk: {}, claims: getClaims() };
+  const o = { id: editId, f: {}, chk: {}, rows: allRows() };
   FIELDS.forEach(function (k) {
     const e = $(k);
     if (!e) return;
-    o.f[k] = e.dataset.money !== undefined || e.hasAttribute('data-money')
-      ? String(numOf(e.value) || '')
-      : String(e.value || '').trim();
+    o.f[k] = e.hasAttribute('data-money') ? String(numOf(e.value) || '') : String(e.value || '').trim();
   });
   PREPS.concat(EXTRAS).forEach(function (p) { const e = chkEl(p.id); o.chk[p.id] = !!(e && e.checked); });
   o.money = RES ? RES.money : 0;
@@ -2754,9 +3014,8 @@ function apply(o) {
     const e = chkEl(p.id);
     if (e) e.checked = !!(o.chk && o.chk[p.id]);
   });
-  $('claimBox').innerHTML = '';
-  const cl = (o.claims && o.claims.length) ? o.claims : [null, null, null];
-  cl.forEach(function (c) { addClaim(c); });
+  const rows = o.rows || {};
+  RSETS.forEach(function (s) { setRows(s.key, rows[s.key]); });
   moneyRefresh();
   calcAll();
   saveDraft();
@@ -2770,8 +3029,7 @@ function resetAll() {
     const lb = $('lb_' + p.id);
     if (lb) lb.classList.remove('auto');
   });
-  $('claimBox').innerHTML = '';
-  for (let i = 0; i < 3; i++) addClaim();
+  resetRows();
   RES = null; editId = null;
   $('script').value = '';
   $('r_items').innerHTML = ''; $('r_kpi').innerHTML = ''; $('r_sum').innerHTML = ''; $('r_blank').innerHTML = '';
@@ -2784,7 +3042,7 @@ function initDefaults() {
   let fp = FP_DEFAULT;
   try { if (STORE && STORE.getItem(FP_KEY)) fp = STORE.getItem(FP_KEY); } catch (e) { /* 무시 */ }
   if (!V('h_fp')) $('h_fp').value = fp;
-  if (!V('h_vdate')) $('h_vdate').value = todayStr;
+  if (!V('h_adate')) $('h_adate').value = todayStr;
 }
 
 /* ===================== 진단 ===================== */
@@ -2798,15 +3056,17 @@ function analyze(silent) {
   if (!V('m_grade')) $('m_grade').value = RES.grade;
   $('m_gradeHint').textContent = '자동 추천 : ' + RES.grade + '등급';
   $('m_hidamt').textContent = won(RES.money);
-  if (!V('m_vdate')) $('m_vdate').value = V('h_vdate');
+  if (!V('m_vdate')) $('m_vdate').value = V('h_adate');
   if (!silent) tab(2);
 }
 
 function renderResult(rec) {
   const R = RES;
-  $('r_head').textContent = R.cust + ' 님 · ' + (V('i_prod') || '상품명 미입력') +
-    ' · 가입일 ' + (ymd(normDate(V('i_join'))) || '-') +
-    ' · 방문예정 ' + (ymd(normDate(V('h_vdate'))) || '-') + ' · FP ' + (V('h_fp') || '-');
+  const prods = R.contracts.map(function (c) { return c.prod; }).filter(Boolean).join(' / ');
+  $('r_head').textContent = R.cust + ' 님 · 계약 ' + R.contracts.length + '건' +
+    (prods ? ' (' + prods + ')' : '') +
+    ' · 첫 가입일 ' + (ymd(R.firstJoin) || '-') +
+    ' · 분석일 ' + (ymd(normDate(V('h_adate'))) || '-') + ' · ' + (V('h_fp') || '-');
 
   const c = function (k) { return R.findings.filter(function (f) { return f.lv === k; }).length; };
   $('r_kpi').innerHTML =
@@ -2841,7 +3101,7 @@ function renderResult(rec) {
           : '') +
         '</div></div>';
     }).join('')
-    : '<div class="note">입력된 내용이 없습니다. ① 계약 입력 탭에서 O/X 항목을 채워 주세요.</div>';
+    : '<div class="note">입력된 내용이 없습니다. ① 고객 입력 탭에서 계약과 O/X 항목을 채워 주세요.</div>';
 
   $('r_blank').innerHTML = R.blanks.length
     ? '<div class="warn"><b>비어 있는 항목 ' + R.blanks.length + '개</b> — 방문 전 회사 시스템 조회 또는 고객 통화로 확인하세요.' +
@@ -2861,16 +3121,19 @@ function autoPrep() {
 function fillHidden() {
   if (!RES) { toast('먼저 분석을 실행해 주세요.', true); return; }
   const m = RES.findings.filter(function (f) { return f.lv === 'm'; });
-  $('m_hidden').value = m.length
-    ? m.map(function (f) { return '· ' + f.t; }).join('\n') +
-    '\n\n[발견 예상액 합계] ' + won(RES.money) + '원' +
-    (RES.moneyUnknown ? ' (금액확인 필요 ' + RES.moneyUnknown + '건 별도)' : '')
-    : '해당 없음';
+  if (!m.length) { toast('진단 결과에 숨은보험금 항목이 없습니다.'); return; }
+  const keep = getRows('hiddens');
+  const seen = {};
+  keep.forEach(function (h) { seen[String(h.item || '').trim()] = 1; });
+  const fresh = m.filter(function (f) { return !seen[f.t]; })
+    .map(function (f) { return { code: f.cat, item: f.t, amt: String(f.est || '') }; });
+  setRows('hiddens', keep.concat(fresh));
   $('m_hidamt').textContent = won(RES.money);
   saveDraft();
+  toast('숨은보험금 ' + m.length + '건을 표에 옮겼습니다.');
 }
 
-/* ===================== 저장 (서버) ===================== */
+/* ===================== 저장 ===================== */
 
 /* 저장·불러오기 같은 중요한 안내는 잠시 그대로 두고, 자동보관 문구가 덮지 않게 한다 */
 let noticeUntil = 0;
@@ -2892,17 +3155,16 @@ async function saveRecord() {
     toast('지금은 저장이 되지 않는 상태입니다. 화면 위 빨간 안내를 봐 주세요.', true);
     return;
   }
-  const j = normDate(V('i_join'));
-  if (j) $('i_join').value = j;
   if (!RES) analyze(true);
   const rec = collect();
+  const prods = (rec.rows.contracts || []).map(function (c) { return c.prod; }).filter(Boolean).join(' / ');
   try {
     const out = await api('/api/contracts', { method: 'POST', body: rec });
     const isNew = !editId;
     editId = out.id;
-    const label = name + ' 님 / ' + (rec.f.i_prod || '상품명 없음');
+    const label = name + ' 님' + (prods ? ' / ' + prods : '');
     setSaveState('저장 완료 · ' + label, 'var(--grn)', true);
-    toast(isNew ? label + ' 계약을 서버에 저장했습니다.' : label + ' 내용을 수정 저장했습니다.');
+    toast(isNew ? label + ' 기록을 저장했습니다.' : label + ' 내용을 수정 저장했습니다.');
     saveDraft();
     DBCACHE = [];
   } catch (e) {
@@ -2926,7 +3188,7 @@ async function drawDB() {
   }
   DBCACHE = list;
   if (!list.length) {
-    box.innerHTML = '<div class="note">' + (q ? '검색 결과가 없습니다.' : '저장된 계약이 없습니다. ③ 탭 하단의 [이 계약 저장]을 눌러 주세요.') + '</div>';
+    box.innerHTML = '<div class="note">' + (q ? '검색 결과가 없습니다.' : '저장된 기록이 없습니다. ③ 탭 하단의 [이 고객 저장]을 눌러 주세요.') + '</div>';
     return;
   }
   const byCust = {};
@@ -2939,17 +3201,17 @@ async function drawDB() {
     const rs = byCust[k];
     const sumM = rs.reduce(function (s, r) { return s + (r.money || 0); }, 0);
     h += '<div style="margin-bottom:16px"><div class="custhd">' +
-      '<b style="color:var(--brand);font-size:14px">' + esc(k) + ' <span class="gsub">· 계약 ' + rs.length + '건</span></b>' +
+      '<b style="color:var(--brand);font-size:14px">' + esc(k) + ' <span class="gsub">· 방문기록 ' + rs.length + '건</span></b>' +
       '<span class="hint">발견 예상액 합계 <b style="color:var(--grn)">' + won(sumM) + '원</b></span></div>' +
-      '<table class="dt"><tr><th>저장일</th><th>상품명</th><th>가입일</th><th>보험료</th><th>등급</th>' +
+      '<table class="dt"><tr><th>저장일</th><th>상품명</th><th>계약</th><th>보험료 합계</th><th>등급</th>' +
       '<th>숨은보험금</th><th>후속조치 기한</th><th>차기방문</th><th class="noprint">관리</th></tr>';
     rs.forEach(function (r) {
-      const dl = r.f.m_deadline, d = Calc.dday(dl);
+      const dl = Schema.ledgerValue(r, '_due'), d = Calc.dday(dl);
       h += '<tr>' +
         '<td>' + String(r.savedAt || '').slice(0, 10) + '</td>' +
-        '<td class="l">' + esc(r.f.i_prod || '-') + '</td>' +
-        '<td>' + (ymd(normDate(r.f.i_join)) || esc(r.f.i_join) || '-') + '</td>' +
-        '<td style="text-align:right">' + (r.f.i_prem ? won(r.f.i_prem) : '-') + '</td>' +
+        '<td class="l">' + esc(Schema.ledgerValue(r, '_prod') || '-') + '</td>' +
+        '<td>' + Schema.ledgerValue(r, '_cnt') + '건</td>' +
+        '<td style="text-align:right">' + won(Schema.ledgerValue(r, '_prem')) + '</td>' +
         '<td>' + (r.f.m_grade
           ? '<span class="tag ' + (r.f.m_grade === 'A' ? 't-a' : r.f.m_grade === 'B' ? 't-b' : 't-i') + '">' + esc(r.f.m_grade) + '</span>'
           : '-') + '</td>' +
@@ -2975,14 +3237,14 @@ async function pick(id) {
     editId = r.id;
     analyze(true);
     $('restoreBar').style.display = 'none';
-    setSaveState('불러옴 · ' + (r.f.h_cust || '') + ' / ' + (r.f.i_prod || ''), 'var(--blue)', true);
-    toast((r.f.h_cust || '') + ' 님 계약을 불러왔습니다. 수정 후 저장하면 같은 건에 덮어쓰기 됩니다.');
+    setSaveState('불러옴 · ' + (r.f.h_cust || ''), 'var(--blue)', true);
+    toast((r.f.h_cust || '') + ' 님 기록을 불러왔습니다. 수정 후 저장하면 같은 건에 덮어쓰기 됩니다.');
     tab(1);
   } catch (e) { toast('불러오지 못했습니다 — ' + e.message, true); }
 }
 
 async function del(id) {
-  if (!confirm('이 계약 기록을 삭제할까요?')) return;
+  if (!confirm('이 방문 기록을 삭제할까요?')) return;
   try {
     await api('/api/contracts/' + id, { method: 'DELETE' });
     if (editId === id) editId = null;
@@ -3016,11 +3278,11 @@ async function drawStat() {
     return;
   }
   $('s_kpi').innerHTML =
-    '<div><div class="n">' + s.total + '</div><div class="t">누적 계약 분석 건수</div></div>' +
+    '<div><div class="n">' + s.total + '</div><div class="t">누적 방문기록 수</div></div>' +
     '<div><div class="n">' + s.customers + '</div><div class="t">관리 고객 수</div></div>' +
     '<div><div class="n" style="color:var(--grn)">' + s.hidden + '</div><div class="t">숨은보험금 발견 건수</div></div>' +
     '<div><div class="n" style="color:var(--grn)">' + won(s.money) + '<span style="font-size:12px">원</span></div><div class="t">발견 예상액 누계</div></div>' +
-    '<div><div class="n" style="color:var(--org)">' + s.upsell + '</div><div class="t">업셀링 제안 건수</div></div>';
+    '<div><div class="n" style="color:var(--org)">' + s.contracts + '</div><div class="t">관리 계약 건수</div></div>';
 
   const G = s.grades || {};
   const mx = Math.max(1, G.A || 0, G.B || 0, G.C || 0, G[''] || 0);
@@ -3061,7 +3323,7 @@ async function drawStat() {
     : '<div class="note">방문일 정보가 없습니다.</div>';
 }
 
-/* ===================== 임시 보관 (이 컴퓨터) ===================== */
+/* ===================== 임시 보관 (이 기기) ===================== */
 
 let draftTimer = null;
 function markDirty() { clearTimeout(draftTimer); draftTimer = setTimeout(saveDraft, 500); }
@@ -3080,11 +3342,13 @@ function saveDraft() {
 }
 
 function draftHasContent(d) {
-  const skip = ['h_vdate', 'm_vdate', 'h_fp'];
-  return Object.keys(d.f || {}).some(function (k) {
+  const skip = ['h_adate', 'm_vdate', 'h_fp'];
+  const hasField = Object.keys(d.f || {}).some(function (k) {
     const v = d.f[k];
     return v && String(v).trim() && skip.indexOf(k) < 0 && v !== '0';
   });
+  if (hasField) return true;
+  return RSETS.some(function (s) { return ((d.rows || {})[s.key] || []).length > 0; });
 }
 
 function restoreDraft() {
@@ -3107,7 +3371,7 @@ function restoreDraft() {
 }
 
 function newRecord() {
-  if (draftHasContent(collect()) && !confirm('지금 화면의 내용을 비우고 새로 시작할까요?\n\n서버에 저장해 두신 고객 자료는 그대로 남습니다.')) return;
+  if (draftHasContent(collect()) && !confirm('지금 화면의 내용을 비우고 새로 시작할까요?\n\n저장해 두신 고객 자료는 그대로 남습니다.')) return;
   resetAll();
   if (STORE) { try { STORE.removeItem(DRAFT_KEY); } catch (e) { /* 무시 */ } }
   $('restoreBar').style.display = 'none';
@@ -3147,7 +3411,7 @@ async function importExcel(input) {
 }
 
 async function wipe() {
-  if (!confirm('서버에 저장된 모든 고객 기록을 삭제합니다. 되돌릴 수 없습니다. 계속할까요?')) return;
+  if (!confirm('저장된 모든 고객 기록을 삭제합니다. 되돌릴 수 없습니다. 계속할까요?')) return;
   if (!confirm('정말 삭제할까요? 먼저 [전체 백업 파일 저장]을 하시길 권합니다.')) return;
   try {
     await api('/api/wipe', { method: 'POST' });
@@ -3176,20 +3440,33 @@ function copyScript() {
 function demo() {
   resetAll();
   const v = {
-    h_cust: '김영수', i_join: '2003-05-14', i_prod: '교보 무배당 실속종신보험',
-    i_prem: '128000', i_age: '32', i_payterm: '20년', i_payend: '2023-05-14', i_insterm: '종신', i_rate: '6.5',
-    c_on: '김영수', c_os: '남', c_obirth: '1971-03-20', c_in: '김영수', c_is: '남', c_ibirth: '1971-03-20',
-    f_std: 'O', f_ht: '174', f_wt: '70', f_smoke: '비흡연', f_hprem: '118000', f_href: '640000',
-    f_disc: 'X', f_comp: '대한기계(주)', f_surg: 'O', f_impl: 'O', f_acc: 'O', f_tooth: 'O',
-    f_c21: 'O', f_ben: 'X', f_polyp: 'O', f_hc: 'X', f_life: '5000', f_hcamt: '8000', f_hcprem: '42000',
-    b_paid: '30720000', b_surr: '27400000', b_lbal: '5000000', b_lrate: '5.9', b_lti: '820000', b_wdavl: '3200000',
-    b_matdt: '2026-05-14', b_matamt: '12000000', b_as: '분할 X', b_am: '만기 X', b_ro: '당사 O', b_rt: '타사 O',
+    h_cust: '김영수', h_adate: todayStr,
+    p_phone: '010-2345-6789', p_job: '기계설비 기술직', p_bday: '03-20', p_anniv: '결혼기념일 05-06',
+    p_addr0: '안양시 동안구 관양동 1234', p_addr1: '안양시 동안구 평촌대로 100, 101동 1502호',
+    c_on: '김영수', c_os: '남', c_obirth: '1971-03-20',
+    c_in: '김영수', c_is: '남', c_ibirth: '1971-03-20',
+    c_bh: '본인', c_uwx: '요추 5년 부담보',
+    f_std: 'O', f_hprem: '118000', f_href: '640000', f_disc: 'X',
+    f_comp: '대한기계(주)', f_surg: 'O', f_impl: 'O', f_acc: 'O', f_tooth: 'O',
+    f_c21: 'O', f_ben: 'X', f_polyp: 'O', f_hc: 'X',
+    b_paid: '30720000', b_surr: '27400000',
+    b_lavl: '9000000', b_ltype: '약대', b_lbal: '5000000', b_lrate: '5.9', b_lmi: '24500', b_lti: '820000',
+    b_wdavl: '3200000',
+    b_matdt: '2026-05-14', b_matamt: '12000000',
+    b_cch: '2019.03 수익자 변경',
     b_crider: '2027-05-14'
   };
   Object.keys(v).forEach(function (k) { if ($(k)) $(k).value = v[k]; });
-  $('claimBox').innerHTML = '';
-  addClaim({ d: '요추 염좌(교통사고)', t: '2023-08-02', a: '1200000' });
-  addClaim(); addClaim();
+  setRows('contracts', [
+    { join: '2003-05-14', prod: '교보 무배당 실속종신보험', prem: '128000', payterm: '20년', insterm: '종신' },
+    { join: '2005-11-02', prod: '21C 넘버원 암치료보험', prem: '46000', payterm: '20년', insterm: '80세' },
+    { join: '2016-08-20', prod: '교보 변액유니버셜통합종신보험', prem: '190000', payterm: '전기납', insterm: '종신' }
+  ]);
+  setRows('claims', [{ c: 'A1023', d: '요추 염좌(교통사고)', t: '2023-08-02', a: '1200000' }]);
+  setRows('funds', [{ name: '가치주식형', ratio: '60' }, { name: '채권안정형', ratio: '40' }]);
+  setRows('talks', [{ date: todayStr, note: '만기보험금 안내 · 대출 상환 계획 상담' }]);
+  setRows('hiddens', []);
+  setRows('follows', [{ what: '치과 초진차트 · 진단서 수령 후 보험금 청구', due: todayStr }]);
   moneyRefresh();
   calcAll();
   saveDraft();
@@ -3199,9 +3476,10 @@ function demo() {
 /* ===================== 시작 ===================== */
 
 renderChecks();
+renderRowsets();
+resetRows();
 enhanceDates();
 enhanceMoney();
-for (let i = 0; i < 3; i++) addClaim();
 initDefaults();
 calcAll();
 
@@ -3210,7 +3488,6 @@ $('btnSave2').addEventListener('click', saveRecord);
 $('btnNew').addEventListener('click', newRecord);
 $('btnDemo').addEventListener('click', demo);
 $('btnAnalyze').addEventListener('click', function () { analyze(); });
-$('btnAddClaim').addEventListener('click', function () { addClaim(); });
 $('btnFillHidden').addEventListener('click', fillHidden);
 $('btnCopy').addEventListener('click', copyScript);
 $('btnRebuild').addEventListener('click', function () { analyze(true); toast('스크립트를 다시 만들었습니다.'); });
@@ -3231,22 +3508,19 @@ $('btnWipe').addEventListener('click', wipe);
 $('h_fp').addEventListener('change', function () {
   if (STORE && V('h_fp')) { try { STORE.setItem(FP_KEY, V('h_fp')); } catch (e) { /* 무시 */ } }
 });
-['f_ht', 'f_wt'].forEach(function (id) { $(id).addEventListener('input', calcBMI); });
-['c_obirth', 'c_ibirth', 'i_join'].forEach(function (id) {
+['c_obirth', 'c_ibirth'].forEach(function (id) {
   $(id).addEventListener('change', calcAll);
   $(id).addEventListener('blur', function () { setTimeout(calcAll, 0); });
 });
-['c_oja', 'c_ona', 'c_ina'].forEach(function (id) { $(id).addEventListener('input', ageMsg); });
-$('i_age').addEventListener('input', function () { syncAge('i_age'); calcTerms(); ageMsg(); });
-$('c_ija').addEventListener('input', function () { syncAge('c_ija'); calcTerms(); ageMsg(); });
-['i_insterm', 'i_payterm'].forEach(function (id) {
-  $(id).addEventListener('input', calcTerms);
-  $(id).addEventListener('blur', calcTerms);
-});
-['i_insend', 'i_payend'].forEach(function (id) {
-  $(id).addEventListener('change', calcTerms);
-  $(id).addEventListener('blur', function () { setTimeout(calcTerms, 0); });
-});
+['c_oja', 'c_ona', 'c_ija', 'c_ina'].forEach(function (id) { $(id).addEventListener('input', ageMsg); });
+
+/* 계약 표의 값이 바뀌면 연령 · 만기일을 다시 계산합니다 */
+document.addEventListener('input', function (e) {
+  if (e.target.closest && e.target.closest('#rsb_contracts')) calcAll();
+}, true);
+document.addEventListener('change', function (e) {
+  if (e.target.closest && e.target.closest('#rsb_contracts')) calcAll();
+}, true);
 
 document.addEventListener('input', markDirty, true);
 document.addEventListener('change', markDirty, true);

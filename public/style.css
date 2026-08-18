@@ -73,6 +73,9 @@ table.form th{background:var(--surf1);border:1px solid var(--line);padding:6px;f
 table.form td{border:1px solid var(--line);padding:5px 6px;vertical-align:middle}
 table.form td.gk{background:var(--surf2);font-weight:700;text-align:center;color:var(--brand);width:96px;font-size:12px}
 table.form td.it{width:41%}
+table.form th.wgk{width:96px}
+table.form th.wval{width:26%}
+table.form th.wprep{width:22%}
 table.form input,table.form select{padding:4px 6px;font-size:12.5px}
 /* 짧은 선택칸이 눌려서 글자가 안 보이지 않도록 최소 너비를 준다 */
 table.form select.sx{min-width:60px;padding-left:6px;padding-right:2px}
@@ -89,6 +92,27 @@ table.form .dtbtn{width:28px}
 .tscroll table.form{min-width:920px}
 .tscroll-hint{display:none;margin-top:5px}
 @media(max-width:960px){.tscroll-hint{display:block}}
+/* 인적사항 · 인수조건 표 */
+table.form td.w1{width:110px}
+table.form th.wuw{width:29%}
+.addr{display:flex;gap:7px;align-items:center}
+.addr span{flex:none;font-size:11.5px;color:var(--sub);font-weight:700;width:52px}
+
+/* 여러 줄 표 (가입건수 · 사고보험금 · 상담내용 …) */
+.rsblock{margin-top:14px}
+.rshd{display:flex;align-items:center;gap:10px;flex-wrap:wrap;
+  background:var(--surf1);border:1px solid var(--line);border-bottom:0;
+  border-radius:7px 7px 0 0;padding:7px 11px;font-size:12.5px;color:var(--brand)}
+.rshd .btns{margin-left:auto}
+.rsblock .tscroll table.form{min-width:760px}
+table.form.rs th.rsno,table.form.rs td.rsno{width:34px;text-align:center;color:var(--sub);font-size:11.5px;background:var(--surf2)}
+table.form.rs th.rsx,table.form.rs td.rsx{width:30px;text-align:center;padding:2px}
+button.rsdel{width:22px;height:22px;padding:0;border:1px solid var(--btnline);border-radius:5px;
+  background:var(--card);color:var(--sub);cursor:pointer;font-size:11px;line-height:1}
+button.rsdel:hover{color:var(--red);border-color:var(--red)}
+input.autoval{background:var(--surf2)}
+.chk .etc{flex:1;min-width:0;margin-left:6px;padding:2px 6px;font-size:12px;height:23px}
+
 .prep{font-size:11.5px;color:var(--red);text-align:center;line-height:1.45}
 .hint{font-size:11px;color:var(--sub)}
 .ox{text-align:center}
@@ -149,6 +173,17 @@ textarea#script{height:280px;font-size:12.8px;line-height:1.7;white-space:pre-wr
 .custhd{display:flex;justify-content:space-between;align-items:center;background:var(--surf1);
   border:1px solid var(--line);border-radius:7px 7px 0 0;padding:8px 12px;flex-wrap:wrap;gap:6px}
 @media(max-width:980px){.g6,.g5,.g4,.g3{grid-template-columns:repeat(2,1fr)}.kpi{grid-template-columns:repeat(2,1fr)}}
+/* 태블릿 세로 화면 : 내용 칸이 좁아 금액이 잘리지 않도록 폭을 다시 나눈다 */
+@media(max-width:900px){
+  table.form th.wgk{width:62px}
+  table.form th.it{width:30%}
+  table.form th.wval{width:34%}
+  table.form th.wprep{width:19%}
+  table.form td.gk{width:62px;font-size:11px;padding:4px 2px}
+  table.form td.prep{font-size:10.5px}
+  table.form td.w1{width:82px;font-size:11.5px}
+  .addr span{width:44px}
+}
 @media print{:root{color-scheme:light}body{background:#fff;color:#000}.noprint{display:none!important}
   .pane{display:block!important}.card{break-inside:avoid}
   *{-webkit-print-color-adjust:exact;print-color-adjust:exact}}

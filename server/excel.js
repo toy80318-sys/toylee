@@ -23,12 +23,12 @@ const SURF2 = 'FFF7F9FB';
 const LINE = 'FFD8DFE6';
 
 const SHEET_INPUT = '계약입력';
-const SHEET_CLAIM = '사고보험금';
 const SHEET_CHECK = '준비물체크';
 const SHEET_RESULT = '진단결과';
 const SHEET_META = '_meta';
 
 const FIELD_MAP = Schema.fieldMap();
+const RSMAP = Schema.rowsetMap();
 
 /* ---------- 서식 도우미 ---------- */
 
@@ -84,7 +84,7 @@ function labelFor(f) {
 function buildWorkbook(record, options) {
   options = options || {};
   const f = (record && record.f) || {};
-  const claims = (record && record.claims) || [];
+  const rows = (record && record.rows) || {};
   const chk = (record && record.chk) || {};
 
   const wb = new ExcelJS.Workbook();
@@ -178,45 +178,58 @@ function buildWorkbook(record, options) {
     r += 1;
   });
 
-  /* ---------- 사고보험금 시트 ---------- */
-  const cs = wb.addWorksheet(SHEET_CLAIM);
-  cs.columns = [{ width: 6 }, { width: 34 }, { width: 16 }, { width: 18 }];
-  let cr = titleRow(cs, 1, '사고보험금 지급 이력', '과거에 받으신 보험금을 적으시면 추가 청구 가능 여부를 함께 판정합니다.');
-  cr += 1;
-  const chead = cs.getRow(cr);
-  ['No', '병명', '수령일', '수령액(원)'].forEach(function (t, i) {
-    const c = chead.getCell(i + 1);
-    c.value = t;
-    c.font = { bold: true, size: 10, color: { argb: 'FFFFFFFF' }, name: '맑은 고딕' };
-    fill(c, NAVY);
-    c.border = thin();
-    c.alignment = { horizontal: 'center', vertical: 'middle' };
-  });
-  meta.push(['table', SHEET_CLAIM, String(cr), 'claims']);
-  Schema.CLAIM_FIELDS.forEach(function (cf, i) {
-    meta.push(['col', SHEET_CLAIM, String.fromCharCode(66 + i), cf.k]);
-  });
-  cr++;
-  const CLAIM_ROWS = Math.max(12, claims.length + 5);
-  for (let i = 0; i < CLAIM_ROWS; i++) {
-    const row = cs.getRow(cr + i);
-    row.getCell(1).value = i + 1;
-    row.getCell(1).alignment = { horizontal: 'center' };
-    const c = claims[i];
-    if (c) {
-      row.getCell(2).value = c.d || '';
-      row.getCell(3).value = Calc.normDate(c.t) || c.t || '';
-      if (c.a) row.getCell(4).value = Calc.numOf(c.a);
+  /* ---------- 여러 줄 표 시트 (가입건수 · 사고보험금 · 상담내용 …) ---------- */
+  Schema.ROWSETS.forEach(function (set) {
+    const list = Schema.pruneRows(set, rows[set.key]);
+    const ts = wb.addWorksheet(set.sheet);
+    ts.columns = [{ width: 6 }].concat(set.cols.map(function (c) { return { width: c.w || 18 }; }));
+
+    let tr = titleRow(ts, 1, set.label, set.sub || '');
+    tr += 1;
+    const th = ts.getRow(tr);
+    ['No'].concat(set.cols.map(function (c) {
+      return c.label + (c.unit ? '(' + c.unit + ')' : '');
+    })).forEach(function (t, i) {
+      const c = th.getCell(i + 1);
+      c.value = t;
+      c.font = { bold: true, size: 10, color: { argb: 'FFFFFFFF' }, name: '맑은 고딕' };
+      fill(c, NAVY);
+      c.border = thin();
+      c.alignment = { horizontal: 'center', vertical: 'middle' };
+    });
+    meta.push(['table', set.sheet, String(tr), set.key]);
+    set.cols.forEach(function (c, i) {
+      meta.push(['col', set.sheet, String.fromCharCode(66 + i), c.k]);
+    });
+    tr++;
+
+    const n = Math.max((set.rows || 3) + 5, list.length + 3);
+    for (let i = 0; i < n; i++) {
+      const row = ts.getRow(tr + i);
+      row.getCell(1).value = i + 1;
+      row.getCell(1).alignment = { horizontal: 'center' };
+      const v = list[i];
+      set.cols.forEach(function (c, ci) {
+        const cell = row.getCell(ci + 2);
+        if (v) {
+          const raw = v[c.k];
+          if (raw !== undefined && raw !== null && String(raw).trim() !== '') {
+            if (c.type === 'number') cell.value = Calc.numOf(raw);
+            else if (c.type === 'date') cell.value = Calc.normDate(raw) || String(raw);
+            else cell.value = String(raw);
+          }
+        }
+        if (c.type === 'number') cell.numFmt = c.unit === '%' ? '#,##0.##' : '#,##0';
+      });
+      for (let col = 1; col <= set.cols.length + 1; col++) {
+        const cell = row.getCell(col);
+        cell.border = thin();
+        cell.font = { size: 10.5, name: '맑은 고딕' };
+        if (col > 1) fill(cell, 'FFFFFDF2');
+      }
+      row.height = 19;
     }
-    for (let col = 1; col <= 4; col++) {
-      const cell = row.getCell(col);
-      cell.border = thin();
-      cell.font = { size: 10.5, name: '맑은 고딕' };
-      if (col > 1) fill(cell, 'FFFFFDF2');
-    }
-    row.getCell(4).numFmt = '#,##0';
-    row.height = 19;
-  }
+  });
 
   /* ---------- 준비물 · 추가점검 시트 ---------- */
   const ks = wb.addWorksheet(SHEET_CHECK);
@@ -396,7 +409,8 @@ async function parseWorkbook(buffer) {
     throw new Error('이 파일은 프로그램에서 내려받은 서식이 아닙니다. [엑셀 서식 내려받기]로 받은 파일에 입력해 주세요.');
   }
 
-  const rec = { f: {}, claims: [], chk: {} };
+  const rec = { f: {}, rows: {}, chk: {} };
+  Schema.ROWSETS.forEach(function (set) { rec.rows[set.key] = []; });
   const tables = [];
   const cols = {};
 
@@ -433,12 +447,14 @@ async function parseWorkbook(buffer) {
       const row = ws.getRow(r);
       const obj = {};
       let any = false;
+      const set = RSMAP[t.key];
       map.forEach(function (m) {
         const v = cellText(row.getCell(m.col));
-        obj[m.key] = (m.key === 't' && v) ? (Calc.normDate(v) || v) : v;
+        const col = set && set.cols.filter(function (c) { return c.k === m.key; })[0];
+        obj[m.key] = (col && col.type === 'date' && v) ? (Calc.normDate(v) || v) : v;
         if (v) any = true;
       });
-      if (any) rec[t.key].push(obj);
+      if (any && rec.rows[t.key]) rec.rows[t.key].push(obj);
     }
   });
 
@@ -467,14 +483,9 @@ function buildLedger(records, stats) {
   records.forEach(function (rec) {
     const row = {};
     Schema.LEDGER_COLS.forEach(function (c) {
-      if (c.k === '_savedAt') row[c.k] = String(rec.savedAt || '').slice(0, 19).replace('T', ' ');
-      else if (c.k === '_money') row[c.k] = rec.money || 0;
-      else if (c.k === '_hidCnt') row[c.k] = rec.hidCnt || 0;
-      else {
-        const fd = FIELD_MAP[c.k];
-        const v = rec.f[c.k];
-        row[c.k] = (fd && fd.type === 'number' && v) ? Calc.numOf(v) : (v || '');
-      }
+      const v = Schema.ledgerValue(rec, c.k);
+      const fd = FIELD_MAP[c.k];
+      row[c.k] = (fd && fd.type === 'number' && v) ? Calc.numOf(v) : (v === 0 ? 0 : (v || ''));
     });
     const added = ws.addRow(row);
     added.eachCell(function (c) {
@@ -495,7 +506,7 @@ function buildLedger(records, stats) {
     ['관리 고객 수', stats.customers + ' 명'],
     ['숨은보험금 발견 건수', stats.hidden + ' 건'],
     ['발견 예상액 누계', Calc.won(stats.money) + ' 원'],
-    ['업셀링 제안 건수', stats.upsell + ' 건'],
+    ['관리 계약 건수', stats.contracts + ' 건'],
     ['A등급 비율', (stats.total ? Math.round((stats.grades.A || 0) / stats.total * 100) : 0) + ' %'],
     ['건당 평균 발견액', Calc.won(stats.total ? stats.money / stats.total : 0) + ' 원']
   ];
