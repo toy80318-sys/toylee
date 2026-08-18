@@ -1,0 +1,43 @@
+# docs/ 폴더를 인터넷 주소(GitHub Pages)로 올립니다.
+# 태블릿에서 그 주소를 열면 [홈 화면에 추가]로 앱처럼 설치할 수 있습니다.
+name: 웹 주소로 올리기
+
+on:
+  push:
+    branches:
+      - main
+      - claude/kyobo-customer-info-program-0fpvpm
+    paths:
+      - 'docs/**'
+      - '.github/workflows/pages.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v4
+
+      # 저장소에 Pages 가 아직 안 켜져 있으면 여기서 켭니다
+      - uses: actions/configure-pages@v5
+        with:
+          enablement: true
+
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: docs
+
+      - id: deployment
+        uses: actions/deploy-pages@v4
