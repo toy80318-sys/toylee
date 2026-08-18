@@ -204,7 +204,12 @@ function renderRowsets() {
   RSETS.forEach(function (set) {
     const box = $('rs_' + set.key);
     if (!box) return;
+    const addBtn = function (cls) {
+      return '<button type="button" class="b b-gold sm ' + cls + '" data-rsadd="' + set.key + '">' +
+        esc(set.addLabel || '＋ 줄 추가') + '</button>';
+    };
     box.innerHTML =
+      '<div class="rstop noprint">' + addBtn('rsadd-top') + '</div>' +
       '<div class="tscroll"><table class="form rs" id="rst_' + set.key + '">' +
       '<thead><tr><th class="rsno">No</th>' +
       set.cols.map(function (c) {
@@ -215,8 +220,7 @@ function renderRowsets() {
       '<th class="rsx noprint"></th></tr></thead>' +
       '<tbody id="rsb_' + set.key + '"></tbody></table></div>' +
       (set.sub ? '<div class="hint">' + esc(set.sub) + '</div>' : '') +
-      '<div class="btns noprint" style="margin-top:6px">' +
-      '<button type="button" class="b b-sub sm" data-rsadd="' + set.key + '">' + esc(set.addLabel || '＋ 줄 추가') + '</button></div>';
+      '<div class="btns noprint" style="margin-top:6px">' + addBtn('') + '</div>';
   });
 }
 
@@ -283,8 +287,10 @@ function setRows(key, listIn) {
   if (!set || !tb) return;
   tb.innerHTML = '';
   const list = (listIn || []).slice();
-  const n = Math.max(set.rows || 1, list.length);
-  for (let i = 0; i < n; i++) addRow(key, list[i]);
+  /* 처음 여는 경우에는 미리 넣어 둔 값(예: 보장만기의 주계약 · 특약)을 채웁니다 */
+  const base = list.length ? list : (set.defaults || []).slice();
+  const n = Math.max(set.rows || 1, base.length);
+  for (let i = 0; i < n; i++) addRow(key, base[i]);
 }
 
 function resetRows() {
@@ -293,7 +299,16 @@ function resetRows() {
 
 document.addEventListener('click', function (e) {
   const a = e.target.closest('[data-rsadd]');
-  if (a) { e.preventDefault(); addRow(a.dataset.rsadd); markDirty(); return; }
+  if (a) {
+    e.preventDefault();
+    const tr = addRow(a.dataset.rsadd);
+    if (tr) {
+      const first = tr.querySelector('input');
+      if (first) { first.focus(); tr.scrollIntoView({ block: 'nearest' }); }
+    }
+    markDirty();
+    return;
+  }
   const d = e.target.closest('.rsdel');
   if (d) {
     e.preventDefault();
@@ -889,8 +904,7 @@ function demo() {
     b_lavl: '9000000', b_ltype: '약대', b_lbal: '5000000', b_lrate: '5.9', b_lmi: '24500', b_lti: '820000',
     b_wdavl: '3200000',
     b_matdt: '2026-05-14', b_matamt: '12000000',
-    b_cch: '2019.03 수익자 변경',
-    b_crider: '2027-05-14'
+    b_cch: '2019.03 수익자 변경'
   };
   Object.keys(v).forEach(function (k) { if ($(k)) $(k).value = v[k]; });
   setRows('contracts', [
@@ -902,6 +916,10 @@ function demo() {
   setRows('funds', [{ name: '가치주식형', ratio: '60' }, { name: '채권안정형', ratio: '40' }]);
   setRows('talks', [{ date: todayStr, note: '만기보험금 안내 · 대출 상환 계획 상담' }]);
   setRows('hiddens', []);
+  setRows('covers', [
+    { kind: '주계약', item: '사망 · 재해', end: '' },
+    { kind: '특약', item: '암진단 · 입원', end: '2027-05-14' }
+  ]);
   setRows('follows', [{ what: '치과 초진차트 · 진단서 수령 후 보험금 청구', due: todayStr }]);
   moneyRefresh();
   calcAll();

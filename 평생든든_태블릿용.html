@@ -111,6 +111,8 @@ table.form th.wuw{width:29%}
   background:var(--surf1);border:1px solid var(--line);border-bottom:0;
   border-radius:7px 7px 0 0;padding:7px 11px;font-size:12.5px;color:var(--brand)}
 .rshd .btns{margin-left:auto}
+.rstop{display:flex;justify-content:flex-end;margin-bottom:5px}
+.rsblock .rstop{margin-top:6px}
 .rsblock .tscroll table.form{min-width:760px}
 table.form.rs th.rsno,table.form.rs td.rsno{width:34px;text-align:center;color:var(--sub);font-size:11.5px;background:var(--surf2)}
 table.form.rs th.rsx,table.form.rs td.rsx{width:30px;text-align:center;padding:2px}
@@ -389,15 +391,10 @@ textarea#script{height:280px;font-size:12.8px;line-height:1.7;white-space:pre-wr
     <div id="rs_funds"></div>
   </div>
 
-  <table class="form" style="margin-top:14px">
-    <tr><th class="wgk">구분</th><th class="it">항목</th><th class="wval">내용</th><th class="wprep">사전 자료준비</th></tr>
-    <tr><td class="gk" rowspan="2">보장만기</td>
-      <td>주요보장 급부 만기시점 — <b>주계약</b></td>
-      <td><input id="b_cmain" data-date></td>
-      <td class="prep" rowspan="2">보장분석으로 대체 가능</td></tr>
-    <tr><td>주요보장 급부 만기시점 — <b>특약</b></td>
-      <td><input id="b_crider" data-date></td></tr>
-  </table>
+  <div class="rsblock">
+    <div class="rshd"><b>보장만기</b><span class="gsub">주요보장 급부 만기시점 · 보장분석으로 대체 가능</span></div>
+    <div id="rs_covers"></div>
+  </div>
 
   <div class="btns noprint" style="margin-top:14px;justify-content:center">
     <button class="b b-main" id="btnAnalyze" style="padding:12px 40px;font-size:15px">📊 분석 실행 → 진단 결과 보기</button>
@@ -845,14 +842,6 @@ textarea#script{height:280px;font-size:12.8px;line-height:1.7;white-space:pre-wr
       ]
     },
     {
-      key: 'back', no: 3, title: '계약 DB분석 — 뒷면',
-      desc: '사고보험금 · 변액 · 보장만기',
-      fields: [
-        { k: 'b_cmain', label: '주계약 보장 만기시점', type: 'date', group: '보장만기' },
-        { k: 'b_crider', label: '특약 보장 만기시점', type: 'date', group: '보장만기' }
-      ]
-    },
-    {
       key: 'memo', no: 5, title: '상담 메모 및 후속조치',
       desc: '방문 결과와 다음에 할 일을 남깁니다.',
       fields: [
@@ -905,6 +894,17 @@ textarea#script{height:280px;font-size:12.8px;line-height:1.7;white-space:pre-wr
       cols: [
         { k: 'name', label: '펀드 가입내역', type: 'text', w: 34 },
         { k: 'ratio', label: '적립비율', type: 'number', unit: '%', w: 14 }
+      ]
+    },
+    {
+      key: 'covers', label: '보장만기', sheet: '보장만기',
+      sub: '주요보장 급부의 만기시점입니다. 보장분석서로 대체할 수 있습니다.',
+      rows: 2, addLabel: '＋ 보장 추가',
+      defaults: [{ kind: '주계약' }, { kind: '특약' }],
+      cols: [
+        { k: 'kind', label: '구분', type: 'text', ph: '주계약 · 특약', w: 14 },
+        { k: 'item', label: '주요보장 급부', type: 'text', ph: '사망 · 암진단 · 입원', w: 30 },
+        { k: 'end', label: '만기시점', type: 'date', w: 15 }
       ]
     },
     {
@@ -1033,7 +1033,7 @@ textarea#script{height:280px;font-size:12.8px;line-height:1.7;white-space:pre-wr
     { k: 'b_wdavl', label: '인출가능' },
     { k: 'b_middt', label: '중도보험금일' }, { k: 'b_midamt', label: '중도보험금액' },
     { k: 'b_matdt', label: '만기일' }, { k: 'b_matamt', label: '만기보험금' },
-    { k: 'b_cmain', label: '주계약만기' }, { k: 'b_crider', label: '특약만기' },
+    { k: '_covers', label: '보장만기' },
     { k: '_claims', label: '사고보험금건수' }, { k: '_funds', label: '펀드건수' },
     { k: 'm_grade', label: '방문등급' }, { k: 'm_reason', label: '재접촉사유' },
     { k: '_hidden', label: '숨은보험금발견' }, { k: '_hiddenAmt', label: '발견보장금액' },
@@ -1068,6 +1068,9 @@ textarea#script{height:280px;font-size:12.8px;line-height:1.7;white-space:pre-wr
       case '_prem': return sumNum(ct, 'prem');
       case '_claims': return rowsOf(rec, 'claims').length;
       case '_funds': return rowsOf(rec, 'funds').length;
+      case '_covers': return rowsOf(rec, 'covers').map(function (c) {
+        return [c.kind, c.item, c.end].filter(Boolean).join(' ');
+      }).join(' / ');
       case '_hidden': return rowsOf(rec, 'hiddens').map(function (h) { return h.item; }).filter(Boolean).join(' / ');
       case '_hiddenAmt': return sumNum(rowsOf(rec, 'hiddens'), 'amt');
       case '_follow': return rowsOf(rec, 'follows').map(function (x) { return x.what; }).filter(Boolean).join(' / ');
@@ -1125,6 +1128,7 @@ textarea#script{height:280px;font-size:12.8px;line-height:1.7;white-space:pre-wr
     const contracts = list('contracts');
     const claims = list('claims');
     const funds = list('funds');
+    const covers = list('covers');
     const hiddens = list('hiddens');
     const follows = list('follows');
 
@@ -1548,28 +1552,28 @@ textarea#script{height:280px;font-size:12.8px;line-height:1.7;white-space:pre-wr
     }
 
     /* ---------- 14. 보장 만기 ---------- */
-    [['b_cmain', '주계약'], ['b_crider', '특약']].forEach(function (pair) {
-      const k = pair[0], nm = pair[1];
-      const d = dd(V(k));
-      if (V(k) && d !== null && d <= 730) {
-        need('p1');
-        add({
-          lv: d < 0 ? 'a' : 'b', pri: d < 0 ? 92 : 66, cat: '보장 만기',
-          t: d < 0
-            ? nm + ' 보장 이미 종료됨 (' + ymd(normDate(V(k))) + ')'
-            : nm + ' 보장 만기 임박 (' + ymd(normDate(V(k))) + ' · D-' + d + ')',
-          ment: d < 0
-            ? cust + ' 님, ' + nm + ' 보장이 ' + ymd(normDate(V(k))) + '로 이미 끝났습니다. 지금은 그 부분이 비어 있는 상태입니다. 어떤 보장이 없어졌는지 정리해서 보여드리고, 어떻게 채울지 함께 보시겠습니다.'
-            : cust + ' 님, ' + nm + ' 보장이 ' + ymd(normDate(V(k))) + '에 끝납니다. 만기가 되면 그날부터 보장이 없어집니다. 미리 알고 계셔야 공백 없이 이어갈 수 있어서 오늘 말씀드립니다.',
-          basis: [
-            '만기 이후에는 보장이 즉시 종료되어 무보험 상태가 됩니다.',
-            '만기 도래 안내는 평생든든서비스의 정규 안내 항목입니다.',
-            '나이가 오른 뒤 새로 가입하면 보험료가 크게 오르므로, 만기 전 대비가 유리합니다.',
-            '주요보장 급부 만기시점은 보장분석서로 대체해 설명할 수 있습니다.'
-          ],
-          prep: ['보장분석서']
-        });
-      }
+    covers.forEach(function (c) {
+      const end = normDate(c.end);
+      const d = dd(end);
+      if (!end || d === null || d > 730) return;
+      const nm = [c.kind, c.item].filter(Boolean).join(' ') || '주요보장';
+      need('p1');
+      add({
+        lv: d < 0 ? 'a' : 'b', pri: d < 0 ? 92 : 66, cat: '보장 만기',
+        t: d < 0
+          ? nm + ' 보장 이미 종료됨 (' + ymd(end) + ')'
+          : nm + ' 보장 만기 임박 (' + ymd(end) + ' · D-' + d + ')',
+        ment: d < 0
+          ? cust + ' 님, ' + nm + ' 보장이 ' + ymd(end) + '로 이미 끝났습니다. 지금은 그 부분이 비어 있는 상태입니다. 어떤 보장이 없어졌는지 정리해서 보여드리고, 어떻게 채울지 함께 보시겠습니다.'
+          : cust + ' 님, ' + nm + ' 보장이 ' + ymd(end) + '에 끝납니다. 만기가 되면 그날부터 보장이 없어집니다. 미리 알고 계셔야 공백 없이 이어갈 수 있어서 오늘 말씀드립니다.',
+        basis: [
+          '만기 이후에는 보장이 즉시 종료되어 무보험 상태가 됩니다.',
+          '만기 도래 안내는 평생든든서비스의 정규 안내 항목입니다.',
+          '나이가 오른 뒤 새로 가입하면 보험료가 크게 오르므로, 만기 전 대비가 유리합니다.',
+          '주요보장 급부 만기시점은 보장분석서로 대체해 설명할 수 있습니다.'
+        ],
+        prep: ['보장분석서']
+      });
     });
 
     /* ---------- 15. 납입 만료 (계약 표에서 자동 계산) ---------- */
@@ -2768,7 +2772,12 @@ function renderRowsets() {
   RSETS.forEach(function (set) {
     const box = $('rs_' + set.key);
     if (!box) return;
+    const addBtn = function (cls) {
+      return '<button type="button" class="b b-gold sm ' + cls + '" data-rsadd="' + set.key + '">' +
+        esc(set.addLabel || '＋ 줄 추가') + '</button>';
+    };
     box.innerHTML =
+      '<div class="rstop noprint">' + addBtn('rsadd-top') + '</div>' +
       '<div class="tscroll"><table class="form rs" id="rst_' + set.key + '">' +
       '<thead><tr><th class="rsno">No</th>' +
       set.cols.map(function (c) {
@@ -2779,8 +2788,7 @@ function renderRowsets() {
       '<th class="rsx noprint"></th></tr></thead>' +
       '<tbody id="rsb_' + set.key + '"></tbody></table></div>' +
       (set.sub ? '<div class="hint">' + esc(set.sub) + '</div>' : '') +
-      '<div class="btns noprint" style="margin-top:6px">' +
-      '<button type="button" class="b b-sub sm" data-rsadd="' + set.key + '">' + esc(set.addLabel || '＋ 줄 추가') + '</button></div>';
+      '<div class="btns noprint" style="margin-top:6px">' + addBtn('') + '</div>';
   });
 }
 
@@ -2847,8 +2855,10 @@ function setRows(key, listIn) {
   if (!set || !tb) return;
   tb.innerHTML = '';
   const list = (listIn || []).slice();
-  const n = Math.max(set.rows || 1, list.length);
-  for (let i = 0; i < n; i++) addRow(key, list[i]);
+  /* 처음 여는 경우에는 미리 넣어 둔 값(예: 보장만기의 주계약 · 특약)을 채웁니다 */
+  const base = list.length ? list : (set.defaults || []).slice();
+  const n = Math.max(set.rows || 1, base.length);
+  for (let i = 0; i < n; i++) addRow(key, base[i]);
 }
 
 function resetRows() {
@@ -2857,7 +2867,16 @@ function resetRows() {
 
 document.addEventListener('click', function (e) {
   const a = e.target.closest('[data-rsadd]');
-  if (a) { e.preventDefault(); addRow(a.dataset.rsadd); markDirty(); return; }
+  if (a) {
+    e.preventDefault();
+    const tr = addRow(a.dataset.rsadd);
+    if (tr) {
+      const first = tr.querySelector('input');
+      if (first) { first.focus(); tr.scrollIntoView({ block: 'nearest' }); }
+    }
+    markDirty();
+    return;
+  }
   const d = e.target.closest('.rsdel');
   if (d) {
     e.preventDefault();
@@ -3453,8 +3472,7 @@ function demo() {
     b_lavl: '9000000', b_ltype: '약대', b_lbal: '5000000', b_lrate: '5.9', b_lmi: '24500', b_lti: '820000',
     b_wdavl: '3200000',
     b_matdt: '2026-05-14', b_matamt: '12000000',
-    b_cch: '2019.03 수익자 변경',
-    b_crider: '2027-05-14'
+    b_cch: '2019.03 수익자 변경'
   };
   Object.keys(v).forEach(function (k) { if ($(k)) $(k).value = v[k]; });
   setRows('contracts', [
@@ -3466,6 +3484,10 @@ function demo() {
   setRows('funds', [{ name: '가치주식형', ratio: '60' }, { name: '채권안정형', ratio: '40' }]);
   setRows('talks', [{ date: todayStr, note: '만기보험금 안내 · 대출 상환 계획 상담' }]);
   setRows('hiddens', []);
+  setRows('covers', [
+    { kind: '주계약', item: '사망 · 재해', end: '' },
+    { kind: '특약', item: '암진단 · 입원', end: '2027-05-14' }
+  ]);
   setRows('follows', [{ what: '치과 초진차트 · 진단서 수령 후 보험금 청구', due: todayStr }]);
   moneyRefresh();
   calcAll();

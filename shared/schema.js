@@ -89,14 +89,6 @@
       ]
     },
     {
-      key: 'back', no: 3, title: '계약 DB분석 — 뒷면',
-      desc: '사고보험금 · 변액 · 보장만기',
-      fields: [
-        { k: 'b_cmain', label: '주계약 보장 만기시점', type: 'date', group: '보장만기' },
-        { k: 'b_crider', label: '특약 보장 만기시점', type: 'date', group: '보장만기' }
-      ]
-    },
-    {
       key: 'memo', no: 5, title: '상담 메모 및 후속조치',
       desc: '방문 결과와 다음에 할 일을 남깁니다.',
       fields: [
@@ -149,6 +141,17 @@
       cols: [
         { k: 'name', label: '펀드 가입내역', type: 'text', w: 34 },
         { k: 'ratio', label: '적립비율', type: 'number', unit: '%', w: 14 }
+      ]
+    },
+    {
+      key: 'covers', label: '보장만기', sheet: '보장만기',
+      sub: '주요보장 급부의 만기시점입니다. 보장분석서로 대체할 수 있습니다.',
+      rows: 2, addLabel: '＋ 보장 추가',
+      defaults: [{ kind: '주계약' }, { kind: '특약' }],
+      cols: [
+        { k: 'kind', label: '구분', type: 'text', ph: '주계약 · 특약', w: 14 },
+        { k: 'item', label: '주요보장 급부', type: 'text', ph: '사망 · 암진단 · 입원', w: 30 },
+        { k: 'end', label: '만기시점', type: 'date', w: 15 }
       ]
     },
     {
@@ -277,7 +280,7 @@
     { k: 'b_wdavl', label: '인출가능' },
     { k: 'b_middt', label: '중도보험금일' }, { k: 'b_midamt', label: '중도보험금액' },
     { k: 'b_matdt', label: '만기일' }, { k: 'b_matamt', label: '만기보험금' },
-    { k: 'b_cmain', label: '주계약만기' }, { k: 'b_crider', label: '특약만기' },
+    { k: '_covers', label: '보장만기' },
     { k: '_claims', label: '사고보험금건수' }, { k: '_funds', label: '펀드건수' },
     { k: 'm_grade', label: '방문등급' }, { k: 'm_reason', label: '재접촉사유' },
     { k: '_hidden', label: '숨은보험금발견' }, { k: '_hiddenAmt', label: '발견보장금액' },
@@ -312,6 +315,9 @@
       case '_prem': return sumNum(ct, 'prem');
       case '_claims': return rowsOf(rec, 'claims').length;
       case '_funds': return rowsOf(rec, 'funds').length;
+      case '_covers': return rowsOf(rec, 'covers').map(function (c) {
+        return [c.kind, c.item, c.end].filter(Boolean).join(' ');
+      }).join(' / ');
       case '_hidden': return rowsOf(rec, 'hiddens').map(function (h) { return h.item; }).filter(Boolean).join(' / ');
       case '_hiddenAmt': return sumNum(rowsOf(rec, 'hiddens'), 'amt');
       case '_follow': return rowsOf(rec, 'follows').map(function (x) { return x.what; }).filter(Boolean).join(' / ');

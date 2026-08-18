@@ -29,6 +29,7 @@
     const contracts = list('contracts');
     const claims = list('claims');
     const funds = list('funds');
+    const covers = list('covers');
     const hiddens = list('hiddens');
     const follows = list('follows');
 
@@ -452,28 +453,28 @@
     }
 
     /* ---------- 14. 보장 만기 ---------- */
-    [['b_cmain', '주계약'], ['b_crider', '특약']].forEach(function (pair) {
-      const k = pair[0], nm = pair[1];
-      const d = dd(V(k));
-      if (V(k) && d !== null && d <= 730) {
-        need('p1');
-        add({
-          lv: d < 0 ? 'a' : 'b', pri: d < 0 ? 92 : 66, cat: '보장 만기',
-          t: d < 0
-            ? nm + ' 보장 이미 종료됨 (' + ymd(normDate(V(k))) + ')'
-            : nm + ' 보장 만기 임박 (' + ymd(normDate(V(k))) + ' · D-' + d + ')',
-          ment: d < 0
-            ? cust + ' 님, ' + nm + ' 보장이 ' + ymd(normDate(V(k))) + '로 이미 끝났습니다. 지금은 그 부분이 비어 있는 상태입니다. 어떤 보장이 없어졌는지 정리해서 보여드리고, 어떻게 채울지 함께 보시겠습니다.'
-            : cust + ' 님, ' + nm + ' 보장이 ' + ymd(normDate(V(k))) + '에 끝납니다. 만기가 되면 그날부터 보장이 없어집니다. 미리 알고 계셔야 공백 없이 이어갈 수 있어서 오늘 말씀드립니다.',
-          basis: [
-            '만기 이후에는 보장이 즉시 종료되어 무보험 상태가 됩니다.',
-            '만기 도래 안내는 평생든든서비스의 정규 안내 항목입니다.',
-            '나이가 오른 뒤 새로 가입하면 보험료가 크게 오르므로, 만기 전 대비가 유리합니다.',
-            '주요보장 급부 만기시점은 보장분석서로 대체해 설명할 수 있습니다.'
-          ],
-          prep: ['보장분석서']
-        });
-      }
+    covers.forEach(function (c) {
+      const end = normDate(c.end);
+      const d = dd(end);
+      if (!end || d === null || d > 730) return;
+      const nm = [c.kind, c.item].filter(Boolean).join(' ') || '주요보장';
+      need('p1');
+      add({
+        lv: d < 0 ? 'a' : 'b', pri: d < 0 ? 92 : 66, cat: '보장 만기',
+        t: d < 0
+          ? nm + ' 보장 이미 종료됨 (' + ymd(end) + ')'
+          : nm + ' 보장 만기 임박 (' + ymd(end) + ' · D-' + d + ')',
+        ment: d < 0
+          ? cust + ' 님, ' + nm + ' 보장이 ' + ymd(end) + '로 이미 끝났습니다. 지금은 그 부분이 비어 있는 상태입니다. 어떤 보장이 없어졌는지 정리해서 보여드리고, 어떻게 채울지 함께 보시겠습니다.'
+          : cust + ' 님, ' + nm + ' 보장이 ' + ymd(end) + '에 끝납니다. 만기가 되면 그날부터 보장이 없어집니다. 미리 알고 계셔야 공백 없이 이어갈 수 있어서 오늘 말씀드립니다.',
+        basis: [
+          '만기 이후에는 보장이 즉시 종료되어 무보험 상태가 됩니다.',
+          '만기 도래 안내는 평생든든서비스의 정규 안내 항목입니다.',
+          '나이가 오른 뒤 새로 가입하면 보험료가 크게 오르므로, 만기 전 대비가 유리합니다.',
+          '주요보장 급부 만기시점은 보장분석서로 대체해 설명할 수 있습니다.'
+        ],
+        prep: ['보장분석서']
+      });
     });
 
     /* ---------- 15. 납입 만료 (계약 표에서 자동 계산) ---------- */
