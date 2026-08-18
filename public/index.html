@@ -5,12 +5,17 @@
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>평생든든 방문활동 사전준비 · 자동분석 프로그램</title>
 <link rel="stylesheet" href="/style.css">
-<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='6' fill='%230b3a5d'/%3E%3Ctext x='16' y='23' font-size='19' text-anchor='middle' fill='%23c9922e' font-family='sans-serif' font-weight='bold'%3E든%3C/text%3E%3C/svg%3E">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%23fbe2e7'/%3E%3Ccircle cx='9' cy='8' r='4' fill='%23d85b7e'/%3E%3Ccircle cx='23' cy='8' r='4' fill='%23d85b7e'/%3E%3Ccircle cx='16' cy='18' r='9' fill='%23d85b7e'/%3E%3Ccircle cx='13' cy='16' r='1.4' fill='%23fffbf2'/%3E%3Ccircle cx='19' cy='16' r='1.4' fill='%23fffbf2'/%3E%3Cellipse cx='16' cy='20' rx='3' ry='2.4' fill='%23fffbf2'/%3E%3C/svg%3E">
 </head>
 <body>
 
 <header><div class="wrap">
-  <h1>평생든든 방문활동 사전준비 · 자동분석 프로그램</h1>
+  <div class="dots noprint"><i></i><i></i><i></i></div>
+  <div class="ttl">
+    <span class="bear" aria-hidden="true">🧸</span>
+    <h1>평생든든 방문활동 사전준비</h1>
+    <span class="bear" aria-hidden="true">🧸</span>
+  </div>
   <p>회사 양식(앞면·뒷면)을 그대로 입력하면 → 숨은보험금·할인 대상 자동 판정 → 고객 안내 멘트와 제안 근거 → 준비물 자동 체크 → <b>고객별 누적 저장</b>까지 한 번에 처리합니다.</p>
   <div class="tabs noprint">
     <button id="tb1" class="on" data-tab="1">① 고객 입력</button>
@@ -21,7 +26,7 @@
   </div>
 </div></header>
 
-<div class="wrap">
+<div class="wrap sheet">
 
 <!-- ================= TAB 1 : 입력 ================= -->
 <div class="pane on" id="p1">
@@ -50,7 +55,7 @@
 </div>
 
 <div class="card">
-  <h2><span class="no">1</span>인적사항</h2>
+  <h2><span class="ico">♥</span><span class="no">1</span>인적사항</h2>
   <p class="sub">고객 연락 정보입니다. 주소가 바뀌었으면 변경 전·후를 함께 남겨 두세요.</p>
   <table class="form">
     <tr><td class="gk w1">전화번호</td><td><input id="p_phone" placeholder="010-0000-0000" inputmode="tel"></td>
@@ -63,7 +68,7 @@
 </div>
 
 <div class="card">
-  <h2><span class="no">2</span>계약사항</h2>
+  <h2><span class="ico">✿</span><span class="no">2</span>계약사항</h2>
   <p class="sub">가입하신 계약을 건별로 적습니다. <b>가입일</b>은 2006년 2월 이전 여부를 자동 판정하는 데 쓰이므로 꼭 넣어 주세요.</p>
   <div id="rs_contracts"></div>
   <div class="hint" id="rs_contractsMsg" style="margin-top:7px"></div>
@@ -99,7 +104,7 @@
 </div>
 
 <div class="card">
-  <h2><span class="no">3</span>계약 DB분석 <span class="gsub">— 앞면 : 할인 · 숨은보험금 · 헬스케어 · 납입/대출 · 보험금</span></h2>
+  <h2><span class="ico">★</span><span class="no">3</span>계약 DB분석 <span class="gsub">— 앞면 : 할인 · 숨은보험금 · 헬스케어 · 납입/대출 · 보험금</span></h2>
   <p class="sub">O / X 를 고르시면 아래 ② 진단 결과에서 <b>청구 가능한 숨은보험금과 할인 대상</b>이 자동으로 걸러집니다.</p>
   <table class="form">
     <tr><th class="wgk">구분</th><th class="it">항목</th><th class="wval">내용</th><th class="wprep">사전 자료준비</th></tr>
@@ -185,7 +190,7 @@
 </div>
 
 <div class="card">
-  <h2><span class="no">3</span>계약 DB분석 <span class="gsub">— 뒷면 : 사고보험금 · 변액 · 보장만기</span></h2>
+  <h2><span class="ico">★</span><span class="no">3</span>계약 DB분석 <span class="gsub">— 뒷면 : 사고보험금 · 변액 · 보장만기</span></h2>
   <p class="sub">과거 지급이력과 펀드 내역, 보장이 끝나는 시점입니다. 날짜를 넣으면 만기 도래 여부를 자동으로 계산합니다.</p>
 
   <div class="rsblock">
@@ -213,20 +218,20 @@
 <!-- ================= TAB 2 : 진단 결과 ================= -->
 <div class="pane" id="p2">
   <div class="card">
-    <h2><span class="no">4</span>진단 요약</h2>
+    <h2><span class="ico">✦</span><span class="no">4</span>진단 요약</h2>
     <p class="sub" id="r_head"></p>
     <div class="kpi" id="r_kpi"></div>
     <div style="margin-top:13px" id="r_sum"></div>
   </div>
 
   <div class="card">
-    <h2><span class="no">5</span>발견 항목 · 고객 안내 멘트 · 제안 근거</h2>
-    <p class="sub">급한 순서로 정렬했습니다. <b>파란 상자</b>는 고객님께 그대로 읽어드리는 문장, <b>노란 상자</b>는 왜 그런지에 대한 근거입니다.</p>
+    <h2><span class="ico">✦</span><span class="no">5</span>발견 항목 · 고객 안내 멘트 · 제안 근거</h2>
+    <p class="sub">급한 순서로 정렬했습니다. <b>초록 상자</b>는 고객님께 그대로 읽어드리는 문장, <b>노란 상자</b>는 왜 그런지에 대한 근거입니다.</p>
     <div id="r_items"></div>
   </div>
 
   <div class="card">
-    <h2><span class="no">6</span>확인이 안 된 항목 <span class="gsub">— 방문 전에 채워야 할 빈칸</span></h2>
+    <h2><span class="ico">✦</span><span class="no">6</span>확인이 안 된 항목 <span class="gsub">— 방문 전에 채워야 할 빈칸</span></h2>
     <p class="sub">비워두신 항목입니다. 이 부분이 채워져야 숨은보험금 판정이 정확해집니다.</p>
     <div id="r_blank"></div>
   </div>
@@ -241,13 +246,13 @@
 <!-- ================= TAB 3 : 준비물 · 메모 ================= -->
 <div class="pane" id="p3">
   <div class="card">
-    <h2><span class="no">4</span>방문 전 준비물 체크</h2>
-    <p class="sub">진단 결과에 따라 <b style="color:var(--gold)">노란색으로 자동 체크</b>된 항목은 이번 방문에 반드시 챙기셔야 할 자료입니다.</p>
+    <h2><span class="ico">♥</span><span class="no">4</span>방문 전 준비물 체크</h2>
+    <p class="sub">진단 결과에 따라 <b style="color:var(--rose)">분홍색으로 자동 체크</b>된 항목은 이번 방문에 반드시 챙기셔야 할 자료입니다.</p>
     <div class="grid g4" id="prepBox"></div>
   </div>
 
   <div class="card">
-    <h2><span class="no">5</span>상담 메모 및 후속조치</h2>
+    <h2><span class="ico">✿</span><span class="no">5</span>상담 메모 및 후속조치</h2>
 
     <div class="rsblock">
       <div class="rshd"><b>상담내용</b></div>
@@ -286,12 +291,12 @@
   </div>
 
   <div class="card">
-    <h2><span class="no">6</span>추가 점검사항 <span class="gsub">— 고객관리 · 놓치기 쉬운 항목</span></h2>
+    <h2><span class="ico">★</span><span class="no">6</span>추가 점검사항 <span class="gsub">— 고객관리 · 놓치기 쉬운 항목</span></h2>
     <div class="grid g2" id="extraBox"></div>
   </div>
 
   <div class="card">
-    <h2><span class="no">7</span>상담 스크립트 <span class="gsub">— 복사해서 사용</span></h2>
+    <h2><span class="ico">✎</span><span class="no">7</span>상담 스크립트 <span class="gsub">— 복사해서 사용</span></h2>
     <p class="sub">인사부터 마무리까지 순서대로 정리된 대본입니다. 전문용어는 괄호 안에 쉬운 말로 함께 넣었습니다.</p>
     <textarea id="script" readonly></textarea>
     <div class="btns noprint" style="margin-top:9px">
@@ -313,7 +318,7 @@
 <!-- ================= TAB 4 : 고객 DB ================= -->
 <div class="pane" id="p4">
   <div class="card">
-    <h2><span class="no">8</span>고객 누적 DB</h2>
+    <h2><span class="ico">🧸</span><span class="no">8</span>고객 누적 DB</h2>
     <p class="sub">저장한 방문기록이 고객별로 쌓입니다.</p>
     <div class="btns noprint" style="margin-bottom:11px">
       <input id="q" placeholder="고객명 · 상품명 검색" style="max-width:240px">
@@ -351,7 +356,7 @@
 <!-- ================= TAB 5 : 통계 ================= -->
 <div class="pane" id="p5">
   <div class="card">
-    <h2><span class="no">9</span>누적 활동 통계</h2>
+    <h2><span class="ico">✦</span><span class="no">9</span>누적 활동 통계</h2>
     <p class="sub">저장된 전체 방문기록을 기준으로 집계합니다.</p>
     <div class="kpi" id="s_kpi"></div>
   </div>

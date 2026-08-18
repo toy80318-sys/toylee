@@ -5,80 +5,99 @@
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>평생든든 방문활동 사전준비 · 자동분석 프로그램</title>
 <style>
-/* 평생든든 고객 정보파악 프로그램 — 화면 서식 (밝은 화면 / 어두운 화면 모두 지원) */
+/* 평생든든 고객 정보파악 프로그램 — 화면 서식 (밝은 화면 / 어두운 화면 모두 지원)
+ * 색은 회사 양식(개정판) 인쇄본의 크림색 바탕 · 분홍 포인트를 그대로 옮긴 것입니다.
+ */
 :root{
   color-scheme:light dark;
-  /* 브랜드 */
-  --navy:#0b3a5d;--navy2:#155b8a;--gold:#c9922e;--ongold:#fff;
+  /* 포인트 */
+  --navy:#d85b7e;--navy2:#c9506f;--gold:#d2975b;--ongold:#fff;
+  --rose:#d85b7e;--rose2:#b85c78;--rosebg:#fbe2e7;
   /* 지면 */
-  --bg:#f3f5f8;--card:#fff;--line:#d8dfe6;--line2:#e8edf2;
-  --surf1:#eef2f6;--surf2:#f7f9fb;--surf3:#fbfcfd;--hover:#f1f6fa;
-  --field:#fff;--ib:#ccd4dc;--btnline:#c3cfda;
+  --bg:#fffbf2;--card:#fffbf2;--line:#e7e0d2;--line2:#efe9dc;
+  --surf1:#f4f1e8;--surf2:#f9f6ed;--surf3:#fdfbf5;--hover:#f7efe6;
+  --field:#fff;--ib:#ded6c6;--btnline:#e0cfd4;
   /* 글자 */
-  --txt:#1f2a35;--sub:#6b7885;--brand:#0b3a5d;
+  --txt:#3d4f48;--sub:#70887e;--brand:#d85b7e;
   /* 의미색 */
-  --red:#c0392b;--org:#d9822b;--grn:#2e8b57;--blue:#2f6fb0;
-  --redbg:#fdecea;--orgbg:#fdf3e6;--grnbg:#e9f5ee;--bluebg:#eef4fa;
+  --red:#c0392b;--org:#d2975b;--grn:#679e91;--blue:#7a94a8;
+  --redbg:#fbeae6;--orgbg:#fbf1e4;--grnbg:#e9f2ef;--bluebg:#eef2f5;
   /* 안내 블록 */
-  --mentbg:#eef4fa;--mentline:#a9c4de;--menttxt:#16304a;
-  --basisbg:#fbf8ee;--basisline:#e0cd9a;--basistxt:#96780a;
-  --warnbg:#fff7e6;--warnline:#e8cd96;--warntxt:#7a5a12;
+  --mentbg:#eef4f3;--mentline:#b6cec8;--menttxt:#2f4a43;
+  --basisbg:#fdf4ea;--basisline:#e8cfa9;--basistxt:#a8762e;
+  --warnbg:#fdeef1;--warnline:#f0c4cf;--warntxt:#a5405e;
 }
 @media(prefers-color-scheme:dark){:root:not([data-theme="light"]){
-  --gold:#d9a445;--ongold:#20170a;
-  --bg:#141b23;--card:#1b232d;--line:#2d3945;--line2:#293440;
-  --surf1:#222d39;--surf2:#1f2833;--surf3:#1e2731;--hover:#26333f;
-  --field:#202a35;--ib:#3a4753;--btnline:#3f4d5b;
-  --txt:#e4eaf0;--sub:#98a6b4;--brand:#8ec3e8;
-  --red:#f08a7d;--org:#e8a55c;--grn:#67c795;--blue:#7fb0e0;
-  --redbg:#3a2320;--orgbg:#38291a;--grnbg:#1d3329;--bluebg:#1e2c3a;
-  --mentbg:#1c2836;--mentline:#3b556e;--menttxt:#d3e2f1;
-  --basisbg:#2b271c;--basisline:#5a4d2c;--basistxt:#dcc073;
-  --warnbg:#2e2718;--warnline:#5a4d2c;--warntxt:#e2c579;
+  --navy:#e58aa4;--navy2:#d3708d;--gold:#dcae74;--ongold:#241a10;
+  --rose:#eb96ad;--rose2:#f0aabd;--rosebg:#3a2730;
+  --bg:#1d1a1c;--card:#252023;--line:#3b3336;--line2:#332c30;
+  --surf1:#2d2629;--surf2:#282124;--surf3:#262022;--hover:#332a2e;
+  --field:#2a2326;--ib:#4a4045;--btnline:#4d4045;
+  --txt:#eae3dc;--sub:#a99c9f;--brand:#eb96ad;
+  --red:#f08a7d;--org:#e8b06c;--grn:#8ec5b6;--blue:#9db6c7;
+  --redbg:#3a2320;--orgbg:#372a1c;--grnbg:#23332f;--bluebg:#26303a;
+  --mentbg:#23302e;--mentline:#456059;--menttxt:#d5e6e1;
+  --basisbg:#332a1d;--basisline:#5f4e2e;--basistxt:#e0bd7e;
+  --warnbg:#3a2730;--warnline:#6b4353;--warntxt:#f0b7c6;
 }}
 :root[data-theme="dark"]{
-  --gold:#d9a445;--ongold:#20170a;
-  --bg:#141b23;--card:#1b232d;--line:#2d3945;--line2:#293440;
-  --surf1:#222d39;--surf2:#1f2833;--surf3:#1e2731;--hover:#26333f;
-  --field:#202a35;--ib:#3a4753;--btnline:#3f4d5b;
-  --txt:#e4eaf0;--sub:#98a6b4;--brand:#8ec3e8;
-  --red:#f08a7d;--org:#e8a55c;--grn:#67c795;--blue:#7fb0e0;
-  --redbg:#3a2320;--orgbg:#38291a;--grnbg:#1d3329;--bluebg:#1e2c3a;
-  --mentbg:#1c2836;--mentline:#3b556e;--menttxt:#d3e2f1;
-  --basisbg:#2b271c;--basisline:#5a4d2c;--basistxt:#dcc073;
-  --warnbg:#2e2718;--warnline:#5a4d2c;--warntxt:#e2c579;
+  --navy:#e58aa4;--navy2:#d3708d;--gold:#dcae74;--ongold:#241a10;
+  --rose:#eb96ad;--rose2:#f0aabd;--rosebg:#3a2730;
+  --bg:#1d1a1c;--card:#252023;--line:#3b3336;--line2:#332c30;
+  --surf1:#2d2629;--surf2:#282124;--surf3:#262022;--hover:#332a2e;
+  --field:#2a2326;--ib:#4a4045;--btnline:#4d4045;
+  --txt:#eae3dc;--sub:#a99c9f;--brand:#eb96ad;
+  --red:#f08a7d;--org:#e8b06c;--grn:#8ec5b6;--blue:#9db6c7;
+  --redbg:#3a2320;--orgbg:#372a1c;--grnbg:#23332f;--bluebg:#26303a;
+  --mentbg:#23302e;--mentline:#456059;--menttxt:#d5e6e1;
+  --basisbg:#332a1d;--basisline:#5f4e2e;--basistxt:#e0bd7e;
+  --warnbg:#3a2730;--warnline:#6b4353;--warntxt:#f0b7c6;
 }
 
 *{box-sizing:border-box}
 body{margin:0;background:var(--bg);color:var(--txt);
   font-family:"Malgun Gothic","맑은 고딕",-apple-system,"Segoe UI",sans-serif;font-size:13.5px;line-height:1.6}
 .wrap{max-width:1240px;margin:0 auto;padding:0 14px 70px}
-header{background:linear-gradient(135deg,var(--navy),var(--navy2));color:#fff;padding:20px 0 0;border-bottom:4px solid var(--gold)}
+header{background:var(--bg);color:var(--txt);padding:16px 0 0;border-bottom:2px solid var(--rose)}
 header .wrap{padding-bottom:0}
-header h1{margin:0;font-size:21px;letter-spacing:-.5px}
-header p{margin:5px 0 14px;opacity:.88;font-size:12.5px}
+header .ttl{display:flex;align-items:center;justify-content:center;gap:14px;margin-bottom:6px}
+header .bear{font-size:30px;line-height:1;flex:none}
+header h1{margin:0;font-size:21px;letter-spacing:-.5px;color:var(--rose);text-align:center;
+  background:var(--rosebg);border:2px solid var(--rose);border-radius:999px;padding:8px 30px}
+header p{margin:5px 0 13px;color:var(--sub);font-size:12.5px;text-align:center}
+.dots{display:flex;gap:5px;padding-top:2px}
+.dots i{width:9px;height:9px;border-radius:50%;display:block}
+.dots i:nth-child(1){background:#e8837f}
+.dots i:nth-child(2){background:#e8c07f}
+.dots i:nth-child(3){background:#9dc3a5}
 .tabs{display:flex;gap:4px;flex-wrap:wrap}
-.tabs button{background:rgba(255,255,255,.12);color:#fff;border:0;border-radius:7px 7px 0 0;
-  padding:10px 18px;font-size:13.5px;font-weight:700;cursor:pointer;font-family:inherit}
-.tabs button.on{background:var(--bg);color:var(--brand)}
-.card{background:var(--card);border:1px solid var(--line);border-radius:9px;padding:16px 18px;margin:16px 0}
-h2{font-size:15.5px;margin:0 0 3px;color:var(--brand);display:flex;align-items:center;gap:8px}
-h2 .no{background:var(--navy);color:#fff;width:22px;height:22px;border-radius:50%;
-  display:inline-flex;align-items:center;justify-content:center;font-size:12px;flex:none}
+.tabs button{background:var(--surf1);color:var(--sub);border:1px solid var(--line);border-bottom:0;
+  border-radius:9px 9px 0 0;padding:9px 17px;font-size:13.5px;font-weight:700;cursor:pointer;font-family:inherit}
+.tabs button.on{background:var(--rosebg);color:var(--rose);border-color:var(--rose)}
+.card{background:var(--card);border:1.5px solid var(--line);border-radius:12px;padding:16px 18px;margin:16px 0}
+/* 인쇄본처럼 화면 전체를 둥근 분홍 테두리로 감싼다 */
+/* 인쇄본처럼 본문 전체를 둥근 분홍 테두리로 감싼다 */
+.wrap.sheet{border:2px solid var(--rose);border-radius:18px;padding:4px 16px 26px;margin:16px auto 40px;background:var(--card)}
+@media(max-width:640px){.wrap.sheet{border-radius:12px;padding:2px 8px 18px}}
+h2{font-size:15.5px;margin:0 0 3px;color:var(--brand);display:flex;align-items:center;gap:7px}
+h2 .no{background:var(--rosebg);color:var(--rose);border:1.5px solid var(--rose);
+  width:22px;height:22px;border-radius:50%;
+  display:inline-flex;align-items:center;justify-content:center;font-size:11.5px;font-weight:800;flex:none}
+h2 .ico{font-size:15px;line-height:1;flex:none}
 .sub{color:var(--sub);font-size:12px;margin:0 0 12px 30px}
 .gsub{color:var(--sub);font-size:11.5px;font-weight:400}
 label{display:block;font-size:11.5px;color:var(--sub);font-weight:700;margin-bottom:3px}
 input,select,textarea{width:100%;padding:6px 8px;border:1px solid var(--ib);border-radius:5px;
   font-size:13px;font-family:inherit;background:var(--field);color:var(--txt)}
-input:focus,select:focus,textarea:focus{outline:0;border-color:var(--brand);box-shadow:0 0 0 3px rgba(21,91,138,.28)}
+input:focus,select:focus,textarea:focus{outline:0;border-color:var(--rose);box-shadow:0 0 0 3px rgba(216,91,126,.22)}
 textarea{resize:vertical}
 .grid{display:grid;gap:9px}
 .g2{grid-template-columns:repeat(2,1fr)}.g3{grid-template-columns:repeat(3,1fr)}
 .g4{grid-template-columns:repeat(4,1fr)}.g5{grid-template-columns:repeat(5,1fr)}.g6{grid-template-columns:repeat(6,1fr)}
 table.form{width:100%;border-collapse:collapse;font-size:12.5px}
-table.form th{background:var(--surf1);border:1px solid var(--line);padding:6px;font-weight:700;color:var(--brand);font-size:12px}
+table.form th{background:var(--surf1);border:1px solid var(--line);padding:6px;font-weight:700;color:var(--txt);font-size:12px}
 table.form td{border:1px solid var(--line);padding:5px 6px;vertical-align:middle}
-table.form td.gk{background:var(--surf2);font-weight:700;text-align:center;color:var(--brand);width:96px;font-size:12px}
+table.form td.gk{background:var(--surf1);font-weight:700;text-align:center;color:var(--txt);width:96px;font-size:12px}
 table.form td.it{width:41%}
 table.form th.wgk{width:96px}
 table.form th.wval{width:26%}
@@ -122,12 +141,12 @@ button.rsdel:hover{color:var(--red);border-color:var(--red)}
 input.autoval{background:var(--surf2)}
 .chk .etc{flex:1;min-width:0;margin-left:6px;padding:2px 6px;font-size:12px;height:23px}
 
-.prep{font-size:11.5px;color:var(--red);text-align:center;line-height:1.45}
+.prep{font-size:11.5px;color:var(--rose);text-align:center;line-height:1.45}
 .hint{font-size:11px;color:var(--sub)}
 .ox{text-align:center}
 .btns{display:flex;gap:8px;flex-wrap:wrap}
 button.b{font-family:inherit;font-size:13px;padding:9px 18px;border-radius:6px;border:1px solid transparent;cursor:pointer;font-weight:700}
-.b-main{background:var(--navy);color:#fff}.b-gold{background:var(--gold);color:var(--ongold)}
+.b-main{background:var(--rose);color:#fff}.b-gold{background:var(--gold);color:var(--ongold)}
 .b-sub{background:var(--card);color:var(--brand);border-color:var(--btnline)}
 .b-red{background:var(--card);color:var(--red);border-color:var(--btnline)}
 button.b:hover{filter:brightness(.93)}
@@ -143,7 +162,7 @@ button.b:disabled{opacity:.55;cursor:default}
 .item.b{border-left-color:var(--org)}.item.i{border-left-color:var(--blue)}
 .item .hd{display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;align-items:center;margin-bottom:7px}
 .item .ttl{font-size:14px;font-weight:800;color:var(--brand)}
-.item .ttl .rk{background:var(--gold);color:var(--ongold);font-size:10.5px;padding:2px 7px;border-radius:10px;margin-right:6px;vertical-align:middle}
+.item .ttl .rk{background:var(--rose);color:#fff;font-size:10.5px;padding:2px 7px;border-radius:10px;margin-right:6px;vertical-align:middle}
 .tag{display:inline-block;padding:2px 9px;border-radius:11px;font-size:11px;font-weight:700;white-space:nowrap}
 .t-m{background:var(--grnbg);color:var(--grn)}.t-a{background:var(--redbg);color:var(--red)}
 .t-b{background:var(--orgbg);color:var(--org)}.t-i{background:var(--bluebg);color:var(--blue)}
@@ -158,7 +177,7 @@ button.b:disabled{opacity:.55;cursor:default}
 .kpi div{background:var(--surf2);border:1px solid var(--line);border-radius:8px;padding:10px;text-align:center}
 .kpi .n{font-size:20px;font-weight:800;line-height:1.2}.kpi .t{font-size:11px;color:var(--sub)}
 table.dt{width:100%;border-collapse:collapse;font-size:12.5px}
-table.dt th{background:var(--navy);color:#fff;padding:8px 6px;font-size:11.5px;font-weight:600}
+table.dt th{background:var(--rose);color:#fff;padding:8px 6px;font-size:11.5px;font-weight:600}
 table.dt td{padding:7px 6px;border-bottom:1px solid var(--line2);text-align:center}
 table.dt td.l{text-align:left}
 table.dt tr:hover td{background:var(--hover)}
@@ -175,7 +194,7 @@ textarea#script{height:280px;font-size:12.8px;line-height:1.7;white-space:pre-wr
 .bar{height:9px;background:var(--line2);border-radius:5px;overflow:hidden;min-width:60px}
 .bar i{display:block;height:100%}
 .toast{position:fixed;left:50%;bottom:26px;transform:translateX(-50%);z-index:9999;
-  background:var(--navy);color:#fff;padding:11px 22px;border-radius:8px;font-size:13px;font-weight:700;
+  background:var(--rose);color:#fff;padding:11px 22px;border-radius:8px;font-size:13px;font-weight:700;
   box-shadow:0 8px 26px rgba(8,22,38,.35);opacity:0;pointer-events:none;transition:opacity .18s}
 .toast.on{opacity:1}
 .toast.bad{background:var(--red)}
@@ -198,12 +217,17 @@ textarea#script{height:280px;font-size:12.8px;line-height:1.7;white-space:pre-wr
   *{-webkit-print-color-adjust:exact;print-color-adjust:exact}}
 
 </style>
-<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='6' fill='%230b3a5d'/%3E%3Ctext x='16' y='23' font-size='19' text-anchor='middle' fill='%23c9922e' font-family='sans-serif' font-weight='bold'%3E든%3C/text%3E%3C/svg%3E">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%23fbe2e7'/%3E%3Ccircle cx='9' cy='8' r='4' fill='%23d85b7e'/%3E%3Ccircle cx='23' cy='8' r='4' fill='%23d85b7e'/%3E%3Ccircle cx='16' cy='18' r='9' fill='%23d85b7e'/%3E%3Ccircle cx='13' cy='16' r='1.4' fill='%23fffbf2'/%3E%3Ccircle cx='19' cy='16' r='1.4' fill='%23fffbf2'/%3E%3Cellipse cx='16' cy='20' rx='3' ry='2.4' fill='%23fffbf2'/%3E%3C/svg%3E">
 </head>
 <body>
 
 <header><div class="wrap">
-  <h1>평생든든 방문활동 사전준비 · 자동분석 프로그램</h1>
+  <div class="dots noprint"><i></i><i></i><i></i></div>
+  <div class="ttl">
+    <span class="bear" aria-hidden="true">🧸</span>
+    <h1>평생든든 방문활동 사전준비</h1>
+    <span class="bear" aria-hidden="true">🧸</span>
+  </div>
   <p>회사 양식(앞면·뒷면)을 그대로 입력하면 → 숨은보험금·할인 대상 자동 판정 → 고객 안내 멘트와 제안 근거 → 준비물 자동 체크 → <b>고객별 누적 저장</b>까지 한 번에 처리합니다.</p>
   <div class="tabs noprint">
     <button id="tb1" class="on" data-tab="1">① 고객 입력</button>
@@ -214,7 +238,7 @@ textarea#script{height:280px;font-size:12.8px;line-height:1.7;white-space:pre-wr
   </div>
 </div></header>
 
-<div class="wrap">
+<div class="wrap sheet">
 
 <!-- ================= TAB 1 : 입력 ================= -->
 <div class="pane on" id="p1">
@@ -243,7 +267,7 @@ textarea#script{height:280px;font-size:12.8px;line-height:1.7;white-space:pre-wr
 </div>
 
 <div class="card">
-  <h2><span class="no">1</span>인적사항</h2>
+  <h2><span class="ico">♥</span><span class="no">1</span>인적사항</h2>
   <p class="sub">고객 연락 정보입니다. 주소가 바뀌었으면 변경 전·후를 함께 남겨 두세요.</p>
   <table class="form">
     <tr><td class="gk w1">전화번호</td><td><input id="p_phone" placeholder="010-0000-0000" inputmode="tel"></td>
@@ -256,7 +280,7 @@ textarea#script{height:280px;font-size:12.8px;line-height:1.7;white-space:pre-wr
 </div>
 
 <div class="card">
-  <h2><span class="no">2</span>계약사항</h2>
+  <h2><span class="ico">✿</span><span class="no">2</span>계약사항</h2>
   <p class="sub">가입하신 계약을 건별로 적습니다. <b>가입일</b>은 2006년 2월 이전 여부를 자동 판정하는 데 쓰이므로 꼭 넣어 주세요.</p>
   <div id="rs_contracts"></div>
   <div class="hint" id="rs_contractsMsg" style="margin-top:7px"></div>
@@ -292,7 +316,7 @@ textarea#script{height:280px;font-size:12.8px;line-height:1.7;white-space:pre-wr
 </div>
 
 <div class="card">
-  <h2><span class="no">3</span>계약 DB분석 <span class="gsub">— 앞면 : 할인 · 숨은보험금 · 헬스케어 · 납입/대출 · 보험금</span></h2>
+  <h2><span class="ico">★</span><span class="no">3</span>계약 DB분석 <span class="gsub">— 앞면 : 할인 · 숨은보험금 · 헬스케어 · 납입/대출 · 보험금</span></h2>
   <p class="sub">O / X 를 고르시면 아래 ② 진단 결과에서 <b>청구 가능한 숨은보험금과 할인 대상</b>이 자동으로 걸러집니다.</p>
   <table class="form">
     <tr><th class="wgk">구분</th><th class="it">항목</th><th class="wval">내용</th><th class="wprep">사전 자료준비</th></tr>
@@ -378,7 +402,7 @@ textarea#script{height:280px;font-size:12.8px;line-height:1.7;white-space:pre-wr
 </div>
 
 <div class="card">
-  <h2><span class="no">3</span>계약 DB분석 <span class="gsub">— 뒷면 : 사고보험금 · 변액 · 보장만기</span></h2>
+  <h2><span class="ico">★</span><span class="no">3</span>계약 DB분석 <span class="gsub">— 뒷면 : 사고보험금 · 변액 · 보장만기</span></h2>
   <p class="sub">과거 지급이력과 펀드 내역, 보장이 끝나는 시점입니다. 날짜를 넣으면 만기 도래 여부를 자동으로 계산합니다.</p>
 
   <div class="rsblock">
@@ -406,20 +430,20 @@ textarea#script{height:280px;font-size:12.8px;line-height:1.7;white-space:pre-wr
 <!-- ================= TAB 2 : 진단 결과 ================= -->
 <div class="pane" id="p2">
   <div class="card">
-    <h2><span class="no">4</span>진단 요약</h2>
+    <h2><span class="ico">✦</span><span class="no">4</span>진단 요약</h2>
     <p class="sub" id="r_head"></p>
     <div class="kpi" id="r_kpi"></div>
     <div style="margin-top:13px" id="r_sum"></div>
   </div>
 
   <div class="card">
-    <h2><span class="no">5</span>발견 항목 · 고객 안내 멘트 · 제안 근거</h2>
-    <p class="sub">급한 순서로 정렬했습니다. <b>파란 상자</b>는 고객님께 그대로 읽어드리는 문장, <b>노란 상자</b>는 왜 그런지에 대한 근거입니다.</p>
+    <h2><span class="ico">✦</span><span class="no">5</span>발견 항목 · 고객 안내 멘트 · 제안 근거</h2>
+    <p class="sub">급한 순서로 정렬했습니다. <b>초록 상자</b>는 고객님께 그대로 읽어드리는 문장, <b>노란 상자</b>는 왜 그런지에 대한 근거입니다.</p>
     <div id="r_items"></div>
   </div>
 
   <div class="card">
-    <h2><span class="no">6</span>확인이 안 된 항목 <span class="gsub">— 방문 전에 채워야 할 빈칸</span></h2>
+    <h2><span class="ico">✦</span><span class="no">6</span>확인이 안 된 항목 <span class="gsub">— 방문 전에 채워야 할 빈칸</span></h2>
     <p class="sub">비워두신 항목입니다. 이 부분이 채워져야 숨은보험금 판정이 정확해집니다.</p>
     <div id="r_blank"></div>
   </div>
@@ -434,13 +458,13 @@ textarea#script{height:280px;font-size:12.8px;line-height:1.7;white-space:pre-wr
 <!-- ================= TAB 3 : 준비물 · 메모 ================= -->
 <div class="pane" id="p3">
   <div class="card">
-    <h2><span class="no">4</span>방문 전 준비물 체크</h2>
-    <p class="sub">진단 결과에 따라 <b style="color:var(--gold)">노란색으로 자동 체크</b>된 항목은 이번 방문에 반드시 챙기셔야 할 자료입니다.</p>
+    <h2><span class="ico">♥</span><span class="no">4</span>방문 전 준비물 체크</h2>
+    <p class="sub">진단 결과에 따라 <b style="color:var(--rose)">분홍색으로 자동 체크</b>된 항목은 이번 방문에 반드시 챙기셔야 할 자료입니다.</p>
     <div class="grid g4" id="prepBox"></div>
   </div>
 
   <div class="card">
-    <h2><span class="no">5</span>상담 메모 및 후속조치</h2>
+    <h2><span class="ico">✿</span><span class="no">5</span>상담 메모 및 후속조치</h2>
 
     <div class="rsblock">
       <div class="rshd"><b>상담내용</b></div>
@@ -479,12 +503,12 @@ textarea#script{height:280px;font-size:12.8px;line-height:1.7;white-space:pre-wr
   </div>
 
   <div class="card">
-    <h2><span class="no">6</span>추가 점검사항 <span class="gsub">— 고객관리 · 놓치기 쉬운 항목</span></h2>
+    <h2><span class="ico">★</span><span class="no">6</span>추가 점검사항 <span class="gsub">— 고객관리 · 놓치기 쉬운 항목</span></h2>
     <div class="grid g2" id="extraBox"></div>
   </div>
 
   <div class="card">
-    <h2><span class="no">7</span>상담 스크립트 <span class="gsub">— 복사해서 사용</span></h2>
+    <h2><span class="ico">✎</span><span class="no">7</span>상담 스크립트 <span class="gsub">— 복사해서 사용</span></h2>
     <p class="sub">인사부터 마무리까지 순서대로 정리된 대본입니다. 전문용어는 괄호 안에 쉬운 말로 함께 넣었습니다.</p>
     <textarea id="script" readonly></textarea>
     <div class="btns noprint" style="margin-top:9px">
@@ -506,7 +530,7 @@ textarea#script{height:280px;font-size:12.8px;line-height:1.7;white-space:pre-wr
 <!-- ================= TAB 4 : 고객 DB ================= -->
 <div class="pane" id="p4">
   <div class="card">
-    <h2><span class="no">8</span>고객 누적 DB</h2>
+    <h2><span class="ico">🧸</span><span class="no">8</span>고객 누적 DB</h2>
     <p class="sub">저장한 방문기록이 고객별로 쌓입니다.</p>
     <div class="btns noprint" style="margin-bottom:11px">
       <input id="q" placeholder="고객명 · 상품명 검색" style="max-width:240px">
@@ -544,7 +568,7 @@ textarea#script{height:280px;font-size:12.8px;line-height:1.7;white-space:pre-wr
 <!-- ================= TAB 5 : 통계 ================= -->
 <div class="pane" id="p5">
   <div class="card">
-    <h2><span class="no">9</span>누적 활동 통계</h2>
+    <h2><span class="ico">✦</span><span class="no">9</span>누적 활동 통계</h2>
     <p class="sub">저장된 전체 방문기록을 기준으로 집계합니다.</p>
     <div class="kpi" id="s_kpi"></div>
   </div>
