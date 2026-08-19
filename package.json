@@ -9,7 +9,8 @@
     "dev": "node --watch server/index.js",
     "template": "node scripts/make-template.js",
     "build:tablet": "node scripts/build-standalone.js",
-    "build:web": "node scripts/build-pages.js"
+    "build:web": "node scripts/build-pages.js",
+    "build:new": "node scripts/build-newcust.js"
   },
   "dependencies": {
     "better-sqlite3": "^13.0.3",

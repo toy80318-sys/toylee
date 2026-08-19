@@ -1,0 +1,19 @@
+/* 기계약자 관리 — 토끼 · 민트 (평생든든의 곰돌이 · 분홍과 짝이 되도록 같은 뼈대에 색만 갈아 끼웁니다) */
+:root{
+  color-scheme:light;
+  --navy:#5cbfa9;--navy2:#48a993;--gold:#d3b06a;--ongold:#fff;
+  --rose:#3aa892;--rose2:#2c8b78;--rosebg:#e2f7f1;
+  --bg:#f6fdfb;--card:#fdfffe;--line:#d7eee8;--line2:#e6f6f2;
+  --surf1:#ecf9f5;--surf2:#f3fcf9;--surf3:#f9fefd;--hover:#eefaf7;
+  --field:#fff;--ib:#cfe8e1;--btnline:#c6e5dc;
+  --txt:#38534d;--sub:#7d968f;--brand:#39a08d;
+  --red:#c0563a;--org:#c08a2e;--grn:#3f9e86;--blue:#5b87a8;
+  --redbg:#fbeee9;--orgbg:#faf3e3;--grnbg:#e6f5f0;--bluebg:#eef3f7;
+  --mentbg:#eef9f5;--mentline:#c6e4da;--menttxt:#2f6255;
+  --basisbg:#faf6e8;--basisline:#e0d3a6;--basistxt:#96792c;
+  --warnbg:#eff9f6;--warnline:#c8e6dd;--warntxt:#358776;
+}
+
+/* 가입설계 표는 칸이 많아 화면 폭을 넘습니다 — 눌러 담지 말고 옆으로 밀어 보게 합니다 */
+.tscroll table.form.rs th{white-space:nowrap}
+.tscroll table.form.rs input,.tscroll table.form.rs select{width:100%;box-sizing:border-box}

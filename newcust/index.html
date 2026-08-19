@@ -1,0 +1,253 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="color-scheme" content="light">
+<meta name="application-name" content="기계약자 관리">
+<meta name="apple-mobile-web-app-title" content="기계약자 관리">
+<meta name="theme-color" content="#f6fdfb">
+<title>기계약자 관리</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%23e2f7f1'/%3E%3Cellipse cx='11' cy='9' rx='2.6' ry='6' fill='%233aa892'/%3E%3Cellipse cx='21' cy='9' rx='2.6' ry='6' fill='%233aa892'/%3E%3Cellipse cx='11' cy='9.5' rx='1.2' ry='3.6' fill='%23e2f7f1'/%3E%3Cellipse cx='21' cy='9.5' rx='1.2' ry='3.6' fill='%23e2f7f1'/%3E%3Ccircle cx='16' cy='20' r='8.5' fill='%233aa892'/%3E%3Ccircle cx='12.8' cy='18.4' r='1.9' fill='%23fbfffe'/%3E%3Ccircle cx='19.2' cy='18.4' r='1.9' fill='%23fbfffe'/%3E%3Ccircle cx='12.8' cy='18.6' r='1.3' fill='%2338534d'/%3E%3Ccircle cx='19.2' cy='18.6' r='1.3' fill='%2338534d'/%3E%3Cellipse cx='16' cy='23.4' rx='4' ry='3' fill='%23fbfffe'/%3E%3Cellipse cx='16' cy='21.9' rx='1.4' ry='1' fill='%2338534d'/%3E%3C/svg%3E">
+<link rel="stylesheet" href="/style.css">
+<link rel="stylesheet" href="/newcust/theme.css">
+</head>
+<body>
+
+<header><div class="wrap">
+  <div class="dots noprint"><i></i><i></i><i></i></div>
+  <div class="ttl">
+    <span class="bear" aria-hidden="true">🐰</span>
+    <h1>기계약자 관리</h1>
+    <span class="bear" aria-hidden="true">🐰</span>
+  </div>
+  <p>가입설계 내용을 넣으면 → <b>특약별 보장영역과 지급보험금</b>이 자동으로 정리되고 → 생일 · 상령일 · 암 면책일 · 만기일이 <b>알림</b>으로 뜹니다.</p>
+  <div class="tabs noprint">
+    <button id="tb1" class="on" data-tab="1">① 고객정보</button>
+    <button id="tb2" data-tab="2">② 사고보험금 청구내역</button>
+    <button id="tb3" data-tab="3">③ 방문준비 · 상담메모</button>
+    <button id="tb4" data-tab="4">④ 고객터치</button>
+    <button id="tb5" data-tab="5">⑤ 누적통계</button>
+  </div>
+</div></header>
+
+<div class="wrap sheet">
+
+<!-- ============ ① 고객정보 ============ -->
+<div class="pane on" id="p1">
+<div id="restoreBar" class="warn noprint" style="display:none;margin-top:16px"></div>
+
+<div class="card">
+  <div class="grid g3">
+    <div><label>고객 성명</label><input id="h_cust" placeholder="홍길동"></div>
+    <div><label>지점 · F P</label><input id="h_fp" placeholder="교보생명 평촌지점 추진이 FP"></div>
+    <div><label>작성일</label><input id="h_date" data-date></div>
+  </div>
+  <div class="btns noprint" style="margin-top:11px">
+    <button class="b b-main sm" id="btnSave">💾 이 고객 저장</button>
+    <button class="b b-gold sm" data-tab="5">📂 저장된 고객 불러오기</button>
+    <button class="b b-sub sm" id="btnNew">🆕 새 고객 시작</button>
+    <button class="b b-sub sm" id="btnDemo">예시 입력</button>
+    <span class="hint" id="saveState" style="align-self:center"></span>
+  </div>
+</div>
+
+<div class="card">
+  <h2><span class="ico">♥</span><span class="no">1</span>고객 정보</h2>
+  <p class="sub">생년월일을 넣으면 <b>보험나이</b>와 <b>상령일</b>(나이가 한 살 오르는 날)이 자동으로 잡힙니다.</p>
+  <table class="form">
+    <tr><td class="gk w1">생년월일</td><td><input id="p_birth" data-date></td>
+        <td class="gk w1">성별</td><td><select id="p_sex"><option value=""></option><option>남</option><option>여</option></select></td>
+        <td class="gk w1">보험나이</td><td><input id="p_age" type="number" class="autoval"></td></tr>
+    <tr><td class="gk">전화번호</td><td><input id="p_phone" placeholder="010-0000-0000" inputmode="tel"></td>
+        <td class="gk">이메일</td><td><input id="p_email"></td>
+        <td class="gk">직 업</td><td><input id="p_job"></td></tr>
+    <tr><td class="gk">주 소</td><td colspan="5"><input id="p_addr"></td></tr>
+    <tr><td class="gk">기념일</td><td><input id="p_anniv" placeholder="결혼기념일 05-06"></td>
+        <td class="gk">가족사항</td><td><input id="p_family" placeholder="배우자 · 자녀 나이"></td>
+        <td class="gk">가입 경로</td><td><input id="p_route" placeholder="소개 · DB"></td></tr>
+    <tr><td class="gk">납입방법<br>이체일</td><td><input id="p_pay" placeholder="카드 / 매월 25일"></td>
+        <td class="gk">특이사항</td><td colspan="3"><textarea id="p_memo" rows="2"></textarea></td></tr>
+  </table>
+  <div class="hint" id="ageMsg" style="margin-top:7px"></div>
+</div>
+
+<div class="card">
+  <h2><span class="ico">✿</span><span class="no">2</span>가입설계 내역</h2>
+  <p class="sub">보험(주계약)을 먼저 넣고, 그 아래에 특약을 넣으세요. <b>보험명</b>을 같게 적으면 특약이 그 보험에 붙습니다.</p>
+  <div id="rs_plans"></div>
+  <div class="hint" id="planMsg" style="margin-top:7px"></div>
+
+  <div class="rsblock">
+    <div class="rshd"><b>특약</b><span class="gsub">가입금액을 넣으면 아래 보장 요약에 지급보험금이 계산됩니다</span></div>
+    <div id="rs_riders"></div>
+  </div>
+</div>
+
+<div class="card">
+  <h2><span class="ico">★</span><span class="no">3</span>보장 요약 <span class="gsub">— 자동 계산</span></h2>
+  <p class="sub">특약별로 <b>어떤 일이 생기면 얼마가 나오는지</b> 정리했습니다. 고객께 그대로 보여드리셔도 됩니다.</p>
+  <div class="btns noprint" style="margin-bottom:10px">
+    <button class="b b-main sm" id="btnCalc">📊 보장 다시 계산</button>
+    <button class="b b-sub sm" id="btnProd">📕 보험 · 약관 고치기</button>
+    <button class="b b-sub sm" id="btnDict">⚙ 특약 사전 고치기</button>
+  </div>
+  <div id="covBox"></div>
+</div>
+
+<div class="card noprint" id="prodCard" style="display:none">
+  <h2><span class="ico">📕</span>보험 · 약관</h2>
+  <p class="sub">여기에 넣은 <b>보험명</b>이 ②의 드롭다운에 뜹니다. 보험을 고르면 <b>그 약관의 지급기준</b>으로 보험금이 계산됩니다.</p>
+  <div class="btns" style="margin-bottom:10px">
+    <select id="prodPick" style="max-width:280px"></select>
+    <button class="b b-sub sm" id="btnProdAdd">＋ 보험 추가</button>
+    <button class="b b-sub sm" id="btnProdRider">＋ 특약 추가</button>
+    <button class="b b-red sm" id="btnProdDel">이 보험 삭제</button>
+  </div>
+  <div id="prodBox"></div>
+  <div class="btns" style="margin-top:10px">
+    <button class="b b-main sm" id="btnProdSave">저장</button>
+    <button class="b b-sub sm" id="btnProdReset">기본값으로 되돌리기</button>
+    <button class="b b-sub sm" id="btnProdClose">닫기</button>
+  </div>
+</div>
+
+<div class="card noprint" id="dictCard" style="display:none">
+  <h2><span class="ico">⚙</span>특약 사전</h2>
+  <p class="sub">여기 값으로 지급보험금이 계산됩니다. <b>약관의 실제 지급률로 고쳐 두시면</b> 이 기기에 저장되어 계속 쓰입니다.</p>
+  <div id="dictBox"></div>
+  <div class="btns" style="margin-top:10px">
+    <button class="b b-main sm" id="btnDictSave">저장</button>
+    <button class="b b-sub sm" id="btnDictReset">기본값으로 되돌리기</button>
+    <button class="b b-sub sm" id="btnDictClose">닫기</button>
+  </div>
+</div>
+</div><!-- /p1 -->
+
+
+<!-- ============ ② 사고보험금 청구내역 ============ -->
+<div class="pane" id="p2">
+  <div class="card">
+    <h2><span class="ico">✦</span><span class="no">1</span>사고보험금 청구내역</h2>
+    <p class="sub">청구한 건과 지급받은 내역을 남겨 두면 ⑤ 누적통계에서 합계가 잡힙니다.</p>
+    <div id="rs_claims"></div>
+    <div id="claimSum" style="margin-top:12px"></div>
+  </div>
+  <div class="card note">
+    보험금 청구권의 <b>소멸시효는 3년</b>입니다. 오래된 건부터 확인해 주세요.
+    청구 후 지급까지 시간이 걸리는 건은 <b>상태</b> 칸에 접수 · 심사 · 지급으로 남겨 두시면 놓치지 않습니다.
+  </div>
+</div>
+
+
+<!-- ============ ③ 방문준비 · 상담메모 ============ -->
+<div class="pane" id="p3">
+  <div class="card">
+    <h2><span class="ico">♥</span><span class="no">1</span>방문 전 준비물</h2>
+    <div class="grid g4" id="prepBox"></div>
+  </div>
+
+  <div class="card">
+    <h2><span class="ico">✿</span><span class="no">2</span>상담 메모</h2>
+    <div id="rs_talks"></div>
+    <table class="form" style="margin-top:14px">
+      <tr><td class="gk w1">고객 요청사항</td><td colspan="3"><textarea id="m_req" rows="2"></textarea></td></tr>
+      <tr><td class="gk">상담 메모</td><td colspan="3"><textarea id="m_note" rows="3"></textarea></td></tr>
+    </table>
+    <div class="rsblock">
+      <div class="rshd"><b>후속조치</b><span class="gsub">처리기한을 넣으면 ④ 고객터치에 알림으로 뜹니다</span></div>
+      <div id="rs_follows"></div>
+    </div>
+    <table class="form" style="margin-top:14px">
+      <tr><td class="gk w1">고객 등급</td>
+        <td><select id="m_grade"><option value="">선택</option>
+          <option value="A">A (적극 관리)</option><option value="B">B (정기 관리)</option><option value="C">C (유지)</option></select></td>
+        <td class="gk w1">차기 방문예정일</td><td><input id="m_next" data-date></td></tr>
+    </table>
+  </div>
+
+  <div class="card">
+    <h2><span class="ico">★</span><span class="no">3</span>신규계약 후 챙길 것</h2>
+    <div class="grid g2" id="extraBox"></div>
+  </div>
+</div>
+
+
+<!-- ============ ④ 고객터치 ============ -->
+<div class="pane" id="p4">
+  <div class="card">
+    <h2><span class="ico">🔔</span><span class="no">1</span>알림 <span class="gsub">— 챙겨야 할 날</span></h2>
+    <p class="sub">생일 · 기념일 · <b>상령일</b> · <b>암 90일 면책 해제일</b> · 만기일 · 납입 만료일이 가까운 순서로 나옵니다.</p>
+    <div class="btns noprint" style="margin-bottom:10px">
+      <button class="b b-main sm" id="btnAlert">🔔 알림 다시 계산</button>
+      <span class="hint" style="align-self:center">30일 안쪽은 <b style="color:var(--rose)">분홍</b>, 지난 것은 <b style="color:var(--red)">빨강</b>으로 표시됩니다</span>
+    </div>
+    <div id="alertBox"></div>
+  </div>
+
+  <div class="card">
+    <h2><span class="ico">✿</span><span class="no">2</span>고객터치 기록</h2>
+    <p class="sub">연락하거나 만난 기록입니다. 알림을 처리하시면 여기에 한 줄 남겨 두세요.</p>
+    <div id="rs_touches"></div>
+  </div>
+</div>
+
+
+<!-- ============ ⑤ 누적통계 ============ -->
+<div class="pane" id="p5">
+  <div class="card">
+    <h2><span class="ico">✦</span><span class="no">1</span>누적 통계</h2>
+    <div class="kpi" id="s_kpi"></div>
+  </div>
+
+  <div class="card">
+    <h2><span class="ico">🔔</span><span class="no">2</span>이번 달 챙길 고객 <span class="gsub">— 전체 고객 기준</span></h2>
+    <p class="sub">저장해 두신 모든 고객의 알림 중 <b>30일 안쪽</b>에 있는 것만 모았습니다.</p>
+    <div id="s_alert"></div>
+  </div>
+
+  <div class="card">
+    <h2><span class="ico">🐰</span><span class="no">3</span>저장된 고객</h2>
+    <div class="btns noprint" style="margin-bottom:11px">
+      <input id="q" placeholder="고객명 · 보험명 검색" style="max-width:240px">
+      <button class="b b-sub sm" id="btnReload">🔄 새로고침</button>
+      <button class="b b-gold sm" id="btnBackup">📦 전체 백업 파일 저장</button>
+      <button class="b b-sub sm" id="btnRestorePick">📂 백업 파일 복원</button>
+      <input type="file" id="rf" accept=".json" style="display:none">
+      <button class="b b-sub sm" id="btnCsv">📑 CSV 내보내기</button>
+      <button class="b b-sub sm" id="btnLedger">📊 누적 관리대장 (.xlsx)</button>
+      <button class="b b-red sm" id="btnWipe">전체 삭제</button>
+    </div>
+    <div class="warn noprint" style="margin-bottom:12px">
+      <b>보관 안내</b> · 자료는 <b>이 기기의 브라우저 안</b>에 쌓입니다. 브라우저 기록을 지우면 함께 사라지니
+      주 1회 <b>[전체 백업 파일 저장]</b>을 눌러 파일로 남겨 두세요.
+    </div>
+    <div id="dbBox"></div>
+  </div>
+
+  <div class="card">
+    <h2><span class="ico">✦</span><span class="no">4</span>월별 신규 추이</h2>
+    <div id="s_month"></div>
+  </div>
+</div>
+
+<div class="card note">
+  <b>안내</b> · 특약별 보장영역과 지급보험금은 <b>특약 사전</b>에 들어 있는 값으로 계산한 <b>참고용</b>입니다.
+  실제 지급 여부와 금액은 <b>반드시 약관과 회사 시스템에서 최종 확인</b>하신 뒤 고객께 안내해 주세요.
+  고객 개인정보가 담기므로 백업 파일은 회사 보안 규정에 따라 관리해 주세요.
+</div>
+
+</div><!-- /wrap -->
+
+<div class="toast" id="toast"></div>
+<input type="date" id="pickHelper" style="position:fixed;left:-9999px;top:0;width:1px;height:1px;opacity:0">
+
+<script src="/shared/calc.js"></script>
+<script src="/newcust/schema.js"></script>
+<script src="/newcust/products.js"></script>
+<script src="/newcust/riders.js"></script>
+<script src="/newcust/engine.js"></script>
+<script src="/standalone/xlsx-lite.js"></script>
+<script src="/newcust/app.js"></script>
+</body>
+</html>
