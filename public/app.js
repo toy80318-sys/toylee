@@ -204,6 +204,7 @@ function renderRowsets() {
   RSETS.forEach(function (set) {
     const box = $('rs_' + set.key);
     if (!box) return;
+    /* 줄 추가 단추는 표 위 오른쪽에 하나만 둔다 */
     const addBtn = function (cls) {
       return '<button type="button" class="b b-gold sm ' + cls + '" data-rsadd="' + set.key + '">' +
         esc(set.addLabel || '＋ 줄 추가') + '</button>';
@@ -219,8 +220,7 @@ function renderRowsets() {
       }).join('') +
       '<th class="rsx noprint"></th></tr></thead>' +
       '<tbody id="rsb_' + set.key + '"></tbody></table></div>' +
-      (set.sub ? '<div class="hint">' + esc(set.sub) + '</div>' : '') +
-      '<div class="btns noprint" style="margin-top:6px">' + addBtn('') + '</div>';
+      (set.sub ? '<div class="hint">' + esc(set.sub) + '</div>' : '');
   });
 }
 
