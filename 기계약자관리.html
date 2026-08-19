@@ -973,35 +973,141 @@ textarea#script{height:340px;font-size:15.5px;line-height:1.7;white-space:pre-wr
   };
 
   const BASE = [
-    /* ───────────────── 교보 K-실속종신보험 (무배당) ───────────────── */
+    /* ───────────────── 교보 K-실속종신보험 (무배당) ─────────────────
+     * 지급률은 약관 (별표1) 보험금 지급기준표를 그대로 옮겼습니다.
+     * 약관의 기준이 「특약보험가입금액 1,000만원」이므로 그 금액 ÷ 1,000만원 = 지급률입니다.
+     */
     {
       key: 'kb_k_silsok', name: '교보 K-실속종신보험 (무배당)',
-      note: '2026.06.29 공시용 통합약관',
+      note: '2026.06.29 공시용 통합약관 — 지급률까지 약관에서 그대로 옮겨 담았습니다',
       main: 종신주계약,
       riders: [
-        R('New(무)암진단특약(갱신형)Ⅱ', 'cancer', W90, CUT1Y, ONCE, DIAG100,
-          { areas: ['일반암 (위암 · 폐암 · 대장암 등)', '고액암 (백혈병 · 뇌암 · 골수암 등)'] }),
-        R('(무)소액암진단특약(갱신형)Ⅳ2형', 'cancer', CUT1Y, ONCE_EA,
-          { areas: ['특정갑상선암', '초기유방암', '전립선암', '경계성종양', '제자리암', '양성뇌종양', '기타피부암', '대장점막내암'],
-            pays: [{ when: '해당 소액암 진단확정', rate: 1 }], wait: 0,
-            note: '소액암은 90일 면책이 없고, 1년 미만 진단 시 50%만 지급됩니다.' }),
-        R('(무)교보뇌혈관질환진단특약(갱신형)Ⅱ', 'brain', CUT1Y, ONCE, DIAG100),
-        R('(무)뇌혈관질환진단특약', 'brain', CUT1Y, ONCE, DIAG100),
-        R('(무)교보허혈심장질환진단특약(갱신형)', 'heart', CUT1Y, ONCE, DIAG100),
-        R('(무)허혈심장질환진단특약', 'heart', CUT1Y, ONCE, DIAG100),
-        R('(무)혈전용해치료보장특약(갱신형)Ⅱ', 'thrombo', CUT1Y, ONCE_EA),
-        R('(무)혈전용해치료보장특약', 'thrombo', CUT1Y, ONCE_EA),
+        R('New(무)암진단특약(갱신형)Ⅱ', 'cancer', W90, CUT1Y, ONCE,
+          { areas: ['일반암 (위암 · 폐암 · 대장암 등)', '고액암 (백혈병 · 뇌암 · 골수암 등)'],
+            pays: [{ when: '암 진단확정', rate: 1 }],
+            note: '암보장개시일은 계약일부터 90일이 되는 날의 다음날입니다. ' +
+              '계약일부터 1년 미만에 진단확정되면 50%만 지급합니다 (갱신계약에는 감액을 적용하지 않습니다).' }),
+        R('(무)소액암진단특약(갱신형)Ⅳ2형', 'cancer', CUT1Y, ONCE_EA, { wait: 0,
+          areas: ['기타피부암 · 대장점막내암 · 특정갑상선암 · 경계성종양 · 제자리암 · 양성뇌종양 (가입금액의 20%)',
+            '초기유방암 · 전립선암 (가입금액의 40%)'],
+          pays: [
+            { when: '기타피부암 진단확정', rate: 0.2 },
+            { when: '대장점막내암 진단확정', rate: 0.2 },
+            { when: '특정갑상선암 진단확정', rate: 0.2 },
+            { when: '초기유방암 진단확정 (여성)', rate: 0.4 },
+            { when: '전립선암 진단확정', rate: 0.4 },
+            { when: '경계성종양 진단확정', rate: 0.2 },
+            { when: '제자리암 진단확정', rate: 0.2 },
+            { when: '양성뇌종양 진단확정', rate: 0.2 }
+          ],
+          note: '소액암은 90일 면책이 없습니다. 계약일부터 1년 미만이면 위 금액의 절반만 지급합니다.' }),
+        R('(무)교보뇌혈관질환진단특약(갱신형)Ⅱ', 'brain', CUT1Y, ONCE,
+          { pays: [{ when: '"뇌혈관질환" 진단확정', rate: 1 }],
+            note: '외상성 두개내출혈 · 혈관성 치매 · 과거 무증상성 열공성 뇌경색증은 보장하지 않습니다.' }),
+        R('(무)뇌혈관질환진단특약', 'brain', CUT1Y, ONCE,
+          { pays: [{ when: '"뇌혈관질환" 진단확정', rate: 1 }] }),
+        R('(무)교보허혈심장질환진단특약(갱신형)', 'heart', CUT1Y, ONCE,
+          { pays: [{ when: '"허혈심장질환" 진단확정', rate: 1 }] }),
+        R('(무)허혈심장질환진단특약', 'heart', CUT1Y, ONCE,
+          { pays: [{ when: '"허혈심장질환" 진단확정', rate: 1 }] }),
+        R('(무)혈전용해치료보장특약(갱신형)Ⅱ', 'thrombo', CUT1Y, ONCE_EA,
+          { pays: [
+            { when: '급성뇌경색증 혈전용해치료', rate: 0.2 },
+            { when: '특정 급성심근경색증 혈전용해치료', rate: 0.2 }
+          ] }),
+        R('(무)혈전용해치료보장특약', 'thrombo', CUT1Y, ONCE_EA,
+          { pays: [
+            { when: '급성뇌경색증 혈전용해치료', rate: 0.2 },
+            { when: '특정 급성심근경색증 혈전용해치료', rate: 0.2 }
+          ] }),
         R('(무)중증질환자[뇌혈관및심장질환]산정특례대상보장특약(갱신형)', 'specialcase', CUT1Y,
-          { limit: '연 각 1회에 한해 보장',
-            note: '재해 이외의 원인으로 1년 미만에 지급사유가 생기면 50%만 지급됩니다.' }),
-        R('(무)희귀질환자산정특례대상보장특약(갱신형)', 'specialcase', ONCE, { reduce: null }),
-        항암방사선(),
-        R('(무)NEW플러스수술특약(갱신형)', 'surg_d'),
-        급여수술기본(), 급여수술방법(), 급여수술원인(),
-        입원3(), 재해골절(), 재해사망(), 재해상해1(),
-        R('(무)정기특약', 'death_d', { areas: ['보험기간 중 사망'], pays: [{ when: '사망', rate: 1 }], reduce: null,
-          note: '정해진 기간 동안만 사망을 보장하는 특약입니다.' }),
-        납면3대(), 납면장해()
+          { areas: ['중증질환자 뇌혈관질환 산정특례대상 적용', '중증질환자 심장질환 산정특례대상 적용'],
+            pays: [
+              { when: '중증질환자 뇌혈관질환 산정특례대상', rate: 1 },
+              { when: '중증질환자 심장질환 산정특례대상', rate: 1 }
+            ],
+            limit: '연 각 1회에 한해 보장',
+            note: '재해 이외의 원인으로 1년 미만에 지급사유가 생기면 50%만 지급합니다.' }),
+        R('(무)희귀질환자산정특례대상보장특약(갱신형)', 'specialcase', ONCE,
+          { areas: ['희귀질환자 산정특례대상 신규등록'],
+            pays: [{ when: '희귀질환자 산정특례대상 신규등록', rate: 0.5 }],
+            reduce: null,
+            note: '건강보험 산정특례 등록만으로 지급됩니다. 등록증을 꼭 챙기시라고 안내해 주세요.' }),
+        R('(무)항암방사선약물치료특약', 'chemo', W90, ONCE_EA,
+          { areas: ['일반암 항암방사선치료 · 항암약물치료 (각 가입금액의 10%)',
+              '소액암 항암방사선치료 · 항암약물치료 (각 가입금액의 2%)'],
+            pays: [
+              { when: '일반암 항암방사선치료', rate: 0.1 },
+              { when: '일반암 항암약물치료', rate: 0.1 },
+              { when: '소액암 항암방사선치료', rate: 0.02 },
+              { when: '소액암 항암약물치료', rate: 0.02 }
+            ],
+            reduce: null,
+            note: '진단만으로는 나오지 않고 실제 치료를 받아야 지급됩니다. 일반암은 암보장개시일(90일) 이후부터입니다.' }),
+        R('(무)NEW플러스수술특약(갱신형)', 'surg_d',
+          { areas: ['약관에서 정한 수술 (1종 ~ 5종)'],
+            pays: [
+              { when: '수술 1종', rate: 0.02 },
+              { when: '수술 2종', rate: 0.04 },
+              { when: '수술 3종', rate: 0.2 },
+              { when: '수술 4종', rate: 0.8 },
+              { when: '수술 5종', rate: 1 }
+            ],
+            limit: '수술 1회당 지급. 동시에 두 종류 이상이면 가장 높은 것 하나만 (치료목적이 다른 독립 수술은 각각)',
+            note: '수술 종 분류는 약관의 수술분류표에서 확인하세요.' }),
+        R('(무)급여수술(기본)특약(갱신형)', 'surg_d',
+          { areas: ['수술 보장 대상 질병 · 재해로 급여수술을 받았을 때'],
+            pays: [
+              { when: '입원(2일 이상, 당일입원 제외) 급여수술', rate: 0.02 },
+              { when: '통원(당일입원 포함) 급여수술', rate: 0.01 }
+            ],
+            limit: '입원 1회당 1회한 / 통원은 1일 1회, 수술코드당 연간 3회한' }),
+        R('(무)급여수술(방법)특약(갱신형)', 'surg_d',
+          { areas: ['주요급여수술1 — 장기이식, 뇌 및 심장 주요수술',
+              '주요급여수술2 — 폐 · 위 · 대장 절제술, 간담췌 복합수술 등',
+              '주요급여수술3 — 소장 절제술, 여성생식기 악성종양 수술, 뇌동맥류 색전술 등',
+              '주요급여수술4 — 충수(맹장)수술, 자궁 외 임신 수술, 관절 치환술 등'],
+            pays: [
+              { when: '주요급여수술1', rate: 1 },
+              { when: '주요급여수술2', rate: 0.6 },
+              { when: '주요급여수술3', rate: 0.2 },
+              { when: '주요급여수술4', rate: 0.1 }
+            ],
+            limit: '입원 또는 통원 1회당 1회한, 수술코드당 연간 1회한' }),
+        R('(무)급여수술(원인)특약(갱신형)', 'surg_d',
+          { areas: ['암 / 뇌질환 및 심장질환 / 경계성종양 및 제자리암 / 4대질병 / 특정재해로 받은 급여수술'],
+            pays: [
+              { when: '암 급여수술', rate: 0.2 },
+              { when: '뇌질환 및 심장질환 급여수술', rate: 0.2 },
+              { when: '경계성종양 및 제자리암 급여수술', rate: 0.05 },
+              { when: '4대질병 급여수술', rate: 0.1 },
+              { when: '특정재해 급여수술', rate: 0.1 }
+            ],
+            limit: '입원 또는 통원 1회당 1회한, 연간 1회한' }),
+        R('(무)교보재해골절특약', 'fract',
+          { areas: ['재해로 "재해골절(치아파절 제외)" 진단확정'],
+            pays: [{ when: '재해골절 진단확정 1회당', rate: 0.03 }],
+            limit: '같은 재해로 두 군데 이상 골절이어도 재해 1회당 1회만 지급',
+            note: '이 상품은 치아파절(깨짐 · 부러짐)은 빠집니다.' }),
+        R('(무)입원특약Ⅲ', 'hosp_d', HOSP120,
+          { areas: ['질병 또는 재해로 1일 이상 입원했을 때'],
+            pays: [{ when: '입원 1일당', rate: 0.001, per: '1일당' }],
+            note: '가입금액 1,000만원 기준으로 입원 1일당 1만원입니다.' }),
+        R('(무)재해사망특약', 'death_a',
+          { areas: ['보험기간 중 발생한 재해로 사망'], pays: [{ when: '재해사망', rate: 1 }] }),
+        R('(무)재해상해특약1형', 'disab',
+          { areas: ['재해로 장해분류표에서 정한 장해상태가 되었을 때'],
+            pays: [{ when: '가입금액 × 해당 장해지급률', rate: 1 }],
+            note: '장해지급률(3% ~ 100%)만큼 비례해서 지급합니다. 위 금액은 100% 기준입니다.' }),
+        R('(무)정기특약', 'death_d',
+          { areas: ['보험기간 중 사망'], pays: [{ when: '사망', rate: 1 }], reduce: null,
+            note: '정해진 기간 동안만 사망을 보장하는 특약입니다.' }),
+        납면3대(), 납면장해(),
+        R('(무)건강체할인특약Ⅱ', 'waiver', { wait: 0, areas: ['건강 조건을 맞추면 보험료를 깎아 주는 특약입니다'], pays: [] }),
+        R('(무)사망보장증액특약', 'death_d', { reduce: null }),
+        R('(무)연금전환특약Ⅲ', 'annuity'),
+        R('(무)장기요양전환특약(보장형)', 'ltc', { wait: 0, pays: [] }),
+        R('(무)장기요양전환특약(연금형)', 'ltc', { wait: 0, pays: [] })
       ]
     },
 
@@ -2557,6 +2663,14 @@ function paysText(pays) {
 
 let PRODIDX = 0;
 
+/* 편집기에는 「실제로 쓰이는 값」을 보여 줍니다 —
+   약관에 적어 둔 값이 있으면 그 값, 없으면 특약 사전의 표준값 */
+function effSpec(r) {
+  const dict = loadDict();
+  const base = (r.dict ? dict.filter(function (d) { return d.key === r.dict; })[0] : null) || Riders.find(r.name, dict);
+  return Riders.overlay(base, r);
+}
+
 function drawProd() {
   const list = loadProducts();
   if (PRODIDX >= list.length) PRODIDX = 0;
@@ -2576,17 +2690,20 @@ function drawProd() {
     '<th style="width:170px">보장한도</th><th class="rsx noprint"></th></tr>' +
     rows.map(function (r, i) {
       const isMain = p.main && i === 0;
+      const e = effSpec(r);
       return '<tr><td class="gk" style="width:60px">' + (isMain ? '주계약' : '특약') + '</td>' +
         '<td><input data-p="' + i + '" data-pf="name" value="' + esc(r.name || '') + '"></td>' +
-        '<td><textarea data-p="' + i + '" data-pf="areas" rows="3">' + esc((r.areas || []).join('\n')) + '</textarea></td>' +
-        '<td><textarea data-p="' + i + '" data-pf="pays" rows="3">' + esc(paysText(r.pays)) + '</textarea></td>' +
-        '<td><input data-p="' + i + '" data-pf="wait" type="number" value="' + (r.wait == null ? '' : r.wait) + '" placeholder="0"></td>' +
-        '<td><input data-p="' + i + '" data-pf="reduce" value="' + (r.reduce ? r.reduce.days + '일 ' + (r.reduce.rate * 100) + '%' : '') + '" placeholder="365일 50%"></td>' +
-        '<td><input data-p="' + i + '" data-pf="limit" value="' + esc(r.limit || '') + '" placeholder="최초 1회에 한해 보장"></td>' +
+        '<td><textarea data-p="' + i + '" data-pf="areas" rows="3">' + esc((e.areas || []).join('\n')) + '</textarea></td>' +
+        '<td><textarea data-p="' + i + '" data-pf="pays" rows="3">' + esc(paysText(e.pays)) + '</textarea></td>' +
+        '<td><input data-p="' + i + '" data-pf="wait" type="number" value="' + (e.wait || 0) + '" placeholder="0"></td>' +
+        '<td><input data-p="' + i + '" data-pf="reduce" value="' + (e.reduce ? e.reduce.days + '일 ' + (e.reduce.rate * 100) + '%' : '') + '" placeholder="비우면 감액 없음"></td>' +
+        '<td><input data-p="' + i + '" data-pf="limit" value="' + esc(e.limit || '') + '" placeholder="한도 없으면 비워 두세요"></td>' +
         '<td class="rsx noprint">' + (isMain ? '' : '<button type="button" class="rsdel" data-pdel="' + i + '" title="이 특약 지우기">✕</button>') + '</td></tr>';
     }).join('') + '</table></div>' +
-    '<div class="hint" style="margin-top:6px">비워 두면 <b>특약 사전</b>의 표준값으로 계산합니다. ' +
-    '약관 값을 넣으시면 그 값이 <b>언제나 우선</b>합니다. 지급기준은 가입금액 대비 비율이고, 정액은 <b>「= 300만원」</b> 처럼 적으세요.</div>';
+    '<div class="hint" style="margin-top:6px">여기 보이는 값이 <b>실제로 계산에 쓰이는 값</b>입니다. ' +
+    '약관에 적힌 값이 없으면 특약 사전의 표준값을 채워 두었습니다. 고쳐서 [저장]하면 그대로 쓰입니다.<br>' +
+    '지급기준은 <b>한 줄에 하나씩</b>, <b>「어떤 일 = 몇 %」</b> — 가입금액 대비 비율입니다. 정액은 <b>「= 300만원」</b> 처럼 적으세요. ' +
+    '감액 칸을 비우면 <b>감액 없음</b>이 됩니다.</div>';
 }
 
 function collectProd() {
@@ -2599,16 +2716,15 @@ function collectProd() {
   document.querySelectorAll('[data-p]').forEach(function (el) {
     const r = rows[+el.dataset.p], f = el.dataset.pf;
     if (!r) return;
+    /* 화면에 보이는 값을 그대로 저장합니다 — 보이는 것과 쓰이는 것이 어긋나지 않게 */
     if (f === 'name') r.name = el.value.trim();
-    else if (f === 'areas') { const a = el.value.split('\n').map(function (x) { return x.trim(); }).filter(Boolean); if (a.length) r.areas = a; else delete r.areas; }
-    else if (f === 'pays') { const a = parsePays(el.value); if (a.length) r.pays = a; else delete r.pays; }
-    else if (f === 'wait') { if (String(el.value).trim() === '') delete r.wait; else r.wait = numOf(el.value) || 0; }
+    else if (f === 'areas') r.areas = el.value.split('\n').map(function (x) { return x.trim(); }).filter(Boolean);
+    else if (f === 'pays') r.pays = parsePays(el.value);
+    else if (f === 'wait') r.wait = numOf(el.value) || 0;
     else if (f === 'limit') { const v = el.value.trim(); if (v) r.limit = v; else delete r.limit; }
     else if (f === 'reduce') {
       const m = el.value.match(/(\d+)\s*일\s*([0-9.]+)\s*%/);
-      if (m) r.reduce = { days: +m[1], rate: +m[2] / 100 };
-      else if (String(el.value).trim() === '') delete r.reduce;
-      else r.reduce = null;
+      r.reduce = m ? { days: +m[1], rate: +m[2] / 100 } : null;
     }
   });
   if (p.main) { p.main = rows[0]; p.riders = rows.slice(1); }

@@ -406,6 +406,14 @@ function paysText(pays) {
 
 let PRODIDX = 0;
 
+/* 편집기에는 「실제로 쓰이는 값」을 보여 줍니다 —
+   약관에 적어 둔 값이 있으면 그 값, 없으면 특약 사전의 표준값 */
+function effSpec(r) {
+  const dict = loadDict();
+  const base = (r.dict ? dict.filter(function (d) { return d.key === r.dict; })[0] : null) || Riders.find(r.name, dict);
+  return Riders.overlay(base, r);
+}
+
 function drawProd() {
   const list = loadProducts();
   if (PRODIDX >= list.length) PRODIDX = 0;
@@ -425,17 +433,20 @@ function drawProd() {
     '<th style="width:170px">보장한도</th><th class="rsx noprint"></th></tr>' +
     rows.map(function (r, i) {
       const isMain = p.main && i === 0;
+      const e = effSpec(r);
       return '<tr><td class="gk" style="width:60px">' + (isMain ? '주계약' : '특약') + '</td>' +
         '<td><input data-p="' + i + '" data-pf="name" value="' + esc(r.name || '') + '"></td>' +
-        '<td><textarea data-p="' + i + '" data-pf="areas" rows="3">' + esc((r.areas || []).join('\n')) + '</textarea></td>' +
-        '<td><textarea data-p="' + i + '" data-pf="pays" rows="3">' + esc(paysText(r.pays)) + '</textarea></td>' +
-        '<td><input data-p="' + i + '" data-pf="wait" type="number" value="' + (r.wait == null ? '' : r.wait) + '" placeholder="0"></td>' +
-        '<td><input data-p="' + i + '" data-pf="reduce" value="' + (r.reduce ? r.reduce.days + '일 ' + (r.reduce.rate * 100) + '%' : '') + '" placeholder="365일 50%"></td>' +
-        '<td><input data-p="' + i + '" data-pf="limit" value="' + esc(r.limit || '') + '" placeholder="최초 1회에 한해 보장"></td>' +
+        '<td><textarea data-p="' + i + '" data-pf="areas" rows="3">' + esc((e.areas || []).join('\n')) + '</textarea></td>' +
+        '<td><textarea data-p="' + i + '" data-pf="pays" rows="3">' + esc(paysText(e.pays)) + '</textarea></td>' +
+        '<td><input data-p="' + i + '" data-pf="wait" type="number" value="' + (e.wait || 0) + '" placeholder="0"></td>' +
+        '<td><input data-p="' + i + '" data-pf="reduce" value="' + (e.reduce ? e.reduce.days + '일 ' + (e.reduce.rate * 100) + '%' : '') + '" placeholder="비우면 감액 없음"></td>' +
+        '<td><input data-p="' + i + '" data-pf="limit" value="' + esc(e.limit || '') + '" placeholder="한도 없으면 비워 두세요"></td>' +
         '<td class="rsx noprint">' + (isMain ? '' : '<button type="button" class="rsdel" data-pdel="' + i + '" title="이 특약 지우기">✕</button>') + '</td></tr>';
     }).join('') + '</table></div>' +
-    '<div class="hint" style="margin-top:6px">비워 두면 <b>특약 사전</b>의 표준값으로 계산합니다. ' +
-    '약관 값을 넣으시면 그 값이 <b>언제나 우선</b>합니다. 지급기준은 가입금액 대비 비율이고, 정액은 <b>「= 300만원」</b> 처럼 적으세요.</div>';
+    '<div class="hint" style="margin-top:6px">여기 보이는 값이 <b>실제로 계산에 쓰이는 값</b>입니다. ' +
+    '약관에 적힌 값이 없으면 특약 사전의 표준값을 채워 두었습니다. 고쳐서 [저장]하면 그대로 쓰입니다.<br>' +
+    '지급기준은 <b>한 줄에 하나씩</b>, <b>「어떤 일 = 몇 %」</b> — 가입금액 대비 비율입니다. 정액은 <b>「= 300만원」</b> 처럼 적으세요. ' +
+    '감액 칸을 비우면 <b>감액 없음</b>이 됩니다.</div>';
 }
 
 function collectProd() {
@@ -448,16 +459,15 @@ function collectProd() {
   document.querySelectorAll('[data-p]').forEach(function (el) {
     const r = rows[+el.dataset.p], f = el.dataset.pf;
     if (!r) return;
+    /* 화면에 보이는 값을 그대로 저장합니다 — 보이는 것과 쓰이는 것이 어긋나지 않게 */
     if (f === 'name') r.name = el.value.trim();
-    else if (f === 'areas') { const a = el.value.split('\n').map(function (x) { return x.trim(); }).filter(Boolean); if (a.length) r.areas = a; else delete r.areas; }
-    else if (f === 'pays') { const a = parsePays(el.value); if (a.length) r.pays = a; else delete r.pays; }
-    else if (f === 'wait') { if (String(el.value).trim() === '') delete r.wait; else r.wait = numOf(el.value) || 0; }
+    else if (f === 'areas') r.areas = el.value.split('\n').map(function (x) { return x.trim(); }).filter(Boolean);
+    else if (f === 'pays') r.pays = parsePays(el.value);
+    else if (f === 'wait') r.wait = numOf(el.value) || 0;
     else if (f === 'limit') { const v = el.value.trim(); if (v) r.limit = v; else delete r.limit; }
     else if (f === 'reduce') {
       const m = el.value.match(/(\d+)\s*일\s*([0-9.]+)\s*%/);
-      if (m) r.reduce = { days: +m[1], rate: +m[2] / 100 };
-      else if (String(el.value).trim() === '') delete r.reduce;
-      else r.reduce = null;
+      r.reduce = m ? { days: +m[1], rate: +m[2] / 100 } : null;
     }
   });
   if (p.main) { p.main = rows[0]; p.riders = rows.slice(1); }
