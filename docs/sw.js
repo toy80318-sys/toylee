@@ -2,7 +2,7 @@
  * 오프라인 보관 — 한 번 열어 두면 인터넷이 끊겨도 그대로 열립니다.
  * 새 판이 올라오면 조용히 받아 두었다가 다음에 열 때 반영합니다.
  */
-const CACHE = 'kyobo-ebaccf28';
+const CACHE = 'kyobo-954907ef';
 const FILES = ['./', './index.html', './manifest.webmanifest', './icon-192.png', './icon-512.png'];
 
 self.addEventListener('install', function (e) {
