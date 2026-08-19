@@ -21,7 +21,7 @@
     <h1>기계약자 관리</h1>
     <span class="bear" aria-hidden="true">🐰</span>
   </div>
-  <p>가입설계 내용을 넣으면 → <b>특약별 보장영역과 지급보험금</b>이 자동으로 정리되고 → 생일 · 상령일 · 암 면책일 · 만기일이 <b>알림</b>으로 뜹니다.</p>
+  <p>가입설계 내용을 넣으면 → <b>특약별 보장영역과 지급보험금</b>이 자동으로 정리되고 → 생일 · 상령일 · <b>특약별 보장 개시일</b> · 감액 종료일 · 만기일이 <b>알림</b>으로 뜹니다.</p>
   <div class="tabs noprint">
     <button id="tb1" class="on" data-tab="1">① 고객정보</button>
     <button id="tb2" data-tab="2">② 사고보험금 청구내역</button>
@@ -177,7 +177,7 @@
 <div class="pane" id="p4">
   <div class="card">
     <h2><span class="ico">🔔</span><span class="no">1</span>알림 <span class="gsub">— 챙겨야 할 날</span></h2>
-    <p class="sub">생일 · 기념일 · <b>상령일</b> · <b>암 90일 면책 해제일</b> · 만기일 · 납입 만료일이 가까운 순서로 나옵니다.</p>
+    <p class="sub">생일 · 기념일 · <b>상령일</b> · <b>특약별 보장 개시일</b>(면책 종료) · <b>감액 종료일</b> · 만기일 · 납입 만료일이 가까운 순서로 나옵니다.</p>
     <div class="btns noprint" style="margin-bottom:10px">
       <button class="b b-main sm" id="btnAlert">🔔 알림 다시 계산</button>
       <span class="hint" style="align-self:center">30일 안쪽은 <b style="color:var(--rose)">분홍</b>, 지난 것은 <b style="color:var(--red)">빨강</b>으로 표시됩니다</span>

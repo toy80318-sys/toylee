@@ -132,17 +132,6 @@
         cust + ' 님이 알려주신 기념일입니다. 축하 연락 드리세요.', 'anniv');
     }
 
-    /* 보험별 — 암 면책은 그 보험에 암 보장이 붙어 있을 때만 안내합니다 */
-    const sameName = function (a, b) {
-      a = String(a || '').replace(/\s/g, ''); b = String(b || '').replace(/\s/g, '');
-      return !!(a && b) && (a.indexOf(b) >= 0 || b.indexOf(a) >= 0);
-    };
-    const hasCancerIn = function (p) {
-      if (/암/.test(String(p.main || ''))) return true;
-      return riders.some(function (r) {
-        return /암/.test(String(r.name || '')) && (!r.plan || sameName(r.plan, p.name));
-      });
-    };
 
     plans.forEach(function (p) {
       const j = normDate(p.join);
@@ -159,15 +148,6 @@
       if (Calc.dday(q3, today) >= 0) {
         add(q3, '품질보증', nm + ' 품질보증해지 기한',
           '자필서명 · 약관 전달 · 청약서 부본 전달이 제대로 되었는지 확인해 두셔야 하는 기한입니다.', 'early');
-      }
-
-      /* 암 90일 면책 */
-      if (hasCancerIn(p)) {
-        const end = addDays(j, 90);
-        const start = addDays(j, 91);
-        add(start, '암 면책', nm + ' 암 보장 개시일 (90일 면책 종료)',
-          '계약일 ' + ymd(j) + ' 부터 90일(' + ymd(end) + ')까지는 암 진단보험금이 나오지 않습니다. ' +
-          ymd(start) + ' 부터 보장이 시작된다고 꼭 안내해 주세요.', 'cancer');
       }
 
       /* 계약 해당일 (매년) */
@@ -188,6 +168,36 @@
       if (insend) {
         add(insend, '보험 만기', nm + ' 보장 만기',
           '이 날부터 보장이 끝납니다. 미리 이어갈 방법을 함께 정리해 두셔야 공백이 생기지 않습니다.', 'insend');
+      }
+    });
+
+    /* 특약별 면책 종료(보장 개시)일 · 감액 종료일 — 약관에 적힌 값으로 계산합니다 */
+    const cov = coverage(record, { today: today, dict: opts.dict, products: opts.products });
+    const seen = {};
+    cov.riders.concat(cov.mains).forEach(function (c) {
+      if (!c.found || !c.name) return;
+      const label = (c.plan ? c.plan + ' · ' : '') + c.name;
+
+      if (c.waitEnd) {
+        const start = addDays(c.waitEnd, 1);
+        const k = 'w' + start + label;
+        if (!seen[k]) {
+          seen[k] = 1;
+          add(start, '보장 개시', label + ' 보장 개시일',
+            ymd(c.waitEnd) + ' 까지는 면책기간이라 보험금이 나오지 않고, ' + ymd(start) + ' 부터 보장이 시작됩니다. ' +
+            '고객께 꼭 알려 드릴 날입니다.', 'wait');
+        }
+      }
+
+      if (c.reduceEnd && c.reducing) {
+        const full = addDays(c.reduceEnd, 1);
+        const k = 'r' + full + label;
+        if (!seen[k]) {
+          seen[k] = 1;
+          add(full, '감액 종료', label + ' 감액기간 종료 — 이 날부터 전액',
+            ymd(c.reduceEnd) + ' 까지는 정해진 비율만 지급되고, ' + ymd(full) + ' 부터 전액 지급됩니다. ' +
+            '그 전에 사고가 나면 절반만 나온다는 점을 미리 안내해 두세요.', 'cut');
+        }
       }
     });
 

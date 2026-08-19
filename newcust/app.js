@@ -421,7 +421,8 @@ function drawProd() {
     '<div class="tscroll"><table class="form"><tr>' +
     '<th style="width:60px">구분</th><th style="width:190px">특약명</th><th>보장영역 <span class="gsub">(한 줄에 하나)</span></th>' +
     '<th style="width:230px">지급 기준 <span class="gsub">(어떤 일 = 몇 %)</span></th>' +
-    '<th style="width:80px">면책(일)</th><th style="width:130px">감액</th><th class="rsx noprint"></th></tr>' +
+    '<th style="width:80px">면책(일)</th><th style="width:130px">감액</th>' +
+    '<th style="width:170px">보장한도</th><th class="rsx noprint"></th></tr>' +
     rows.map(function (r, i) {
       const isMain = p.main && i === 0;
       return '<tr><td class="gk" style="width:60px">' + (isMain ? '주계약' : '특약') + '</td>' +
@@ -430,6 +431,7 @@ function drawProd() {
         '<td><textarea data-p="' + i + '" data-pf="pays" rows="3">' + esc(paysText(r.pays)) + '</textarea></td>' +
         '<td><input data-p="' + i + '" data-pf="wait" type="number" value="' + (r.wait == null ? '' : r.wait) + '" placeholder="0"></td>' +
         '<td><input data-p="' + i + '" data-pf="reduce" value="' + (r.reduce ? r.reduce.days + '일 ' + (r.reduce.rate * 100) + '%' : '') + '" placeholder="365일 50%"></td>' +
+        '<td><input data-p="' + i + '" data-pf="limit" value="' + esc(r.limit || '') + '" placeholder="최초 1회에 한해 보장"></td>' +
         '<td class="rsx noprint">' + (isMain ? '' : '<button type="button" class="rsdel" data-pdel="' + i + '" title="이 특약 지우기">✕</button>') + '</td></tr>';
     }).join('') + '</table></div>' +
     '<div class="hint" style="margin-top:6px">비워 두면 <b>특약 사전</b>의 표준값으로 계산합니다. ' +
@@ -450,6 +452,7 @@ function collectProd() {
     else if (f === 'areas') { const a = el.value.split('\n').map(function (x) { return x.trim(); }).filter(Boolean); if (a.length) r.areas = a; else delete r.areas; }
     else if (f === 'pays') { const a = parsePays(el.value); if (a.length) r.pays = a; else delete r.pays; }
     else if (f === 'wait') { if (String(el.value).trim() === '') delete r.wait; else r.wait = numOf(el.value) || 0; }
+    else if (f === 'limit') { const v = el.value.trim(); if (v) r.limit = v; else delete r.limit; }
     else if (f === 'reduce') {
       const m = el.value.match(/(\d+)\s*일\s*([0-9.]+)\s*%/);
       if (m) r.reduce = { days: +m[1], rate: +m[2] / 100 };
@@ -503,6 +506,7 @@ function saveDict() {
     if (!r) return;
     if (f === 'areas') r.areas = el.value.split('\n').map(function (s) { return s.trim(); }).filter(Boolean);
     else if (f === 'wait') r.wait = numOf(el.value) || 0;
+    else if (f === 'limit') { const v = el.value.trim(); if (v) r.limit = v; else delete r.limit; }
     else if (f === 'reduce') {
       const m = el.value.match(/(\d+)\s*일\s*(\d+(?:\.\d+)?)\s*%/);
       r.reduce = m ? { days: +m[1], rate: +m[2] / 100 } : null;
@@ -558,6 +562,7 @@ function drawCoverage() {
       '<td style="text-align:right;white-space:nowrap">' + (c.amt ? won(c.amt) + '만원' : '-') + '</td>' +
       '<td>' + (c.found ? c.areas.map(function (a) { return '· ' + esc(a); }).join('<br>') : '-') +
       (c.waitEnd ? '<div class="gsub" style="color:var(--red)">면책 : ' + ymd(c.waitEnd) + ' 까지 보장 안 됨</div>' : '') +
+      (c.limit ? '<div class="gsub" style="color:var(--org)">한도 : ' + esc(c.limit) + '</div>' : '') +
       (c.note ? '<div class="gsub">' + esc(c.note) + '</div>' : '') + '</td>' +
       '<td>' + pays + '</td></tr>';
   });
@@ -1071,14 +1076,14 @@ $('btnDemo').addEventListener('click', function () {
   };
   Object.keys(v).forEach(function (k) { if ($(k)) $(k).value = v[k]; });
   setRows('plans', [
-    { name: '교보 New 든든한 종신보험', insured: '본인', join: todayStr, main: '사망', amt: '10000', prem: '187000', payterm: '20년납', insterm: '종신' },
-    { name: '교보 건강백세 암보험', insured: '본인', join: todayStr, main: '암진단', amt: '3000', prem: '52000', payterm: '20년납', insterm: '80세만기' }
+    { name: '교보 K-실속종신보험 (무배당)', insured: '본인', join: todayStr, main: '사망보험금', amt: '10000', prem: '187000', payterm: '20년납', insterm: '종신' },
+    { name: '교보 K-밸류업종신보험 (무배당)', insured: '본인', join: todayStr, main: '사망보험금', amt: '3000', prem: '52000', payterm: '20년납', insterm: '종신' }
   ]);
   setRows('riders', [
-    { plan: '교보 건강백세 암보험', name: '암진단특약', amt: '3000', payterm: '20년납', insterm: '80세만기' },
-    { plan: '교보 건강백세 암보험', name: '뇌혈관질환진단특약', amt: '2000', payterm: '20년납', insterm: '80세만기' },
-    { plan: '교보 New 든든한 종신보험', name: '질병수술특약', amt: '500', payterm: '20년납', insterm: '80세만기' },
-    { plan: '교보 New 든든한 종신보험', name: '재해골절치료특약', amt: '100', payterm: '20년납', insterm: '80세만기' }
+    { plan: '교보 K-실속종신보험 (무배당)', name: 'New(무)암진단특약(갱신형)Ⅱ', amt: '3000', payterm: '20년납', insterm: '80세만기' },
+    { plan: '교보 K-실속종신보험 (무배당)', name: '(무)교보뇌혈관질환진단특약(갱신형)Ⅱ', amt: '2000', payterm: '20년납', insterm: '80세만기' },
+    { plan: '교보 K-실속종신보험 (무배당)', name: '(무)입원특약Ⅲ', amt: '3', payterm: '20년납', insterm: '80세만기' },
+    { plan: '교보 K-밸류업종신보험 (무배당)', name: '(무)교보재해골절특약', amt: '100', payterm: '20년납', insterm: '80세만기' }
   ]);
   setRows('talks', [{ date: todayStr, note: '신규 가입 · 증권 전달 예정' }]);
   setRows('follows', [{ what: '증권 전달 및 보장내용 설명', due: Engine.addDays(todayStr, 14) }]);

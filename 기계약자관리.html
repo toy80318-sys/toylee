@@ -251,7 +251,7 @@ textarea#script{height:340px;font-size:15.5px;line-height:1.7;white-space:pre-wr
     <h1>기계약자 관리</h1>
     <span class="bear" aria-hidden="true">🐰</span>
   </div>
-  <p>가입설계 내용을 넣으면 → <b>특약별 보장영역과 지급보험금</b>이 자동으로 정리되고 → 생일 · 상령일 · 암 면책일 · 만기일이 <b>알림</b>으로 뜹니다.</p>
+  <p>가입설계 내용을 넣으면 → <b>특약별 보장영역과 지급보험금</b>이 자동으로 정리되고 → 생일 · 상령일 · <b>특약별 보장 개시일</b> · 감액 종료일 · 만기일이 <b>알림</b>으로 뜹니다.</p>
   <div class="tabs noprint">
     <button id="tb1" class="on" data-tab="1">① 고객정보</button>
     <button id="tb2" data-tab="2">② 사고보험금 청구내역</button>
@@ -407,7 +407,7 @@ textarea#script{height:340px;font-size:15.5px;line-height:1.7;white-space:pre-wr
 <div class="pane" id="p4">
   <div class="card">
     <h2><span class="ico">🔔</span><span class="no">1</span>알림 <span class="gsub">— 챙겨야 할 날</span></h2>
-    <p class="sub">생일 · 기념일 · <b>상령일</b> · <b>암 90일 면책 해제일</b> · 만기일 · 납입 만료일이 가까운 순서로 나옵니다.</p>
+    <p class="sub">생일 · 기념일 · <b>상령일</b> · <b>특약별 보장 개시일</b>(면책 종료) · <b>감액 종료일</b> · 만기일 · 납입 만료일이 가까운 순서로 나옵니다.</p>
     <div class="btns noprint" style="margin-bottom:10px">
       <button class="b b-main sm" id="btnAlert">🔔 알림 다시 계산</button>
       <span class="hint" style="align-self:center">30일 안쪽은 <b style="color:var(--rose)">분홍</b>, 지난 것은 <b style="color:var(--red)">빨강</b>으로 표시됩니다</span>
@@ -699,7 +699,7 @@ textarea#script{height:340px;font-size:15.5px;line-height:1.7;white-space:pre-wr
   const ROWSETS = [
     {
       key: 'plans', label: '가입설계 — 보험(주계약)', sheet: '가입설계',
-      sub: '보험 한 건이 한 줄입니다. 계약일을 넣으면 만기일 · 암 면책일 · 상령일 알림이 자동으로 잡힙니다.',
+      sub: '보험 한 건이 한 줄입니다. 보험명을 고르면 그 약관의 지급기준이 적용되고, 계약일을 넣으면 만기일 · 면책 종료일 · 상령일 알림이 자동으로 잡힙니다.',
       rows: 2, addLabel: '＋ 보험 추가',
       cols: [
         { k: 'name', label: '보험명', type: 'select', opt: 'products', ph: '교보 New 든든한 종신보험', w: 26 },
@@ -891,57 +891,371 @@ textarea#script{height:340px;font-size:15.5px;line-height:1.7;white-space:pre-wr
  * 상품(보험) 목록 — 보험명을 고르면 그 상품의 약관 지급기준으로 보험금이 계산됩니다.
  *
  *   name    : 화면 드롭다운에 뜨는 보험명
- *   main    : 주계약 { name, dict }
+ *   main    : 주계약 { name, dict, ... }
  *   riders  : 그 상품에 붙는 특약 목록
- *             { name, dict, areas?, pays?, wait?, reduce? }
+ *             { name, dict, areas?, pays?, wait?, reduce?, limit?, note? }
  *             dict  = 특약 사전(riders.js)의 key — 적지 않으면 특약명으로 찾습니다
- *             areas / pays / wait / reduce 를 적으면 그 상품의 약관 값이 사전값보다 우선합니다
+ *             areas / pays / wait / reduce / limit 를 적으면 그 상품의 약관 값이 사전값보다 우선합니다
  *
- * ※ 지금 들어 있는 값은 흔히 쓰이는 **표준 예시**입니다.
- *   약관을 주시면 그대로 채워 넣고, 그 전에도 화면 [⚙ 보험 · 약관 고치기]에서 직접 넣으실 수 있습니다.
+ * ─────────────────────────────────────────────────────────────────
+ *  아래 상품의 **면책기간 · 감액기간 및 비율 · 보장한도**는
+ *  교보생명 공시용 통합약관의 「보험약관 요약서」에서 그대로 옮긴 값입니다.
+ *
+ *  지급률(가입금액의 몇 %)은 진단보험금처럼 약관에 100%로 정해진 것만 넣었고,
+ *  수술 종별 · 입원 일당처럼 표를 봐야 하는 것은 비워 두어
+ *  특약 사전의 표준값으로 계산되게 했습니다. 화면에서 언제든 고치실 수 있습니다.
+ *
+ *  ※ 지급 여부와 금액은 반드시 약관과 회사 시스템에서 최종 확인하세요.
+ * ─────────────────────────────────────────────────────────────────
  */
 (function (global) {
   'use strict';
 
+  /* 자주 쓰는 조각 — 약관 요약서에 적힌 그대로입니다 */
+  const W90 = { wait: 90 };                                  /* 가입 후 90일 면책 */
+  const W1Y = { wait: 365 };                                 /* 가입 후 1년 면책 */
+  const CUT1Y = { reduce: { days: 365, rate: 0.5 } };        /* 1년 미만 50% 감액 */
+  const CUT2Y = { reduce: { days: 730, rate: 0.5 } };        /* 2년 이내 50% 감액 */
+  const ONCE = { limit: '최초 1회에 한해 보장' };
+  const ONCE_EA = { limit: '최초 각 1회에 한해 보장' };
+  const YEAR1 = { limit: '연간 1회에 한해 보장' };
+  const HOSP120 = { limit: '1회 입원당 지급일수 120일 한도' };
+  const HOSP60 = { limit: '1회 입원당 지급일수 60일 한도' };
+  const HOSP90 = { limit: '1회 입원당 지급일수 90일 한도' };
+  const CARE180 = { limit: '1회 입원당 사용일수 180일 한도' };
+  const DIAG100 = { pays: [{ when: '진단확정', rate: 1 }] };  /* 진단보험금 = 가입금액 100% */
+
+  /* 한 줄로 특약을 적기 위한 도우미 */
+  function R(name, dict) {
+    const o = { name: name, dict: dict };
+    for (let i = 2; i < arguments.length; i++) Object.assign(o, arguments[i]);
+    return o;
+  }
+
+  /* 여러 상품에 똑같이 들어가는 특약들 */
+  const 재해골절 = function () { return R('(무)교보재해골절특약', 'fract'); };
+  const 재해수술 = function () { return R('(무)교보재해수술특약', 'surg_a'); };
+  const 깁스 = function () { return R('(무)교보깁스치료(부목제외)특약', 'cast'); };
+  const 입원3 = function () {
+    return R('(무)입원특약Ⅲ', 'hosp_d', HOSP120,
+      { areas: ['질병 또는 재해로 입원했을 때'],
+        note: '이 상품은 1회 입원당 지급일수가 120일 한도입니다. 면책일수는 약관에서 확인하세요.' });
+  };
+  const 재해사망 = function () { return R('(무)재해사망특약', 'death_a'); };
+  const 재해상해1 = function () { return R('(무)재해상해특약1형', 'disab'); };
+  const 납면3대 = function () { return R('(무)보험료납입면제특약(특정3대질환)1형', 'waiver', W90); };
+  const 납면장해 = function () { return R('(무)질병재해장해납입면제특약', 'waiver', { wait: 0 }); };
+  const 상급종합 = function (nm) { return R(nm || '(무)상급종합병원입원특약', 'hosp_d', HOSP120); };
+  const 급여수술기본 = function () {
+    return R('(무)급여수술(기본)특약(갱신형)', 'surg_d',
+      { limit: '입원 1회당 1회한 / 통원은 1일 1회, 수술코드당 연간 3회한' });
+  };
+  const 급여수술방법 = function () {
+    return R('(무)급여수술(방법)특약(갱신형)', 'surg_d',
+      { limit: '입원 또는 통원 1회당 1회한, 수술코드당 연간 1회한' });
+  };
+  const 급여수술원인 = function () {
+    return R('(무)급여수술(원인)특약(갱신형)', 'surg_d',
+      { limit: '입원 또는 통원 1회당 1회한, 연간 1회한' });
+  };
+  const 항암방사선 = function () {
+    return R('(무)항암방사선약물치료특약', 'chemo', W90, ONCE_EA,
+      { areas: ['일반암 항암방사선치료', '일반암 항암약물치료', '소액암 항암방사선 · 항암약물치료'] });
+  };
+
+  const 종신주계약 = {
+    name: '사망보험금', dict: 'death_d',
+    areas: ['재해 이외의 원인으로 사망 (질병사망)', '재해로 사망'],
+    pays: [{ when: '사망', rate: 1 }],
+    wait: 0, reduce: null,
+    note: '기본보험금액은 보험가입금액입니다. 여기에 사망 당시의 사망보장증액보너스 · ' +
+      '유지보너스 계약자적립액을 더해 지급하며, 이미 낸 보험료보다 적으면 낸 보험료를 지급합니다.'
+  };
+
   const BASE = [
+    /* ───────────────── 교보 K-실속종신보험 (무배당) ───────────────── */
     {
-      key: 'kb_jongsin', name: '교보 New 든든한 종신보험',
-      note: '표준 예시값입니다. 약관을 받으면 그대로 채워 넣습니다.',
-      main: { name: '사망', dict: 'death_d' },
+      key: 'kb_k_silsok', name: '교보 K-실속종신보험 (무배당)',
+      note: '2026.06.29 공시용 통합약관',
+      main: 종신주계약,
       riders: [
-        { name: '질병수술특약', dict: 'surg_d' },
-        { name: '재해수술특약', dict: 'surg_a' },
-        { name: '재해골절치료특약', dict: 'fract' },
-        { name: '재해사망특약', dict: 'death_a' },
-        { name: '후유장해특약', dict: 'disab' },
-        { name: '질병입원특약', dict: 'hosp_d' }
+        R('New(무)암진단특약(갱신형)Ⅱ', 'cancer', W90, CUT1Y, ONCE, DIAG100,
+          { areas: ['일반암 (위암 · 폐암 · 대장암 등)', '고액암 (백혈병 · 뇌암 · 골수암 등)'] }),
+        R('(무)소액암진단특약(갱신형)Ⅳ2형', 'cancer', CUT1Y, ONCE_EA,
+          { areas: ['특정갑상선암', '초기유방암', '전립선암', '경계성종양', '제자리암', '양성뇌종양', '기타피부암', '대장점막내암'],
+            pays: [{ when: '해당 소액암 진단확정', rate: 1 }], wait: 0,
+            note: '소액암은 90일 면책이 없고, 1년 미만 진단 시 50%만 지급됩니다.' }),
+        R('(무)교보뇌혈관질환진단특약(갱신형)Ⅱ', 'brain', CUT1Y, ONCE, DIAG100),
+        R('(무)뇌혈관질환진단특약', 'brain', CUT1Y, ONCE, DIAG100),
+        R('(무)교보허혈심장질환진단특약(갱신형)', 'heart', CUT1Y, ONCE, DIAG100),
+        R('(무)허혈심장질환진단특약', 'heart', CUT1Y, ONCE, DIAG100),
+        R('(무)혈전용해치료보장특약(갱신형)Ⅱ', 'thrombo', CUT1Y, ONCE_EA),
+        R('(무)혈전용해치료보장특약', 'thrombo', CUT1Y, ONCE_EA),
+        R('(무)중증질환자[뇌혈관및심장질환]산정특례대상보장특약(갱신형)', 'specialcase', CUT1Y,
+          { limit: '연 각 1회에 한해 보장',
+            note: '재해 이외의 원인으로 1년 미만에 지급사유가 생기면 50%만 지급됩니다.' }),
+        R('(무)희귀질환자산정특례대상보장특약(갱신형)', 'specialcase', ONCE, { reduce: null }),
+        항암방사선(),
+        R('(무)NEW플러스수술특약(갱신형)', 'surg_d'),
+        급여수술기본(), 급여수술방법(), 급여수술원인(),
+        입원3(), 재해골절(), 재해사망(), 재해상해1(),
+        R('(무)정기특약', 'death_d', { areas: ['보험기간 중 사망'], pays: [{ when: '사망', rate: 1 }], reduce: null,
+          note: '정해진 기간 동안만 사망을 보장하는 특약입니다.' }),
+        납면3대(), 납면장해()
       ]
     },
+
+    /* ───────────────── 교보 K-밸류업종신보험 (무배당) ───────────────── */
     {
-      key: 'kb_cancer', name: '교보 건강백세 암보험',
-      note: '표준 예시값입니다. 약관을 받으면 그대로 채워 넣습니다.',
-      main: { name: '암진단', dict: 'cancer' },
+      key: 'kb_k_value', name: '교보 K-밸류업종신보험 (무배당)',
+      note: '2026.06.29 통합약관',
+      main: 종신주계약,
       riders: [
-        { name: '암진단특약', dict: 'cancer' },
-        { name: '유사암진단특약', dict: 'cancer', areas: ['제자리암 · 경계성종양 · 기타피부암 · 갑상선암'], pays: [{ when: '유사암 진단확정', rate: 1 }], wait: 90, reduce: { days: 365, rate: 0.5 } },
-        { name: '뇌혈관질환진단특약', dict: 'brain' },
-        { name: '허혈성심장질환진단특약', dict: 'heart' },
-        { name: '항암방사선약물치료특약', dict: 'cancer', areas: ['암 치료를 위한 항암 방사선 · 약물치료'], pays: [{ when: '치료 1회당', rate: 1 }], wait: 90, reduce: null }
+        R('(무)암진단특약', 'cancer', W90, CUT1Y, ONCE, DIAG100),
+        R('(무)암진단특약(갱신형)Ⅱ', 'cancer', W90, CUT1Y, ONCE, DIAG100),
+        R('(무)소액암진단특약Ⅱ', 'cancer', ONCE_EA, { reduce: { days: 365, rate: 0.5 }, wait: 0,
+          areas: ['기타피부암', '대장점막내암', '특정갑상선암', '초기유방암', '전립선암', '경계성종양', '제자리암', '양성뇌종양'],
+          pays: [{ when: '해당 소액암 진단확정', rate: 1 }] }),
+        R('(무)소액암진단특약(갱신형)Ⅳ2형', 'cancer', CUT1Y, ONCE_EA, { wait: 0,
+          areas: ['특정갑상선암', '초기유방암', '전립선암', '경계성종양', '제자리암', '양성뇌종양', '기타피부암', '대장점막내암'],
+          pays: [{ when: '해당 소액암 진단확정', rate: 1 }] }),
+        R('(무)암수술특약', 'surg_d', { areas: ['암 수술'] }),
+        R('(무)교보암수술특약(갱신형)Ⅳ', 'surg_d', { areas: ['암 수술'] }),
+        R('(무)암요양병원입원특약(갱신형)Ⅲ', 'hosp_d', HOSP90, { areas: ['암으로 요양병원에 입원했을 때'] }),
+        R('(무)암직접치료특약(요양병원입원 제외)', 'hosp_d', W90, HOSP120,
+          { areas: ['암 직접치료 입원 (요양병원 제외)', '암 직접치료 통원'] }),
+        R('(무)암진단 보험료환급특약 1형', 'waiver', W90),
+        R('(무)암진단 보험료환급특약 2형', 'waiver', W90),
+        R('(무)표적항암약물허가치료특약(갱신형)', 'chemo', W90, ONCE, CUT2Y,
+          { areas: ['표적항암약물 허가치료를 받았을 때'],
+            note: '가입 후 2년 이내에는 50%만 지급됩니다.' }),
+        항암방사선(),
+        R('(무)교보뇌혈관질환진단특약(갱신형)Ⅱ', 'brain', CUT1Y, ONCE, DIAG100),
+        R('(무)뇌혈관질환진단특약', 'brain', CUT1Y, ONCE, DIAG100),
+        R('(무)뇌출혈진단특약', 'brain', CUT1Y, ONCE, { areas: ['뇌출혈'], pays: [{ when: '뇌출혈 진단확정', rate: 1 }] }),
+        R('(무)뇌출혈및뇌경색증진단특약', 'brain', CUT1Y, ONCE,
+          { areas: ['뇌출혈', '뇌경색증'], pays: [{ when: '"뇌출혈 및 뇌경색증" 진단확정', rate: 1 }] }),
+        R('(무)뇌혈관질환수술보장특약(갱신형)', 'surg_d', CUT1Y,
+          { areas: ['뇌혈관질환 관혈 수술', '뇌혈관질환 비관혈 수술'],
+            limit: '관혈 최초 1회 / 비관혈 연간 1회에 한해 보장' }),
+        R('(무)뇌혈관질환입원특약', 'hosp_d', HOSP120, { areas: ['뇌혈관질환으로 입원했을 때'] }),
+        R('(무)교보허혈심장질환진단특약(갱신형)', 'heart', CUT1Y, ONCE, DIAG100),
+        R('(무)허혈심장질환진단특약', 'heart', CUT1Y, ONCE, DIAG100),
+        R('(무)급성심근경색증진단특약', 'heart', CUT1Y, ONCE,
+          { areas: ['급성심근경색증'], pays: [{ when: '급성심근경색증 진단확정', rate: 1 }] }),
+        R('(무)특정허혈심장질환및특정뇌혈관질환진단특약(갱신형)', 'heart', CUT1Y, ONCE_EA,
+          { areas: ['특정허혈심장질환', '특정뇌혈관질환'] }),
+        R('(무)심장질환수술보장특약(갱신형)', 'surg_d', CUT1Y,
+          { areas: ['심장질환 관혈 수술', '심장질환 비관혈 수술'],
+            limit: '관혈 최초 1회 / 비관혈 연간 1회에 한해 보장',
+            note: '재해가 원인인 경우에는 감액 없이 100% 지급됩니다.' }),
+        R('(무)허혈심장질환입원특약', 'hosp_d', HOSP120, { areas: ['허혈심장질환으로 입원했을 때'] }),
+        R('(무)허혈심장질환및뇌혈관질환수술보장특약(갱신형)Ⅳ', 'surg_d', CUT1Y),
+        R('(무)교보2대질병수술특약(갱신형)Ⅴ', 'surg_d', YEAR1,
+          { areas: ['"뇌출혈 및 뇌경색증" 수술', '급성심근경색증 수술'] }),
+        R('(무)혈전용해치료보장특약(갱신형)Ⅱ', 'thrombo', CUT1Y, ONCE_EA),
+        R('(무)혈전용해치료보장특약', 'thrombo', CUT1Y, ONCE_EA),
+        R('(무)건강치료특약Ⅱ', 'surg_d', CUT1Y, ONCE_EA,
+          { areas: ['2대질병 치료비', '5대장기이식수술비', '조혈모세포이식수술비', '8대특정질병 · 부인과질환 입원비'] }),
+        R('(무)노인성질환진단특약Ⅱ', 'disab', CUT1Y, ONCE_EA,
+          { areas: ['루게릭병', '파킨슨병', '특정 류마티스관절염'], pays: [{ when: '진단확정', rate: 1 }] }),
+        R('(무)당뇨진단및합병증보장특약(갱신형)Ⅳ', 'lifestyle', W1Y, CUT1Y,
+          { areas: ['당뇨병 진단', '인슐린 치료', '당뇨 · 고혈압의 안과적 합병증 수술', '질병 실명 진단', '질병 발목 이상 족부절단'],
+            limit: '진단 · 치료는 최초 각 1회 / 입원은 1회 입원당 120일 한도',
+            note: '당뇨는 가입 후 1년간 면책입니다.' }),
+        R('(무)대상포진및통풍보장특약(갱신형)Ⅲ', 'lifestyle', CUT1Y, ONCE_EA,
+          { areas: ['대상포진 진단', '통풍 진단'] }),
+        R('(무)36대생활습관병수술특약(갱신형)', 'surg_d'),
+        R('(무)36대생활습관병입원특약', 'lifestyle', HOSP120),
+        R('(무)3대특정생활습관병입원수술특약(갱신형)Ⅱ', 'lifestyle', HOSP120,
+          { areas: ['하지정맥류', '성대 관련 질환', '손목터널증후군'] }),
+        R('(무)감염병보장특약(갱신형)', 'lifestyle', HOSP120, { areas: ['약관에서 정한 특정 감염병으로 입원했을 때'] }),
+        R('(무)시니어수술보장특약(갱신형)Ⅱ', 'surg_d', CUT1Y,
+          { areas: ['녹내장 수술', '관절염 수술'], limit: '관절염 수술은 연간 1회에 한해 보장' }),
+        R('(무)여성특화수술보장특약(갱신형)', 'surg_d', W90, CUT1Y, ONCE_EA,
+          { areas: ['여성생식기암 · 여성생식기 제자리암 수술', '유방암 · 유방제자리암 절제 및 보전 수술(급여)'] }),
+        R('(무)NEW플러스수술특약(갱신형)', 'surg_d'),
+        급여수술기본(), 급여수술방법(), 급여수술원인(),
+        R('(무)교보중환자실입원특약(갱신형)Ⅳ', 'icu', HOSP60),
+        R('(무)교보응급실내원특약(갱신형)Ⅵ', 'er', { limit: '1일 1회에 한함' }),
+        상급종합('(무)상급종합병원입원특약(갱신형)'),
+        입원3(), 재해골절(), 재해수술(), 깁스(), 재해사망(), 재해상해1(),
+        R('(무)재해장해연금특약(2형)', 'disab', { areas: ['재해로 장해가 남았을 때 연금으로 지급'] }),
+        R('(무)교보GI납입면제특약 2형', 'waiver', W90,
+          { note: '뇌출혈 · 급성심근경색증 · 중대한 화상 및 부식은 보장하며, 그 밖의 주요질병 · 주요수술은 가입 후 90일 면책입니다.' }),
+        납면3대(), 납면장해(),
+        R('(무)사망보장증액특약', 'death_d', { reduce: null }),
+        R('(무)장기요양전환특약(보장형)', 'ltc', { wait: 0, pays: [] }),
+        R('(무)장기요양전환특약(연금형)', 'ltc', { wait: 0, pays: [] }),
+        R('(무)연금전환특약Ⅲ(보장(7년))', 'annuity'),
+        R('(무)건강체할인특약Ⅱ', 'waiver', { wait: 0, areas: ['건강 조건을 맞추면 보험료를 깎아 주는 특약입니다'], pays: [] })
       ]
     },
+
+    /* ───────────────── 교보 모두지킴종신보험 (무배당) ───────────────── */
     {
-      key: 'kb_health', name: '교보 실손의료비보험',
-      note: '실손은 실제 낸 병원비를 보상해 자동 계산에서 뺐습니다.',
-      main: { name: '실손의료비', dict: 'silson' },
-      riders: [{ name: '비급여 실손의료비', dict: 'silson' }]
-    },
-    {
-      key: 'kb_care', name: '교보 간병 · 치매보험',
-      note: '표준 예시값입니다. 약관을 받으면 그대로 채워 넣습니다.',
-      main: { name: '장기요양 진단', dict: 'care' },
+      key: 'kb_modu', name: '교보 모두지킴종신보험 (무배당)',
+      note: '2026.06.29 통합약관 — 면책 · 감액 · 보장한도가 걸린 담보가 거의 없는 상품입니다',
+      main: 종신주계약,
       riders: [
-        { name: '중증치매진단특약', dict: 'care' },
-        { name: '장기요양등급특약', dict: 'care' }
+        납면3대(), 납면장해(),
+        R('(무)사망보장증액특약', 'death_d', { reduce: null }),
+        R('(무)건강체할인특약Ⅱ', 'waiver', { wait: 0, areas: ['건강 조건을 맞추면 보험료를 깎아 주는 특약입니다'], pays: [] }),
+        R('(무)연금전환특약Ⅲ(저해지기간)', 'annuity'),
+        R('(무)장기요양전환특약(보장형)', 'ltc', { wait: 0, pays: [] }),
+        R('(무)장기요양전환특약(연금형)', 'ltc', { wait: 0, pays: [] })
+      ]
+    },
+
+    /* ───────────────── 교보더안심치매 · 간병보험 (무배당) ───────────────── */
+    {
+      key: 'kb_dementia', name: '교보더안심치매 · 간병보험 (무배당)',
+      note: '2026.06.29 공시용 통합약관 — 주계약은 사망을 보장하고 치매 · 장기요양 특약을 붙입니다',
+      main: {
+        name: '사망보험금', dict: 'death_d',
+        areas: ['보험기간 중 사망'], pays: [{ when: '사망', rate: 1 }], wait: 0, reduce: null,
+        note: '주계약은 사망을 보장하고, 치매 · 장기요양은 특약으로 붙입니다.'
+      },
+      riders: [
+        R('(무)경도이상치매(CDR1점이상)보장특약H(저해약환급금형)', 'dementia', W1Y,
+          { areas: ['경도이상 치매 (CDR 1점 이상)'], pays: [{ when: '경도이상 치매 진단확정', rate: 1 }],
+            limit: '진단보험금 최초 1회 / 생활자금은 120회 한도, 최초 36회 보증지급',
+            note: '가입 후 1년간 면책입니다 (재해가 직접 원인이면 보장).' }),
+        R('(무)경도이상치매(CDR1점이상)보장특약L(저해약환급금형)', 'dementia', W1Y,
+          { areas: ['경도이상 치매 (CDR 1점 이상)'], pays: [{ when: '경도이상 치매 진단확정', rate: 1 }],
+            limit: '진단보험금 최초 1회 / 생활자금은 120회 한도, 최초 36회 보증지급' }),
+        R('(무)중등도이상치매(CDR2점이상)보장특약H(저해약환급금형)', 'dementia', W1Y,
+          { areas: ['중등도이상 치매 (CDR 2점 이상)'], pays: [{ when: '중등도이상 치매 진단확정', rate: 1 }] }),
+        R('(무)중등도이상치매(CDR2점이상)보장특약L(저해약환급금형)', 'dementia', W1Y,
+          { areas: ['중등도이상 치매 (CDR 2점 이상)'], pays: [{ when: '중등도이상 치매 진단확정', rate: 1 }] }),
+        R('(무)중증치매(CDR3점이상)보장특약H(저해약환급금형)', 'dementia', W1Y,
+          { areas: ['중증치매 (CDR 3점 이상)'], pays: [{ when: '중증치매 진단확정', rate: 1 }] }),
+        R('(무)중증치매(CDR3점이상)보장특약L(저해약환급금형)', 'dementia', W1Y,
+          { areas: ['중증치매 (CDR 3점 이상)'], pays: [{ when: '중증치매 진단확정', rate: 1 }] }),
+        R('(무)중증치매산정특례보장특약', 'dementia', W1Y,
+          { areas: ['중증치매 산정특례 등록'], pays: [{ when: '중증치매 산정특례 대상', rate: 1 }] }),
+        R('(무)급여치매보장특약(갱신형)', 'dementia', W1Y,
+          { areas: ['치매 진단', '급여 치매 CT · MRI · PET 검사', '급여 치매 약물치료'],
+            limit: '검사비 · 약물치료 각 연간 1회에 한해 보장' }),
+        R('(무)치매입원특약(갱신형)', 'dementia', W1Y, { areas: ['치매로 입원했을 때'] }),
+        R('(무)치매입원간병인사용특약(갱신형)', 'caregiver', W1Y,
+          { areas: ['치매로 입원해 간병인을 썼을 때', '치매입원 간호 · 간병 통합서비스 (요양병원 제외)'], reduce: null }),
+        R('(무)표적치매약물허가치료특약(1회이상)(갱신형)', 'dementia', W1Y, { areas: ['표적치매약물 허가치료 1회 이상'] }),
+        R('(무)표적치매약물허가치료특약(7회이상)(갱신형)', 'dementia', W1Y, { areas: ['표적치매약물 허가치료 7회 이상'] }),
+        R('(무)표적치매약물허가치료특약(14회이상)(갱신형)', 'dementia', W1Y, { areas: ['표적치매약물 허가치료 14회 이상'] }),
+        R('(무)장기요양진단특약H(1~5등급)(저해약환급금형)', 'ltc', W90,
+          { areas: ['장기요양 1 ~ 5등급 판정'], pays: [{ when: '해당 등급 판정', rate: 1 }] }),
+        R('(무)장기요양진단특약L(1~5등급)(저해약환급금형)', 'ltc', W90,
+          { areas: ['장기요양 1 ~ 5등급 판정'], pays: [{ when: '해당 등급 판정', rate: 1 }] }),
+        R('(무)장기요양진단특약H(1~인지지원등급)(저해약환급금형)', 'ltc', W90,
+          { areas: ['장기요양 1 ~ 인지지원등급 판정'], pays: [{ when: '해당 등급 판정', rate: 1 }] }),
+        R('(무)장기요양진단특약L(1~인지지원등급)(저해약환급금형)', 'ltc', W90,
+          { areas: ['장기요양 1 ~ 인지지원등급 판정'], pays: [{ when: '해당 등급 판정', rate: 1 }] }),
+        R('(무)장기요양시설급여특약H(1~4등급)(일1회)(저해약환급금형)', 'ltc', W90,
+          { areas: ['장기요양 1 ~ 4등급 시설급여'], pays: [{ when: '시설급여 1일당', rate: 1, per: '1일당' }],
+            limit: '등급 판정일부터 10년 한도, 1일 1회에 한해 보장' }),
+        R('(무)장기요양시설급여특약L(1~4등급)(일1회)(저해약환급금형)', 'ltc', W90,
+          { areas: ['장기요양 1 ~ 4등급 시설급여'], pays: [{ when: '시설급여 1일당', rate: 1, per: '1일당' }],
+            limit: '등급 판정일부터 10년 한도, 1일 1회에 한해 보장' }),
+        R('(무)장기요양시설급여특약H(1~4등급)(월1회)(저해약환급금형)', 'ltc', W90,
+          { areas: ['장기요양 1 ~ 4등급 시설급여'], limit: '"판정후 보험월" 기준 월 1회에 한해 보장' }),
+        R('(무)장기요양시설급여특약L(1~4등급)(월1회)(저해약환급금형)', 'ltc', W90,
+          { areas: ['장기요양 1 ~ 4등급 시설급여'], limit: '"판정후 보험월" 기준 월 1회에 한해 보장' }),
+        R('(무)장기요양방문요양지원금특약H(1~5등급)(월1회)(저해약환급금형)', 'ltc', W90,
+          { areas: ['장기요양 1 ~ 5등급 방문요양'], limit: '"판정후 보험월" 기준 월 1회에 한해 보장' }),
+        R('(무)장기요양방문요양지원금특약L(1~5등급)(월1회)(저해약환급금형)', 'ltc', W90,
+          { areas: ['장기요양 1 ~ 5등급 방문요양'], limit: '"판정후 보험월" 기준 월 1회에 한해 보장' }),
+        R('(무)장기요양복합재가급여특약H(1~5등급)(월1회)(저해약환급금형)', 'ltc', W90,
+          { areas: ['장기요양 1 ~ 5등급 복합 재가급여'], limit: '"판정후 보험월" 기준 월 1회에 한해 보장' }),
+        R('(무)장기요양복합재가급여특약L(1~5등급)(월1회)(저해약환급금형)', 'ltc', W90,
+          { areas: ['장기요양 1 ~ 5등급 복합 재가급여'], limit: '"판정후 보험월" 기준 월 1회에 한해 보장' }),
+        R('(무)장기요양진단보험료환급특약(1~4등급)(1형)', 'waiver', W90,
+          { areas: ['장기요양 1 ~ 4등급 판정 시 낸 보험료를 돌려줍니다'] }),
+        R('(무)장기요양진단보험료환급특약(1~4등급)(2형)', 'waiver', W90,
+          { areas: ['장기요양 1 ~ 4등급 판정 시 낸 보험료를 돌려줍니다'] }),
+        R('(무)입원간병인사용특약H1형(일반형)(요양병원)', 'caregiver', CUT1Y, CARE180),
+        R('(무)입원간병인사용특약H1형(일반형)(요양병원제외)', 'caregiver', CUT1Y, CARE180),
+        R('(무)입원간병인사용특약H1형(일반형)(입원간호간병통합서비스)', 'caregiver', CUT1Y, CARE180),
+        R('(무)입원간병인사용특약H2형(체증형)(요양병원)', 'caregiver', CUT1Y, CARE180),
+        R('(무)입원간병인사용특약H2형(체증형)(요양병원제외)', 'caregiver', CUT1Y, CARE180),
+        R('(무)입원간병인사용특약H2형(체증형)(입원간호간병통합서비스)', 'caregiver', CUT1Y, CARE180),
+        R('(무)입원간병인사용특약L1형(일반형)(요양병원)', 'caregiver', CUT1Y, CARE180),
+        R('(무)입원간병인사용특약L1형(일반형)(요양병원제외)', 'caregiver', CUT1Y, CARE180),
+        R('(무)입원간병인사용특약L1형(일반형)(입원간호간병통합서비스)', 'caregiver', CUT1Y, CARE180),
+        R('(무)입원간병인사용특약L2형(체증형)(요양병원)', 'caregiver', CUT1Y, CARE180),
+        R('(무)입원간병인사용특약L2형(체증형)(요양병원제외)', 'caregiver', CUT1Y, CARE180),
+        R('(무)입원간병인사용특약L2형(체증형)(입원간호간병통합서비스)', 'caregiver', CUT1Y, CARE180),
+        R('(무)교보100세입원특약Ⅱ', 'hosp_d', HOSP120),
+        상급종합(), 입원3(), 재해골절(), 재해수술(), 깁스(),
+        R('(무)통합재해진단특약', 'disab', { areas: ['약관에서 정한 재해로 진단받았을 때'] }),
+        R('(무)플러스보험료납입면제특약1형', 'waiver', W90),
+        R('(무)연금전환특약Ⅲ(저해지)', 'annuity')
+      ]
+    },
+
+    /* ───────────────── 교보경영인정기보험 [2501] (무배당) ───────────────── */
+    {
+      key: 'kb_ceo', name: '교보경영인정기보험 [2501] (무배당)',
+      note: '2026.06.29 통합약관 (보증비용부과형) — 면책 · 감액 · 보장한도가 걸린 담보가 없습니다',
+      main: {
+        name: '사망보험금', dict: 'death_d',
+        areas: ['보험기간 중 사망'],
+        pays: [{ when: '사망', rate: 1 }], wait: 0, reduce: null,
+        note: '기본사망보험금은 보험가입금액의 100%입니다. 체증형플랜은 10년 경과 연계약해당일부터 ' +
+          '매년 가입금액의 5%(또는 10%)씩 40년 경과 시점까지 정액 체증합니다. ' +
+          '지급 시에는 기본사망보험금과 이미 납입한 보험료 중 큰 금액을 지급합니다.'
+      },
+      riders: [
+        R('(무)재해장해납입면제특약', 'waiver', { wait: 0 }),
+        R('(무)질병재해장해납입면제특약', 'waiver', { wait: 0 }),
+        R('(무)사망보장증액특약', 'death_d', { reduce: null }),
+        R('(무)연금전환특약Ⅲ(보장(7년))', 'annuity'),
+        R('대리청구서비스특약', 'waiver', { wait: 0, areas: ['보험금을 대신 청구할 수 있게 하는 서비스 특약'], pays: [] }),
+        R('보험료납입면제서비스특약', 'waiver', { wait: 0 }),
+        R('사후정리특약', 'death_d', { reduce: null, areas: ['사망 후 정리자금'] }),
+        R('선지급서비스특약', 'death_d', { reduce: null, areas: ['여명 판단 시 사망보험금을 미리 지급'] }),
+        R('양육연금지급서비스특약', 'death_d', { reduce: null, areas: ['사망보험금을 양육연금으로 나누어 지급'] }),
+        R('출산육아휴직보험료납입유예특약', 'waiver', { wait: 0, areas: ['출산 · 육아휴직 중 보험료 납입을 미룰 수 있습니다'], pays: [] })
+      ]
+    },
+
+    /* ───────────────── 미리 보는 내 연금 (무)교보변액연금보험Ⅱ ───────────────── */
+    {
+      key: 'kb_va2', name: '미리 보는 내 연금 (무)교보변액연금보험Ⅱ',
+      note: '2023.01.01 약관 — 펀드 운용성과에 따라 연금액 · 해약환급금이 달라집니다 (예금자보호 비보호)',
+      main: {
+        name: '연금 · 사망보험금', dict: 'annuity',
+        areas: ['연금개시 후 생존하시는 동안 연금 지급', '연금개시 전 사망 시 사망보험금'],
+        pays: [], wait: 0, reduce: null,
+        note: '변액상품이라 금액이 펀드 성과에 따라 달라져 자동 계산에서 뺐습니다. 회사 시스템에서 확인하세요.'
+      },
+      riders: [
+        R('(무)입원특약Ⅲ', 'hosp_d', HOSP120, { limit: '최초 1회한 / 1회 입원당 지급일수 120일 한도' }),
+        R('(무)플러스수술특약(갱신형)Ⅲ', 'surg_d'),
+        재해사망(), 재해상해1(),
+        R('(무)교보플러스보험료납입면제특약', 'waiver', W90,
+          { note: '암에 따른 보험료 납입면제는 가입 후 90일간 보장제외입니다.' }),
+        R('(무)고도장해납입면제특약', 'waiver', { wait: 0 }),
+        R('(무)교보장기간병연금전환특약', 'ltc', { wait: 0, pays: [] }),
+        R('(무)연금전환특약Ⅲ', 'annuity')
+      ]
+    },
+
+    /* ───────────────── 교보마이플랜건강보험 (무배당) ───────────────── */
+    {
+      key: 'kb_myplan', name: '교보마이플랜건강보험 (무배당)',
+      note: '2026.06.29 공시용 통합약관 — 파일이 너무 커서 아직 읽지 못했습니다. ' +
+        '아래 값은 표준 예시이니 약관을 나눠서 올려 주시면 실제 값으로 바꿔 넣겠습니다.',
+      main: { name: '주계약', dict: 'death_d' },
+      riders: [
+        R('(무)암진단특약', 'cancer', W90, CUT1Y, ONCE, DIAG100),
+        R('(무)소액암진단특약', 'cancer', CUT1Y, ONCE_EA, { wait: 0 }),
+        R('(무)뇌혈관질환진단특약', 'brain', CUT1Y, ONCE, DIAG100),
+        R('(무)허혈심장질환진단특약', 'heart', CUT1Y, ONCE, DIAG100),
+        항암방사선(),
+        급여수술기본(), 급여수술방법(), 급여수술원인(),
+        입원3(), 상급종합(), 재해골절(), 재해수술(), 깁스(), 재해사망(), 재해상해1(),
+        납면3대(), 납면장해()
       ]
     }
   ];
@@ -1015,6 +1329,102 @@ textarea#script{height:340px;font-size:15.5px;line-height:1.7;white-space:pre-wr
   'use strict';
 
   const BASE = [
+    {
+      key: 'chemo', label: '항암 방사선 · 약물치료',
+      match: ['항암방사선', '항암약물', '항암방사선약물', '표적항암', '항암치료'],
+      areas: ['암 치료를 위한 항암 방사선치료', '암 치료를 위한 항암 약물치료'],
+      pays: [{ when: '해당 치료를 받았을 때', rate: 1 }],
+      wait: 90, reduce: null,
+      note: '진단만으로는 나오지 않고 실제 치료를 받아야 지급됩니다. 청구 누락이 많은 항목입니다.'
+    },
+    {
+      key: 'thrombo', label: '혈전용해치료',
+      match: ['혈전용해'],
+      areas: ['급성뇌경색증으로 혈전용해치료를 받았을 때', '특정 급성심근경색증으로 혈전용해치료를 받았을 때'],
+      pays: [{ when: '혈전용해치료', rate: 1 }],
+      wait: 0, reduce: { days: 365, rate: 0.5 },
+      note: '응급실에서 받는 치료라 고객이 보험금인 줄 모르고 지나치는 경우가 많습니다.'
+    },
+    {
+      key: 'specialcase', label: '산정특례 대상 보장',
+      match: ['산정특례'],
+      areas: ['중증질환자 산정특례 등록 (뇌혈관질환 · 심장질환)', '희귀질환자 산정특례 등록'],
+      pays: [{ when: '산정특례 대상자로 등록되었을 때', rate: 1 }],
+      wait: 0, reduce: { days: 365, rate: 0.5 },
+      note: '건강보험 산정특례 등록만으로 지급됩니다. 등록증을 챙기시라고 안내해 주세요.'
+    },
+    {
+      key: 'dementia', label: '치매 진단',
+      match: ['치매', 'CDR'],
+      areas: ['경도이상치매 (CDR 1점 이상)', '중등도이상치매 (CDR 2점 이상)', '중증치매 (CDR 3점 이상)'],
+      pays: [{ when: '해당 치매 진단확정', rate: 1 }],
+      wait: 365, reduce: null,
+      note: '가입 후 1년간 면책이 일반적입니다 (재해가 직접 원인이면 보장).'
+    },
+    {
+      key: 'ltc', label: '장기요양 등급',
+      match: ['장기요양', '요양등급', '시설급여', '재가급여', '방문요양', '주야간보호'],
+      areas: ['노인장기요양보험 등급 판정 (1 ~ 5등급 · 인지지원등급)'],
+      pays: [{ when: '해당 등급 판정', rate: 1 }],
+      wait: 90, reduce: null,
+      note: '가입 후 90일 면책이 일반적입니다 (재해가 직접 원인이면 보장). 등급 판정은 건강보험공단에서 받습니다.'
+    },
+    {
+      key: 'caregiver', label: '간병인 사용',
+      match: ['간병인', '간호간병', '간호·간병'],
+      areas: ['입원해서 간병인을 썼을 때', '간호 · 간병 통합서비스 병동에 입원했을 때'],
+      pays: [{ when: '사용 1일당', rate: 1, per: '1일당' }],
+      wait: 0, reduce: { days: 365, rate: 0.5 },
+      note: '1회 입원당 사용일수 180일 한도가 일반적입니다. 재해가 원인이면 감액 없이 100% 지급됩니다.'
+    },
+    {
+      key: 'waiver', label: '보험료 납입면제',
+      match: ['납입면제', '납입 면제', '보험료납입면제'],
+      areas: ['암 · 뇌 · 심장 등 정해진 질병에 걸리면 남은 보험료를 안 내도 됩니다'],
+      pays: [],
+      wait: 90, reduce: null,
+      note: '보험금이 나오는 특약이 아니라 보험료를 면제해 주는 특약입니다. 암은 가입 후 90일 면책입니다.'
+    },
+    {
+      key: 'icu', label: '중환자실 입원',
+      match: ['중환자실'],
+      areas: ['중환자실에 입원했을 때'],
+      pays: [{ when: '입원 1일당', rate: 1, per: '1일당' }],
+      wait: 0, reduce: null,
+      note: '1회 입원당 60일 한도가 일반적입니다.'
+    },
+    {
+      key: 'er', label: '응급실 내원',
+      match: ['응급실'],
+      areas: ['응급실에 내원해 진료받았을 때'],
+      pays: [{ when: '내원 1회당', rate: 1 }],
+      wait: 0, reduce: null,
+      note: '1일 1회에 한합니다. 소액이라 청구를 잊기 쉬우니 챙겨 주세요.'
+    },
+    {
+      key: 'cast', label: '깁스 치료',
+      match: ['깁스'],
+      areas: ['재해로 깁스(부목 제외) 치료를 받았을 때'],
+      pays: [{ when: '깁스치료 1회당', rate: 1 }],
+      wait: 0, reduce: null,
+      note: '부목은 빠지는 상품이 많습니다. 진단명과 치료방법을 확인하세요.'
+    },
+    {
+      key: 'lifestyle', label: '생활습관병 · 특정질병 입원',
+      match: ['생활습관병', '특정질병입원', '감염병'],
+      areas: ['약관에서 정한 생활습관병 · 특정질병으로 입원했을 때'],
+      pays: [{ when: '입원 1일당', rate: 1, per: '1일당' }],
+      wait: 0, reduce: null,
+      note: '1회 입원당 120일 한도가 일반적입니다.'
+    },
+    {
+      key: 'annuity', label: '연금 · 변액',
+      match: ['연금', '변액', '펀드'],
+      areas: ['연금개시 후 생존하시는 동안 연금 지급', '연금개시 전 사망 시 사망보험금'],
+      pays: [],
+      wait: 0, reduce: null,
+      note: '펀드 운용성과에 따라 연금액 · 해약환급금이 달라집니다. 자동 계산에서 뺐습니다.'
+    },
     {
       key: 'cancer', label: '암 진단',
       match: ['암진단', '암보장', '고액암', '일반암', '암치료', '암특약'],
@@ -1160,6 +1570,7 @@ textarea#script{height:340px;font-size:15.5px;line-height:1.7;white-space:pre-wr
     if (spec.wait != null) b.wait = spec.wait;
     if (spec.reduce !== undefined) b.reduce = spec.reduce;
     if (spec.note) b.note = spec.note;
+    if (spec.limit) b.limit = spec.limit;
     return b;
   }
 
@@ -1176,7 +1587,7 @@ textarea#script{height:340px;font-size:15.5px;line-height:1.7;white-space:pre-wr
     const out = {
       name: rider.name || '', amt: amt, found: !!hit,
       label: hit ? hit.label : '', areas: hit ? hit.areas : [],
-      note: hit ? hit.note : '', pays: [], wait: hit ? hit.wait : 0,
+      note: hit ? hit.note : '', limit: hit ? (hit.limit || '') : '', pays: [], wait: hit ? hit.wait : 0,
       waitEnd: '', reduceEnd: '', reducing: false
     };
     if (!hit) return out;
@@ -1356,17 +1767,6 @@ textarea#script{height:340px;font-size:15.5px;line-height:1.7;white-space:pre-wr
         cust + ' 님이 알려주신 기념일입니다. 축하 연락 드리세요.', 'anniv');
     }
 
-    /* 보험별 — 암 면책은 그 보험에 암 보장이 붙어 있을 때만 안내합니다 */
-    const sameName = function (a, b) {
-      a = String(a || '').replace(/\s/g, ''); b = String(b || '').replace(/\s/g, '');
-      return !!(a && b) && (a.indexOf(b) >= 0 || b.indexOf(a) >= 0);
-    };
-    const hasCancerIn = function (p) {
-      if (/암/.test(String(p.main || ''))) return true;
-      return riders.some(function (r) {
-        return /암/.test(String(r.name || '')) && (!r.plan || sameName(r.plan, p.name));
-      });
-    };
 
     plans.forEach(function (p) {
       const j = normDate(p.join);
@@ -1383,15 +1783,6 @@ textarea#script{height:340px;font-size:15.5px;line-height:1.7;white-space:pre-wr
       if (Calc.dday(q3, today) >= 0) {
         add(q3, '품질보증', nm + ' 품질보증해지 기한',
           '자필서명 · 약관 전달 · 청약서 부본 전달이 제대로 되었는지 확인해 두셔야 하는 기한입니다.', 'early');
-      }
-
-      /* 암 90일 면책 */
-      if (hasCancerIn(p)) {
-        const end = addDays(j, 90);
-        const start = addDays(j, 91);
-        add(start, '암 면책', nm + ' 암 보장 개시일 (90일 면책 종료)',
-          '계약일 ' + ymd(j) + ' 부터 90일(' + ymd(end) + ')까지는 암 진단보험금이 나오지 않습니다. ' +
-          ymd(start) + ' 부터 보장이 시작된다고 꼭 안내해 주세요.', 'cancer');
       }
 
       /* 계약 해당일 (매년) */
@@ -1412,6 +1803,36 @@ textarea#script{height:340px;font-size:15.5px;line-height:1.7;white-space:pre-wr
       if (insend) {
         add(insend, '보험 만기', nm + ' 보장 만기',
           '이 날부터 보장이 끝납니다. 미리 이어갈 방법을 함께 정리해 두셔야 공백이 생기지 않습니다.', 'insend');
+      }
+    });
+
+    /* 특약별 면책 종료(보장 개시)일 · 감액 종료일 — 약관에 적힌 값으로 계산합니다 */
+    const cov = coverage(record, { today: today, dict: opts.dict, products: opts.products });
+    const seen = {};
+    cov.riders.concat(cov.mains).forEach(function (c) {
+      if (!c.found || !c.name) return;
+      const label = (c.plan ? c.plan + ' · ' : '') + c.name;
+
+      if (c.waitEnd) {
+        const start = addDays(c.waitEnd, 1);
+        const k = 'w' + start + label;
+        if (!seen[k]) {
+          seen[k] = 1;
+          add(start, '보장 개시', label + ' 보장 개시일',
+            ymd(c.waitEnd) + ' 까지는 면책기간이라 보험금이 나오지 않고, ' + ymd(start) + ' 부터 보장이 시작됩니다. ' +
+            '고객께 꼭 알려 드릴 날입니다.', 'wait');
+        }
+      }
+
+      if (c.reduceEnd && c.reducing) {
+        const full = addDays(c.reduceEnd, 1);
+        const k = 'r' + full + label;
+        if (!seen[k]) {
+          seen[k] = 1;
+          add(full, '감액 종료', label + ' 감액기간 종료 — 이 날부터 전액',
+            ymd(c.reduceEnd) + ' 까지는 정해진 비율만 지급되고, ' + ymd(full) + ' 부터 전액 지급됩니다. ' +
+            '그 전에 사고가 나면 절반만 나온다는 점을 미리 안내해 두세요.', 'cut');
+        }
       }
     });
 
@@ -2151,7 +2572,8 @@ function drawProd() {
     '<div class="tscroll"><table class="form"><tr>' +
     '<th style="width:60px">구분</th><th style="width:190px">특약명</th><th>보장영역 <span class="gsub">(한 줄에 하나)</span></th>' +
     '<th style="width:230px">지급 기준 <span class="gsub">(어떤 일 = 몇 %)</span></th>' +
-    '<th style="width:80px">면책(일)</th><th style="width:130px">감액</th><th class="rsx noprint"></th></tr>' +
+    '<th style="width:80px">면책(일)</th><th style="width:130px">감액</th>' +
+    '<th style="width:170px">보장한도</th><th class="rsx noprint"></th></tr>' +
     rows.map(function (r, i) {
       const isMain = p.main && i === 0;
       return '<tr><td class="gk" style="width:60px">' + (isMain ? '주계약' : '특약') + '</td>' +
@@ -2160,6 +2582,7 @@ function drawProd() {
         '<td><textarea data-p="' + i + '" data-pf="pays" rows="3">' + esc(paysText(r.pays)) + '</textarea></td>' +
         '<td><input data-p="' + i + '" data-pf="wait" type="number" value="' + (r.wait == null ? '' : r.wait) + '" placeholder="0"></td>' +
         '<td><input data-p="' + i + '" data-pf="reduce" value="' + (r.reduce ? r.reduce.days + '일 ' + (r.reduce.rate * 100) + '%' : '') + '" placeholder="365일 50%"></td>' +
+        '<td><input data-p="' + i + '" data-pf="limit" value="' + esc(r.limit || '') + '" placeholder="최초 1회에 한해 보장"></td>' +
         '<td class="rsx noprint">' + (isMain ? '' : '<button type="button" class="rsdel" data-pdel="' + i + '" title="이 특약 지우기">✕</button>') + '</td></tr>';
     }).join('') + '</table></div>' +
     '<div class="hint" style="margin-top:6px">비워 두면 <b>특약 사전</b>의 표준값으로 계산합니다. ' +
@@ -2180,6 +2603,7 @@ function collectProd() {
     else if (f === 'areas') { const a = el.value.split('\n').map(function (x) { return x.trim(); }).filter(Boolean); if (a.length) r.areas = a; else delete r.areas; }
     else if (f === 'pays') { const a = parsePays(el.value); if (a.length) r.pays = a; else delete r.pays; }
     else if (f === 'wait') { if (String(el.value).trim() === '') delete r.wait; else r.wait = numOf(el.value) || 0; }
+    else if (f === 'limit') { const v = el.value.trim(); if (v) r.limit = v; else delete r.limit; }
     else if (f === 'reduce') {
       const m = el.value.match(/(\d+)\s*일\s*([0-9.]+)\s*%/);
       if (m) r.reduce = { days: +m[1], rate: +m[2] / 100 };
@@ -2233,6 +2657,7 @@ function saveDict() {
     if (!r) return;
     if (f === 'areas') r.areas = el.value.split('\n').map(function (s) { return s.trim(); }).filter(Boolean);
     else if (f === 'wait') r.wait = numOf(el.value) || 0;
+    else if (f === 'limit') { const v = el.value.trim(); if (v) r.limit = v; else delete r.limit; }
     else if (f === 'reduce') {
       const m = el.value.match(/(\d+)\s*일\s*(\d+(?:\.\d+)?)\s*%/);
       r.reduce = m ? { days: +m[1], rate: +m[2] / 100 } : null;
@@ -2288,6 +2713,7 @@ function drawCoverage() {
       '<td style="text-align:right;white-space:nowrap">' + (c.amt ? won(c.amt) + '만원' : '-') + '</td>' +
       '<td>' + (c.found ? c.areas.map(function (a) { return '· ' + esc(a); }).join('<br>') : '-') +
       (c.waitEnd ? '<div class="gsub" style="color:var(--red)">면책 : ' + ymd(c.waitEnd) + ' 까지 보장 안 됨</div>' : '') +
+      (c.limit ? '<div class="gsub" style="color:var(--org)">한도 : ' + esc(c.limit) + '</div>' : '') +
       (c.note ? '<div class="gsub">' + esc(c.note) + '</div>' : '') + '</td>' +
       '<td>' + pays + '</td></tr>';
   });
@@ -2801,14 +3227,14 @@ $('btnDemo').addEventListener('click', function () {
   };
   Object.keys(v).forEach(function (k) { if ($(k)) $(k).value = v[k]; });
   setRows('plans', [
-    { name: '교보 New 든든한 종신보험', insured: '본인', join: todayStr, main: '사망', amt: '10000', prem: '187000', payterm: '20년납', insterm: '종신' },
-    { name: '교보 건강백세 암보험', insured: '본인', join: todayStr, main: '암진단', amt: '3000', prem: '52000', payterm: '20년납', insterm: '80세만기' }
+    { name: '교보 K-실속종신보험 (무배당)', insured: '본인', join: todayStr, main: '사망보험금', amt: '10000', prem: '187000', payterm: '20년납', insterm: '종신' },
+    { name: '교보 K-밸류업종신보험 (무배당)', insured: '본인', join: todayStr, main: '사망보험금', amt: '3000', prem: '52000', payterm: '20년납', insterm: '종신' }
   ]);
   setRows('riders', [
-    { plan: '교보 건강백세 암보험', name: '암진단특약', amt: '3000', payterm: '20년납', insterm: '80세만기' },
-    { plan: '교보 건강백세 암보험', name: '뇌혈관질환진단특약', amt: '2000', payterm: '20년납', insterm: '80세만기' },
-    { plan: '교보 New 든든한 종신보험', name: '질병수술특약', amt: '500', payterm: '20년납', insterm: '80세만기' },
-    { plan: '교보 New 든든한 종신보험', name: '재해골절치료특약', amt: '100', payterm: '20년납', insterm: '80세만기' }
+    { plan: '교보 K-실속종신보험 (무배당)', name: 'New(무)암진단특약(갱신형)Ⅱ', amt: '3000', payterm: '20년납', insterm: '80세만기' },
+    { plan: '교보 K-실속종신보험 (무배당)', name: '(무)교보뇌혈관질환진단특약(갱신형)Ⅱ', amt: '2000', payterm: '20년납', insterm: '80세만기' },
+    { plan: '교보 K-실속종신보험 (무배당)', name: '(무)입원특약Ⅲ', amt: '3', payterm: '20년납', insterm: '80세만기' },
+    { plan: '교보 K-밸류업종신보험 (무배당)', name: '(무)교보재해골절특약', amt: '100', payterm: '20년납', insterm: '80세만기' }
   ]);
   setRows('talks', [{ date: todayStr, note: '신규 가입 · 증권 전달 예정' }]);
   setRows('follows', [{ what: '증권 전달 및 보장내용 설명', due: Engine.addDays(todayStr, 14) }]);

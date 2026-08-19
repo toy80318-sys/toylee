@@ -16,6 +16,102 @@
 
   const BASE = [
     {
+      key: 'chemo', label: '항암 방사선 · 약물치료',
+      match: ['항암방사선', '항암약물', '항암방사선약물', '표적항암', '항암치료'],
+      areas: ['암 치료를 위한 항암 방사선치료', '암 치료를 위한 항암 약물치료'],
+      pays: [{ when: '해당 치료를 받았을 때', rate: 1 }],
+      wait: 90, reduce: null,
+      note: '진단만으로는 나오지 않고 실제 치료를 받아야 지급됩니다. 청구 누락이 많은 항목입니다.'
+    },
+    {
+      key: 'thrombo', label: '혈전용해치료',
+      match: ['혈전용해'],
+      areas: ['급성뇌경색증으로 혈전용해치료를 받았을 때', '특정 급성심근경색증으로 혈전용해치료를 받았을 때'],
+      pays: [{ when: '혈전용해치료', rate: 1 }],
+      wait: 0, reduce: { days: 365, rate: 0.5 },
+      note: '응급실에서 받는 치료라 고객이 보험금인 줄 모르고 지나치는 경우가 많습니다.'
+    },
+    {
+      key: 'specialcase', label: '산정특례 대상 보장',
+      match: ['산정특례'],
+      areas: ['중증질환자 산정특례 등록 (뇌혈관질환 · 심장질환)', '희귀질환자 산정특례 등록'],
+      pays: [{ when: '산정특례 대상자로 등록되었을 때', rate: 1 }],
+      wait: 0, reduce: { days: 365, rate: 0.5 },
+      note: '건강보험 산정특례 등록만으로 지급됩니다. 등록증을 챙기시라고 안내해 주세요.'
+    },
+    {
+      key: 'dementia', label: '치매 진단',
+      match: ['치매', 'CDR'],
+      areas: ['경도이상치매 (CDR 1점 이상)', '중등도이상치매 (CDR 2점 이상)', '중증치매 (CDR 3점 이상)'],
+      pays: [{ when: '해당 치매 진단확정', rate: 1 }],
+      wait: 365, reduce: null,
+      note: '가입 후 1년간 면책이 일반적입니다 (재해가 직접 원인이면 보장).'
+    },
+    {
+      key: 'ltc', label: '장기요양 등급',
+      match: ['장기요양', '요양등급', '시설급여', '재가급여', '방문요양', '주야간보호'],
+      areas: ['노인장기요양보험 등급 판정 (1 ~ 5등급 · 인지지원등급)'],
+      pays: [{ when: '해당 등급 판정', rate: 1 }],
+      wait: 90, reduce: null,
+      note: '가입 후 90일 면책이 일반적입니다 (재해가 직접 원인이면 보장). 등급 판정은 건강보험공단에서 받습니다.'
+    },
+    {
+      key: 'caregiver', label: '간병인 사용',
+      match: ['간병인', '간호간병', '간호·간병'],
+      areas: ['입원해서 간병인을 썼을 때', '간호 · 간병 통합서비스 병동에 입원했을 때'],
+      pays: [{ when: '사용 1일당', rate: 1, per: '1일당' }],
+      wait: 0, reduce: { days: 365, rate: 0.5 },
+      note: '1회 입원당 사용일수 180일 한도가 일반적입니다. 재해가 원인이면 감액 없이 100% 지급됩니다.'
+    },
+    {
+      key: 'waiver', label: '보험료 납입면제',
+      match: ['납입면제', '납입 면제', '보험료납입면제'],
+      areas: ['암 · 뇌 · 심장 등 정해진 질병에 걸리면 남은 보험료를 안 내도 됩니다'],
+      pays: [],
+      wait: 90, reduce: null,
+      note: '보험금이 나오는 특약이 아니라 보험료를 면제해 주는 특약입니다. 암은 가입 후 90일 면책입니다.'
+    },
+    {
+      key: 'icu', label: '중환자실 입원',
+      match: ['중환자실'],
+      areas: ['중환자실에 입원했을 때'],
+      pays: [{ when: '입원 1일당', rate: 1, per: '1일당' }],
+      wait: 0, reduce: null,
+      note: '1회 입원당 60일 한도가 일반적입니다.'
+    },
+    {
+      key: 'er', label: '응급실 내원',
+      match: ['응급실'],
+      areas: ['응급실에 내원해 진료받았을 때'],
+      pays: [{ when: '내원 1회당', rate: 1 }],
+      wait: 0, reduce: null,
+      note: '1일 1회에 한합니다. 소액이라 청구를 잊기 쉬우니 챙겨 주세요.'
+    },
+    {
+      key: 'cast', label: '깁스 치료',
+      match: ['깁스'],
+      areas: ['재해로 깁스(부목 제외) 치료를 받았을 때'],
+      pays: [{ when: '깁스치료 1회당', rate: 1 }],
+      wait: 0, reduce: null,
+      note: '부목은 빠지는 상품이 많습니다. 진단명과 치료방법을 확인하세요.'
+    },
+    {
+      key: 'lifestyle', label: '생활습관병 · 특정질병 입원',
+      match: ['생활습관병', '특정질병입원', '감염병'],
+      areas: ['약관에서 정한 생활습관병 · 특정질병으로 입원했을 때'],
+      pays: [{ when: '입원 1일당', rate: 1, per: '1일당' }],
+      wait: 0, reduce: null,
+      note: '1회 입원당 120일 한도가 일반적입니다.'
+    },
+    {
+      key: 'annuity', label: '연금 · 변액',
+      match: ['연금', '변액', '펀드'],
+      areas: ['연금개시 후 생존하시는 동안 연금 지급', '연금개시 전 사망 시 사망보험금'],
+      pays: [],
+      wait: 0, reduce: null,
+      note: '펀드 운용성과에 따라 연금액 · 해약환급금이 달라집니다. 자동 계산에서 뺐습니다.'
+    },
+    {
       key: 'cancer', label: '암 진단',
       match: ['암진단', '암보장', '고액암', '일반암', '암치료', '암특약'],
       areas: ['일반암 (위암 · 폐암 · 대장암 등)', '고액암 (백혈병 · 뇌암 · 골수암 등)',
@@ -160,6 +256,7 @@
     if (spec.wait != null) b.wait = spec.wait;
     if (spec.reduce !== undefined) b.reduce = spec.reduce;
     if (spec.note) b.note = spec.note;
+    if (spec.limit) b.limit = spec.limit;
     return b;
   }
 
@@ -176,7 +273,7 @@
     const out = {
       name: rider.name || '', amt: amt, found: !!hit,
       label: hit ? hit.label : '', areas: hit ? hit.areas : [],
-      note: hit ? hit.note : '', pays: [], wait: hit ? hit.wait : 0,
+      note: hit ? hit.note : '', limit: hit ? (hit.limit || '') : '', pays: [], wait: hit ? hit.wait : 0,
       waitEnd: '', reduceEnd: '', reducing: false
     };
     if (!hit) return out;
