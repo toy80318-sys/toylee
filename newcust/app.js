@@ -170,6 +170,8 @@ function optionsFor(opt, tr) {
     return list.filter(Boolean).length ? list.filter(Boolean) : Products.names(loadProducts());
   }
   if (opt === 'riderNames') return Products.riderNames(productOfRow(tr));
+  if (opt === 'payterms') return Schema.PAYTERMS;
+  if (opt === 'insterms') return Schema.INSTERMS;
   return [];
 }
 
@@ -348,16 +350,19 @@ function calcPlans() {
   const tb = $('rsb_plans');
   if (!tb) return;
   const msgs = [];
-  const age = V('p_age');
+  const birth = normDate(V('p_birth'));
   [].slice.call(tb.children).forEach(function (tr, i) {
     const get = function (k) { const e = tr.querySelector('[data-col="' + k + '"]'); return e ? e.value.trim() : ''; };
     const j = normDate(get('join'));
     if (!j) return;
+    /* 만기 · 납입만료는 그 계약을 맺을 때의 나이(가입연령)로 셉니다 */
+    const ia = birth ? Calc.insAge(birth, j) : null;
+    const age = ia ? ia.age : V('p_age');
     const nm = get('name') || (i + 1) + '번 보험';
     const ins = Calc.calcInsEnd(j, get('insterm'), age);
     if (ins.whole) msgs.push('<b>' + esc(nm) + '</b> 종신 — 만기가 따로 없습니다.');
     else if (ins.value) { setAuto(tr.querySelector('[data-col="insend"]'), ins.value); msgs.push('<b>' + esc(nm) + '</b> 보험 만기일 ' + ins.how); }
-    const pay = Calc.calcPayEnd(j, get('payterm'), get('insend'));
+    const pay = Calc.calcPayEnd(j, get('payterm'), get('insend'), age);
     if (pay.value) { setAuto(tr.querySelector('[data-col="payend"]'), pay.value); msgs.push('<b>' + esc(nm) + '</b> 납입 만료일 ' + pay.how); }
   });
   const el = $('planMsg');

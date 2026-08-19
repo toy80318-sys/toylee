@@ -540,6 +540,9 @@ textarea#script{height:340px;font-size:15.5px;line-height:1.7;white-space:pre-wr
     if (!t) return null;
     if (/일시/.test(t)) return { type: 'once', label: '일시납' };
     if (/전기|종신/.test(t)) return { type: 'whole', label: '전기납' };
+    /* 60세납 · 65세납 처럼 나이로 끊는 납입 */
+    let a = t.match(/(\d+)세/);
+    if (a) return { type: 'age', n: +a[1], label: a[1] + '세납' };
     let m = t.match(/(\d+)(년|개월|월)납/);
     if (!m) m = t.match(/(\d+)(개월|월|년)?/);
     if (!m) return null;
@@ -597,7 +600,7 @@ textarea#script{height:340px;font-size:15.5px;line-height:1.7;white-space:pre-wr
   }
 
   /* 납입 만료일 자동 계산 (전기납은 보험 만기일과 동일) */
-  function calcPayEnd(join, payterm, insEnd) {
+  function calcPayEnd(join, payterm, insEnd, joinAge) {
     const j = normDate(join), term = parseTerm(payterm);
     if (!j || !term) return { value: '', how: '' };
     if (term.type === 'once') return { value: j, how: '일시납 — 가입일에 납입이 끝납니다' };
@@ -606,6 +609,14 @@ textarea#script{height:340px;font-size:15.5px;line-height:1.7;white-space:pre-wr
       return ins
         ? { value: ins, how: '전기납 — 보험 만기일과 같습니다' }
         : { value: '', how: '전기납입니다. 보험 만기일을 넣으시면 만료일이 같이 채워집니다.' };
+    }
+    if (term.type === 'age') {
+      const age = numOf(joinAge);
+      if (!age) return { value: '', how: term.label + ' 입니다. 가입연령을 넣으시면 만료일이 계산됩니다.' };
+      const yrs = term.n - age;
+      if (yrs <= 0) return { value: '', how: '가입연령(' + age + '세)이 납입 만료나이(' + term.n + '세)보다 크거나 같습니다.' };
+      const v = addTerm(j, { type: 'y', n: yrs });
+      return { value: v, how: '가입일 + (' + term.n + '세 − 가입연령 ' + age + '세 = ' + yrs + '년) = ' + v };
     }
     const v = addTerm(j, term);
     return { value: v, how: '가입일 + ' + term.label + ' = ' + v };
@@ -696,6 +707,23 @@ textarea#script{height:340px;font-size:15.5px;line-height:1.7;white-space:pre-wr
   ];
 
   /* ---------- 여러 줄로 적는 표 ---------- */
+  /* 납입기간 · 보험기간 — 드롭다운에 뜨는 목록입니다.
+     여기에 한 줄 더 적으면 화면 목록에 바로 늘어납니다.
+     목록에 없는 것은 화면에서 [＋ 목록에 없어요]로 직접 넣으실 수 있습니다. */
+  const PAYTERMS = [
+    '전기납', '일시납',
+    '3년납', '5년납', '7년납', '10년납', '12년납', '15년납', '20년납', '25년납', '30년납',
+    '40세납', '45세납', '50세납', '55세납', '60세납', '65세납', '70세납', '80세납', '90세납', '100세납'
+  ];
+
+  const INSTERMS = [
+    '종신',
+    '10년만기', '15년만기', '20년만기', '25년만기', '30년만기',
+    '60세만기', '65세만기', '70세만기', '75세만기', '80세만기', '85세만기',
+    '90세만기', '95세만기', '100세만기', '105세만기', '110세만기',
+    '연금개시전', '연금개시후'
+  ];
+
   const ROWSETS = [
     {
       key: 'plans', label: '가입설계 — 보험(주계약)', sheet: '가입설계',
@@ -708,9 +736,9 @@ textarea#script{height:340px;font-size:15.5px;line-height:1.7;white-space:pre-wr
         { k: 'main', label: '주계약 내용', type: 'text', ph: '사망 · 암진단', w: 20 },
         { k: 'amt', label: '주계약 가입금액', type: 'number', unit: '만원', w: 16 },
         { k: 'prem', label: '보험료', type: 'number', unit: '원', w: 14 },
-        { k: 'payterm', label: '납입기간', type: 'text', ph: '20년납 · 전기납', w: 14 },
+        { k: 'payterm', label: '납입기간', type: 'select', opt: 'payterms', ph: '20년납 · 전기납', w: 14 },
         { k: 'payend', label: '납입 만료일', type: 'date', auto: true, w: 15 },
-        { k: 'insterm', label: '보험기간', type: 'text', ph: '종신 · 80세만기', w: 14 },
+        { k: 'insterm', label: '보험기간', type: 'select', opt: 'insterms', ph: '종신 · 80세만기', w: 14 },
         { k: 'insend', label: '보험 만기일', type: 'date', auto: true, w: 15 }
       ]
     },
@@ -722,8 +750,8 @@ textarea#script{height:340px;font-size:15.5px;line-height:1.7;white-space:pre-wr
         { k: 'plan', label: '보험명', type: 'select', opt: 'planNames', ph: '어느 보험의 특약인지', w: 22 },
         { k: 'name', label: '특약명', type: 'select', opt: 'riderNames', ph: '암진단특약', w: 26 },
         { k: 'amt', label: '가입금액', type: 'number', unit: '만원', w: 14 },
-        { k: 'payterm', label: '납입기간', type: 'text', w: 13 },
-        { k: 'insterm', label: '보험기간', type: 'text', w: 13 }
+        { k: 'payterm', label: '납입기간', type: 'select', opt: 'payterms', w: 14 },
+        { k: 'insterm', label: '보험기간', type: 'select', opt: 'insterms', w: 14 }
       ]
     },
     {
@@ -876,6 +904,7 @@ textarea#script{height:340px;font-size:15.5px;line-height:1.7;white-space:pre-wr
   const Schema = {
     SECTIONS: SECTIONS, ROWSETS: ROWSETS, PREPS: PREPS, EXTRAS: EXTRAS,
     LEDGER_COLS: LEDGER_COLS,
+    PAYTERMS: PAYTERMS, INSTERMS: INSTERMS,
     allFields: allFields, rowsetMap: rowsetMap, pruneRows: pruneRows,
     rowsOf: rowsOf, sumNum: sumNum, ledgerValue: ledgerValue
   };
@@ -1941,8 +1970,9 @@ textarea#script{height:340px;font-size:15.5px;line-height:1.7;white-space:pre-wr
         '가입 1년째마다 돌아오는 날입니다. 보장 점검과 추가 니즈 확인에 좋은 시점입니다.', 'anni');
 
       /* 납입 만료일 · 보험 만기일 */
+      const ia = birth ? Calc.insAge(birth, j) : null;
       const payend = normDate(p.payend) || (function () {
-        const r = Calc.calcPayEnd(j, p.payterm, p.insend);
+        const r = Calc.calcPayEnd(j, p.payterm, p.insend, ia ? ia.age : '');
         return r.value;
       })();
       if (payend) {
@@ -2471,6 +2501,8 @@ function optionsFor(opt, tr) {
     return list.filter(Boolean).length ? list.filter(Boolean) : Products.names(loadProducts());
   }
   if (opt === 'riderNames') return Products.riderNames(productOfRow(tr));
+  if (opt === 'payterms') return Schema.PAYTERMS;
+  if (opt === 'insterms') return Schema.INSTERMS;
   return [];
 }
 
@@ -2649,16 +2681,19 @@ function calcPlans() {
   const tb = $('rsb_plans');
   if (!tb) return;
   const msgs = [];
-  const age = V('p_age');
+  const birth = normDate(V('p_birth'));
   [].slice.call(tb.children).forEach(function (tr, i) {
     const get = function (k) { const e = tr.querySelector('[data-col="' + k + '"]'); return e ? e.value.trim() : ''; };
     const j = normDate(get('join'));
     if (!j) return;
+    /* 만기 · 납입만료는 그 계약을 맺을 때의 나이(가입연령)로 셉니다 */
+    const ia = birth ? Calc.insAge(birth, j) : null;
+    const age = ia ? ia.age : V('p_age');
     const nm = get('name') || (i + 1) + '번 보험';
     const ins = Calc.calcInsEnd(j, get('insterm'), age);
     if (ins.whole) msgs.push('<b>' + esc(nm) + '</b> 종신 — 만기가 따로 없습니다.');
     else if (ins.value) { setAuto(tr.querySelector('[data-col="insend"]'), ins.value); msgs.push('<b>' + esc(nm) + '</b> 보험 만기일 ' + ins.how); }
-    const pay = Calc.calcPayEnd(j, get('payterm'), get('insend'));
+    const pay = Calc.calcPayEnd(j, get('payterm'), get('insend'), age);
     if (pay.value) { setAuto(tr.querySelector('[data-col="payend"]'), pay.value); msgs.push('<b>' + esc(nm) + '</b> 납입 만료일 ' + pay.how); }
   });
   const el = $('planMsg');

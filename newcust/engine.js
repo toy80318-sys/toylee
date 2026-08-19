@@ -156,8 +156,9 @@
         '가입 1년째마다 돌아오는 날입니다. 보장 점검과 추가 니즈 확인에 좋은 시점입니다.', 'anni');
 
       /* 납입 만료일 · 보험 만기일 */
+      const ia = birth ? Calc.insAge(birth, j) : null;
       const payend = normDate(p.payend) || (function () {
-        const r = Calc.calcPayEnd(j, p.payterm, p.insend);
+        const r = Calc.calcPayEnd(j, p.payterm, p.insend, ia ? ia.age : '');
         return r.value;
       })();
       if (payend) {

@@ -46,6 +46,23 @@
   ];
 
   /* ---------- 여러 줄로 적는 표 ---------- */
+  /* 납입기간 · 보험기간 — 드롭다운에 뜨는 목록입니다.
+     여기에 한 줄 더 적으면 화면 목록에 바로 늘어납니다.
+     목록에 없는 것은 화면에서 [＋ 목록에 없어요]로 직접 넣으실 수 있습니다. */
+  const PAYTERMS = [
+    '전기납', '일시납',
+    '3년납', '5년납', '7년납', '10년납', '12년납', '15년납', '20년납', '25년납', '30년납',
+    '40세납', '45세납', '50세납', '55세납', '60세납', '65세납', '70세납', '80세납', '90세납', '100세납'
+  ];
+
+  const INSTERMS = [
+    '종신',
+    '10년만기', '15년만기', '20년만기', '25년만기', '30년만기',
+    '60세만기', '65세만기', '70세만기', '75세만기', '80세만기', '85세만기',
+    '90세만기', '95세만기', '100세만기', '105세만기', '110세만기',
+    '연금개시전', '연금개시후'
+  ];
+
   const ROWSETS = [
     {
       key: 'plans', label: '가입설계 — 보험(주계약)', sheet: '가입설계',
@@ -58,9 +75,9 @@
         { k: 'main', label: '주계약 내용', type: 'text', ph: '사망 · 암진단', w: 20 },
         { k: 'amt', label: '주계약 가입금액', type: 'number', unit: '만원', w: 16 },
         { k: 'prem', label: '보험료', type: 'number', unit: '원', w: 14 },
-        { k: 'payterm', label: '납입기간', type: 'text', ph: '20년납 · 전기납', w: 14 },
+        { k: 'payterm', label: '납입기간', type: 'select', opt: 'payterms', ph: '20년납 · 전기납', w: 14 },
         { k: 'payend', label: '납입 만료일', type: 'date', auto: true, w: 15 },
-        { k: 'insterm', label: '보험기간', type: 'text', ph: '종신 · 80세만기', w: 14 },
+        { k: 'insterm', label: '보험기간', type: 'select', opt: 'insterms', ph: '종신 · 80세만기', w: 14 },
         { k: 'insend', label: '보험 만기일', type: 'date', auto: true, w: 15 }
       ]
     },
@@ -72,8 +89,8 @@
         { k: 'plan', label: '보험명', type: 'select', opt: 'planNames', ph: '어느 보험의 특약인지', w: 22 },
         { k: 'name', label: '특약명', type: 'select', opt: 'riderNames', ph: '암진단특약', w: 26 },
         { k: 'amt', label: '가입금액', type: 'number', unit: '만원', w: 14 },
-        { k: 'payterm', label: '납입기간', type: 'text', w: 13 },
-        { k: 'insterm', label: '보험기간', type: 'text', w: 13 }
+        { k: 'payterm', label: '납입기간', type: 'select', opt: 'payterms', w: 14 },
+        { k: 'insterm', label: '보험기간', type: 'select', opt: 'insterms', w: 14 }
       ]
     },
     {
@@ -226,6 +243,7 @@
   const Schema = {
     SECTIONS: SECTIONS, ROWSETS: ROWSETS, PREPS: PREPS, EXTRAS: EXTRAS,
     LEDGER_COLS: LEDGER_COLS,
+    PAYTERMS: PAYTERMS, INSTERMS: INSTERMS,
     allFields: allFields, rowsetMap: rowsetMap, pruneRows: pruneRows,
     rowsOf: rowsOf, sumNum: sumNum, ledgerValue: ledgerValue
   };

@@ -64,6 +64,9 @@
     if (!t) return null;
     if (/일시/.test(t)) return { type: 'once', label: '일시납' };
     if (/전기|종신/.test(t)) return { type: 'whole', label: '전기납' };
+    /* 60세납 · 65세납 처럼 나이로 끊는 납입 */
+    let a = t.match(/(\d+)세/);
+    if (a) return { type: 'age', n: +a[1], label: a[1] + '세납' };
     let m = t.match(/(\d+)(년|개월|월)납/);
     if (!m) m = t.match(/(\d+)(개월|월|년)?/);
     if (!m) return null;
@@ -121,7 +124,7 @@
   }
 
   /* 납입 만료일 자동 계산 (전기납은 보험 만기일과 동일) */
-  function calcPayEnd(join, payterm, insEnd) {
+  function calcPayEnd(join, payterm, insEnd, joinAge) {
     const j = normDate(join), term = parseTerm(payterm);
     if (!j || !term) return { value: '', how: '' };
     if (term.type === 'once') return { value: j, how: '일시납 — 가입일에 납입이 끝납니다' };
@@ -130,6 +133,14 @@
       return ins
         ? { value: ins, how: '전기납 — 보험 만기일과 같습니다' }
         : { value: '', how: '전기납입니다. 보험 만기일을 넣으시면 만료일이 같이 채워집니다.' };
+    }
+    if (term.type === 'age') {
+      const age = numOf(joinAge);
+      if (!age) return { value: '', how: term.label + ' 입니다. 가입연령을 넣으시면 만료일이 계산됩니다.' };
+      const yrs = term.n - age;
+      if (yrs <= 0) return { value: '', how: '가입연령(' + age + '세)이 납입 만료나이(' + term.n + '세)보다 크거나 같습니다.' };
+      const v = addTerm(j, { type: 'y', n: yrs });
+      return { value: v, how: '가입일 + (' + term.n + '세 − 가입연령 ' + age + '세 = ' + yrs + '년) = ' + v };
     }
     const v = addTerm(j, term);
     return { value: v, how: '가입일 + ' + term.label + ' = ' + v };
