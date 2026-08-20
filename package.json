@@ -10,7 +10,8 @@
     "template": "node scripts/make-template.js",
     "build:tablet": "node scripts/build-standalone.js",
     "build:web": "node scripts/build-pages.js",
-    "build:new": "node scripts/build-newcust.js"
+    "build:new": "node scripts/build-newcust.js",
+    "icons:rabbit": "node scripts/make-rabbit-icons.js"
   },
   "dependencies": {
     "better-sqlite3": "^13.0.3",
