@@ -372,6 +372,13 @@ function calcPlans() {
 
 function calcAll() { calcAge(); calcPlans(); }
 
+/* 바탕화면 아이콘 — 파비콘과 같은 그림을 크게 보여 주고 꾹 눌러 저장하게 합니다 */
+(function () {
+  const img = $('iconImg');
+  const link = document.querySelector('link[rel="icon"]');
+  if (img && link) img.src = link.href;
+})();
+
 /* ===================== 보험 · 약관 (상품 목록) ===================== */
 
 let PRODCACHE = null;
