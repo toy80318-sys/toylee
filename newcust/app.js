@@ -570,7 +570,9 @@ function drawCoverage() {
           (p.amount ? won(p.amount) + '만원' : '-') + (p.per ? ' (' + esc(p.per) + ')' : '') + '</b>' +
           (p.cut ? ' <span style="color:var(--org)">감액기간</span>' : '') + '</div>';
       }).join('')
-      : '<span style="color:var(--org)">사전에 없는 특약입니다 — [특약 사전 고치기]에서 넣어 주세요</span>';
+      : (c.found
+        ? '<span class="gsub">약관에 금액이 정해져 있지 않은 급부입니다 — 가입설계서 · 회사 시스템에서 확인하세요</span>'
+        : '<span style="color:var(--org)">사전에 없는 특약입니다 — [보험 · 약관 고치기]에서 넣어 주세요</span>');
     h += '<tr><td class="gk" style="width:150px">' + esc(c.plan || '-') +
       '<div class="gsub">' + (c.main ? '주계약' : '특약') + '</div></td>' +
       '<td>' + esc(c.name) + (c.found ? '<div class="gsub">' + esc(c.label) + '</div>' : '') + '</td>' +

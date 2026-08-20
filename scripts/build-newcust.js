@@ -22,6 +22,7 @@ const styles = ['public/style.css', 'newcust/theme.css'];
 const scripts = [
   'shared/calc.js',
   'newcust/schema.js',
+  'newcust/products-gen.js',
   'newcust/products.js',
   'newcust/riders.js',
   'newcust/engine.js',
