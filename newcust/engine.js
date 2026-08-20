@@ -64,10 +64,18 @@
       })[0] || plans[0] || null;
     };
 
+    const birth = normDate((record.f || {}).p_birth);
+    const ageAt = function (d) {
+      if (!birth || !d) return null;
+      const a = Calc.insAge(birth, d);
+      return a ? a.age : null;
+    };
+
     const list = riders.map(function (r) {
       const p = planOf(r.plan);
       const prod = Products.find(prods, (p && p.name) || r.plan);
-      const c = Riders.coverage(r, p ? normDate(p.join) : '', today, dict, Products.riderSpec(prod, r.name));
+      const join = p ? normDate(p.join) : '';
+      const c = Riders.coverage(r, join, today, dict, Products.riderSpec(prod, r.name), ageAt(join));
       c.plan = r.plan || (p ? p.name : '');
       c.product = prod ? prod.name : '';
       return c;
@@ -77,8 +85,9 @@
     const mains = plans.map(function (p) {
       const prod = Products.find(prods, p.name);
       const nm = p.main || (prod && prod.main ? prod.main.name : '') || p.name;
-      const c = Riders.coverage({ name: nm, amt: p.amt }, normDate(p.join), today, dict,
-        Products.riderSpec(prod, nm) || (prod ? prod.main : null));
+      const c = Riders.coverage({ name: nm, amt: p.amt, insterm: p.insterm, payterm: p.payterm, prem: p.prem },
+        normDate(p.join), today, dict,
+        Products.riderSpec(prod, nm) || (prod ? prod.main : null), ageAt(normDate(p.join)));
       c.plan = p.name || '';
       c.product = prod ? prod.name : '';
       c.main = true;
@@ -87,6 +96,103 @@
 
     const unknown = list.concat(mains).filter(function (c) { return !c.found && c.name; });
     return { riders: list, mains: mains, unknown: unknown, today: today };
+  }
+
+
+  /* ---------- 해약환급금 ----------
+   * 프로그램이 계산하지 않습니다. 상품제안서에 인쇄된 예시표를 그대로 찾아 보여 줍니다.
+   * (해약환급금은 예정해약환급금 · 공시이율 적립액 · 최저보증액 중 큰 값에서
+   *  보증비용을 빼고, 저해약환급금형이면 해지지급률까지 곱하는 구조라
+   *  임의로 계산하면 회사 금액과 어긋납니다.)
+   */
+
+  /* '3개월' → 3 · '1년' → 12 · '47년 6개월' → 570 */
+  function months(text) {
+    const t = String(text == null ? '' : text).trim();
+    if (!t) return null;
+    let m = 0, hit = false;
+    const y = t.match(/(\d+(?:\.\d+)?)\s*년/);
+    if (y) { m += parseFloat(y[1]) * 12; hit = true; }
+    const mo = t.match(/(\d+(?:\.\d+)?)\s*개?월/);
+    if (mo) { m += parseFloat(mo[1]); hit = true; }
+    if (!hit) {
+      const n = parseFloat(t.replace(/[^0-9.]/g, ''));
+      if (!isFinite(n)) return null;
+      m = n * 12;                                  /* 단위가 없으면 '년' 으로 봅니다 */
+    }
+    return Math.round(m);
+  }
+
+  function monthText(m) {
+    if (m == null) return '';
+    const y = Math.floor(m / 12), r = m % 12;
+    if (y && r) return y + '년 ' + r + '개월';
+    if (y) return y + '년';
+    return r + '개월';
+  }
+
+  function num(v) {
+    const n = parseFloat(String(v == null ? '' : v).replace(/[^0-9.\-]/g, ''));
+    return isFinite(n) ? n : null;
+  }
+
+  /* 그 보험의 환급금 예시표를 경과월수 순으로 정리합니다 */
+  function cashTable(record, planName) {
+    const rows = Schema.pruneRows(Schema.rowsetMap().cash, (record.rows || {}).cash);
+    const want = String(planName || '').replace(/\s/g, '');
+    return rows.filter(function (r) {
+      if (!want) return true;
+      const a = String(r.plan || '').replace(/\s/g, '');
+      if (!a) return true;                          /* 보험명을 안 적었으면 다 씁니다 */
+      return a.indexOf(want) >= 0 || want.indexOf(a) >= 0;
+    }).map(function (r) {
+      return {
+        m: months(r.year), year: r.year || '', age: num(r.age),
+        paid: num(r.paid), cv: num(r.cv), rate: num(r.rate), death: num(r.death),
+        mark: r.mark || ''
+      };
+    }).filter(function (r) { return r.m != null; })
+      .sort(function (a, b) { return a.m - b.m; });
+  }
+
+  /* 경과월수로 한 줄을 찾습니다. 표에 없으면 앞뒤 줄 사이를 이어서(보간) 알려 줍니다 */
+  function cashAt(table, m) {
+    if (!table.length || m == null) return null;
+    let lo = null, hi = null;
+    for (let i = 0; i < table.length; i++) {
+      const r = table[i];
+      if (r.m === m) return { row: r, exact: true, between: null };
+      if (r.m < m) lo = r;
+      if (r.m > m && !hi) hi = r;
+    }
+    if (!lo) return { row: table[0], exact: false, before: true, between: null };
+    if (!hi) return { row: table[table.length - 1], exact: false, after: true, between: null };
+    const t = (m - lo.m) / (hi.m - lo.m);
+    const mid = function (a, b) { return (a == null || b == null) ? null : a + (b - a) * t; };
+    return {
+      exact: false, between: [lo, hi],
+      row: {
+        m: m, year: monthText(m),
+        age: mid(lo.age, hi.age) == null ? null : Math.round(mid(lo.age, hi.age)),
+        paid: mid(lo.paid, hi.paid), cv: mid(lo.cv, hi.cv),
+        rate: mid(lo.rate, hi.rate), death: mid(lo.death, hi.death), mark: ''
+      }
+    };
+  }
+
+  /* 낸 돈을 다 돌려받는 시점 (환급률 100% 를 처음 넘는 줄) */
+  function breakEven(table) {
+    for (let i = 0; i < table.length; i++) {
+      const r = table[i];
+      const rate = r.rate != null ? r.rate : (r.paid ? (r.cv || 0) / r.paid * 100 : null);
+      if (rate != null && rate >= 100) return r;
+    }
+    return null;
+  }
+
+  /* 표에서 '납입완료' · '만기' 로 적어 둔 줄 */
+  function marked(table, word) {
+    return table.filter(function (r) { return String(r.mark || '').indexOf(word) >= 0; })[0] || null;
   }
 
   /* ---------- 알림 ---------- */
@@ -202,6 +308,23 @@
       }
     });
 
+    /* 갱신형 특약 — 갱신되는 날 (이 날부터 보험료가 오릅니다) */
+    cov.riders.concat(cov.mains).forEach(function (c) {
+      if (!c.name || !c.renew || !c.renew.on || !c.renew.next) return;
+      const label = (c.plan ? c.plan + ' · ' : '') + c.name;
+      const nx = c.renew.dates.filter(function (x) { return x.date === c.renew.next; })[0];
+      const k = 'n' + c.renew.next + label;
+      if (seen[k]) return;
+      seen[k] = 1;
+      const isLast = c.renew.last && c.renew.next === c.renew.last;
+      add(c.renew.next, '특약 갱신', label + ' 갱신',
+        c.renew.cycle + '년마다 갱신되는 특약입니다. ' +
+        '이 날 나이(' + (nx && nx.age != null ? nx.age + '세' : '갱신 시점') + ') 기준으로 보험료가 다시 정해져 ' +
+        '지금보다 오릅니다. 미리 말씀드려 두셔야 민원이 없습니다.' +
+        (c.renew.endAge ? ' 이 특약은 ' + c.renew.endAge + '세까지 갱신됩니다.' : '') +
+        (isLast ? ' ※ 이번이 마지막 갱신이라 그 뒤로는 보장이 끝납니다.' : ''), 'renew');
+    });
+
     /* 후속조치 · 차기 방문 */
     follows.forEach(function (x) {
       if (x.due) add(x.due, '후속조치', x.what || '후속조치 처리기한', '약속하신 일의 처리기한입니다.', 'follow');
@@ -224,7 +347,9 @@
 
   const Engine = {
     alerts: alerts, upcoming: upcoming, coverage: coverage,
-    addDays: addDays, addMonths: addMonths, nextYearly: nextYearly, pickMMDD: pickMMDD
+    addDays: addDays, addMonths: addMonths, nextYearly: nextYearly, pickMMDD: pickMMDD,
+    cashTable: cashTable, cashAt: cashAt, breakEven: breakEven, marked: marked,
+    months: months, monthText: monthText
   };
 
   if (isNode) module.exports = Engine;

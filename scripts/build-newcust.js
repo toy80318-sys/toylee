@@ -26,6 +26,7 @@ const scripts = [
   'newcust/products.js',
   'newcust/riders.js',
   'newcust/engine.js',
+  'newcust/importer.js',
   'standalone/xlsx-lite.js',
   'newcust/app.js'
 ];

@@ -4,7 +4,8 @@
  */
 'use strict';
 
-const Calc = KB.Calc, Xlsx = KB.Xlsx, Schema = NC.Schema, Riders = NC.Riders, Engine = NC.Engine, Products = NC.Products;
+const Calc = KB.Calc, Xlsx = KB.Xlsx, Schema = NC.Schema, Riders = NC.Riders, Engine = NC.Engine,
+  Products = NC.Products, Importer = NC.Importer;
 const $ = function (id) { return document.getElementById(id); };
 const V = function (id) { const e = $(id); return e ? String(e.value || '').trim() : ''; };
 const won = Calc.won, normDate = Calc.normDate, ymd = Calc.ymd, numOf = Calc.numOf;
@@ -43,14 +44,19 @@ function esc(s) {
     .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
 }
 
+const TABS = 7;
+
 function tab(n) {
-  for (let i = 1; i <= 5; i++) {
-    $('p' + i).classList.toggle('on', i === n);
-    $('tb' + i).classList.toggle('on', i === n);
+  for (let i = 1; i <= TABS; i++) {
+    const p = $('p' + i), b = $('tb' + i);
+    if (p) p.classList.toggle('on', i === n);
+    if (b) b.classList.toggle('on', i === n);
   }
-  if (n === 2) drawClaimSum();
-  if (n === 4) drawAlerts();
-  if (n === 5) { drawDB(); drawStat(); }
+  if (n === 2) drawCoverage();
+  if (n === 3) drawCash();
+  if (n === 4) drawClaimSum();
+  if (n === 6) drawAlerts();
+  if (n === 7) { drawDB(); drawStat(); }
   window.scrollTo({ top: 0, behavior: 'smooth' });
 }
 document.addEventListener('click', function (e) {
@@ -281,7 +287,7 @@ function getRows(key) {
       const el = tr.querySelector('[data-col="' + c.k + '"]');
       let v = el ? String(el.value || '').trim() : '';
       if (c.type === 'date') v = normDate(v) || v;
-      if (c.type === 'number') v = String(numOf(v) || '');
+      if (c.type === 'number') v = (v === '' ? '' : String(numOf(v)));   /* 0 원도 뜻이 있는 값입니다 */
       o[c.k] = v;
     });
     out.push(o);
@@ -370,7 +376,7 @@ function calcPlans() {
   else { el.innerHTML = '계약일과 납입기간 · 보험기간을 넣으시면 <b>납입 만료일 · 보험 만기일</b>이 자동으로 채워집니다.'; el.style.color = ''; }
 }
 
-function calcAll() { calcAge(); calcPlans(); }
+function calcAll() { calcAge(); calcPlans(); fillCashPlan(); }
 
 /* 바탕화면 아이콘 — 파비콘과 같은 그림을 크게 보여 주고 꾹 눌러 저장하게 합니다 */
 (function () {
@@ -557,13 +563,11 @@ function manwon(v) {
 
 /* ===================== 보장 요약 ===================== */
 
-function drawCoverage() {
-  const rec = collect();
-  const dict = loadDict();
-  const cov = Engine.coverage(rec, { today: todayStr, dict: dict, products: loadProducts() });
-  /* 보험별로 주계약을 먼저, 그 아래에 붙은 특약을 이어 붙입니다 */
-  const rows = [];
-  const used = [];
+let covMode = 'card';           /* 'card' = 고객께 보여드리는 모습 · 'table' = 한눈에 보는 표 */
+
+/* 특약 · 주계약을 보험별로 묶어 보기 좋은 차례로 세웁니다 */
+function covRows(cov) {
+  const rows = [], used = [];
   cov.mains.filter(function (c) { return c.name; }).forEach(function (m) {
     rows.push(m);
     cov.riders.forEach(function (r) {
@@ -571,41 +575,411 @@ function drawCoverage() {
     });
   });
   cov.riders.forEach(function (r) { if (r.name && used.indexOf(r) < 0) rows.push(r); });
+  return rows;
+}
+
+/* 언제부터 · 언제까지 — 면책 · 감액 · 갱신을 한 덩어리로 */
+function covWhen(c) {
+  const out = [];
+  if (c.waitEnd) {
+    const start = Engine.addDays(c.waitEnd, 1);
+    const on = start <= todayStr;
+    out.push({
+      k: '보장 시작', v: ymd(start) + ' 부터',
+      sub: '계약일부터 ' + c.wait + '일은 면책기간이라 보험금이 나오지 않습니다 (' + ymd(c.waitEnd) + ' 까지).',
+      tone: on ? 'ok' : 'red'
+    });
+  } else if (c.found) {
+    out.push({ k: '보장 시작', v: '계약일부터 바로', sub: '면책기간이 없습니다.', tone: 'ok' });
+  }
+  if (c.reduceEnd) {
+    const full = Engine.addDays(c.reduceEnd, 1);
+    const pct = Math.round((c.reduceRate || 0.5) * 100);
+    out.push({
+      k: '감액기간', v: ymd(c.reduceEnd) + ' 까지 ' + pct + '%',
+      sub: '이 기간에 사고가 나면 ' + pct + '%만 나오고, ' + ymd(full) + ' 부터 전액 나옵니다.',
+      tone: c.reducing ? 'org' : 'ok'
+    });
+  }
+  if (c.renew && c.renew.on) {
+    const nx = (c.renew.dates || []).filter(function (x) { return x.date === c.renew.next; })[0];
+    out.push({
+      k: '갱신', v: c.renew.cycle ? c.renew.cycle + '년마다' : '갱신형',
+      sub: (c.renew.next ? '다음 갱신 ' + ymd(c.renew.next) +
+            (nx && nx.age != null ? ' (' + nx.age + '세)' : '') + ' — 그때 나이로 보험료가 다시 정해져 오릅니다. ' : '') +
+        (c.renew.endAge ? c.renew.endAge + '세까지 갱신됩니다.'
+          : '갱신 종료나이는 상품제안서를 보고 ① 특약표의 [갱신 종료나이] 칸에 넣어 주세요.'),
+      tone: 'org'
+    });
+  } else if (c.found) {
+    out.push({ k: '갱신', v: '갱신 없음', sub: '보험료가 오르지 않고 만기까지 그대로 갑니다.', tone: 'ok' });
+  }
+  if (c.limit) out.push({ k: '보장한도', v: c.limit, sub: '', tone: 'org' });
+  return out;
+}
+
+const TONE = { ok: 'var(--brand)', red: 'var(--red)', org: 'var(--org)' };
+
+/* 「급부명 — 지급사유」 꼴로 적힌 보장영역에서 그 급부의 지급사유만 골라냅니다 */
+function whyOf(c, when) {
+  const head = String(when || '') + ' — ';
+  const hit = (c.areas || []).filter(function (a) { return String(a).indexOf(head) === 0; })[0];
+  return hit ? String(hit).slice(head.length) : '';
+}
+
+/* 지급사유가 금액표 안으로 들어갔다면 위에 또 늘어놓지 않습니다 */
+function areasSeparate(c) {
+  if (!c.found || !c.areas.length) return [];
+  return c.areas.filter(function (a) {
+    return !(c.pays || []).some(function (p) { return String(a).indexOf(String(p.when) + ' — ') === 0; });
+  });
+}
+
+function covCard(c) {
+  const when = covWhen(c);
+  const pays = (c.found && c.pays.length)
+    ? '<table class="dt" style="margin:0"><tr><th class="l">이런 일이 생기면</th><th style="width:160px">이만큼 나옵니다</th></tr>' +
+      c.pays.map(function (p) {
+        const why = whyOf(c, p.when);
+        return '<tr><td class="l">' + esc(p.when) +
+          (why ? '<div class="gsub" style="margin-top:2px">' + esc(why) + '</div>' : '') + '</td>' +
+          '<td style="text-align:right;white-space:nowrap"><b style="color:var(--rose)">' + manwon(p.amount) +
+          '</b>' + (p.per ? ' <span class="gsub">' + esc(p.per) + '</span>' : '') +
+          (p.cut ? '<div class="gsub" style="color:var(--org)">지금은 감액기간 (전액 ' + manwon(p.full) + ')</div>' : '') +
+          '</td></tr>';
+      }).join('') + '</table>'
+    : (c.found
+      ? '<div class="hint">약관에 금액이 정해져 있지 않은 급부입니다 — 상품제안서나 회사 시스템에서 확인해 주세요.</div>'
+      : '<div class="warn">이 특약의 지급기준을 아직 모릅니다. 상품제안서를 불러오시거나 [📕 보험 · 약관 고치기]에서 넣어 주세요.</div>');
+
+  return '<div class="card" style="margin:12px 0">' +
+    '<div style="display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;align-items:baseline">' +
+      '<div><b style="font-size:18px">' + esc(c.name) + '</b>' +
+        ' <span class="gsub">' + (c.main ? '주계약' : '특약') + (c.plan ? ' · ' + esc(c.plan) : '') + '</span></div>' +
+      '<div style="white-space:nowrap">' + (c.amt ? '가입금액 <b>' + won(c.amt) + '만원</b>' : '') +
+        (c.prem ? ' <span class="gsub">· 보험료 ' + won(numOf(c.prem)) + '원</span>' : '') + '</div>' +
+    '</div>' +
+    (c.easy ? '<p class="sub" style="margin:9px 0 12px 0;color:var(--ink)">' + esc(c.easy) + '</p>' : '') +
+    (function () {
+      const rest = areasSeparate(c);
+      return rest.length
+        ? '<div class="hint" style="margin-bottom:10px"><b>보장받는 영역</b><br>' +
+          rest.map(function (x) { return '· ' + esc(x); }).join('<br>') + '</div>' : '';
+    })() +
+    pays +
+    (when.length
+      ? '<div class="grid g3" style="margin-top:12px">' + when.map(function (w) {
+        return '<div class="hint" style="margin:0"><b style="color:' + TONE[w.tone] + '">' + esc(w.k) + '</b><br>' +
+          '<b>' + esc(w.v) + '</b>' + (w.sub ? '<br><span class="gsub">' + esc(w.sub) + '</span>' : '') + '</div>';
+      }).join('') + '</div>' : '') +
+    (c.note ? '<div class="hint" style="margin-top:10px"><b>청구할 때</b> · ' + esc(c.note) + '</div>' : '') +
+    '</div>';
+}
+
+function covTable(rows) {
+  let h = '<div class="tscroll"><table class="form"><tr>' +
+    '<th style="width:140px">구분</th><th style="width:200px">특약 · 주계약</th>' +
+    '<th style="width:100px">가입금액</th><th>보장받는 영역 · 쉬운 설명</th>' +
+    '<th style="width:230px">증상별 보장금액</th><th style="width:190px">보장시작 · 감액 · 갱신</th></tr>';
+  rows.forEach(function (c) {
+    const pays = (c.found && c.pays.length)
+      ? c.pays.map(function (p) {
+        const why = whyOf(c, p.when);
+        return '<div style="margin-bottom:4px">' + esc(p.when) + ' → <b style="color:var(--rose)">' + manwon(p.amount) +
+          (p.per ? ' (' + esc(p.per) + ')' : '') + '</b>' +
+          (p.cut ? ' <span style="color:var(--org)">감액</span>' : '') +
+          (why ? '<div class="gsub">' + esc(why) + '</div>' : '') + '</div>';
+      }).join('')
+      : (c.found ? '<span class="gsub">약관에 금액이 정해져 있지 않습니다</span>'
+        : '<span style="color:var(--org)">지급기준을 모릅니다</span>');
+    h += '<tr><td class="gk">' + esc(c.plan || '-') +
+      '<div class="gsub">' + (c.main ? '주계약' : '특약') + '</div></td>' +
+      '<td>' + esc(c.name) + (c.found && c.label ? '<div class="gsub">' + esc(c.label) + '</div>' : '') + '</td>' +
+      '<td style="text-align:right;white-space:nowrap">' + (c.amt ? won(c.amt) + '만원' : '-') + '</td>' +
+      '<td>' + (c.easy ? esc(c.easy) : '') +
+        (function () {
+          const rest = areasSeparate(c);
+          return rest.length ? '<div class="gsub" style="margin-top:5px">' +
+            rest.map(function (a) { return '· ' + esc(a); }).join('<br>') + '</div>' : '';
+        })() + '</td>' +
+      '<td>' + pays + '</td>' +
+      '<td>' + covWhen(c).map(function (w) {
+        return '<div style="color:' + TONE[w.tone] + '"><b>' + esc(w.k) + '</b> ' + esc(w.v) + '</div>';
+      }).join('') + '</td></tr>';
+  });
+  return h + '</table></div>';
+}
+
+function drawCoverage() {
+  const box = $('covBox');
+  if (!box) return;
+  const rec = collect();
+  const cov = Engine.coverage(rec, { today: todayStr, dict: loadDict(), products: loadProducts() });
+  const rows = covRows(cov);
   if (!rows.length) {
-    $('covBox').innerHTML = '<div class="note">위 ②에 보험과 특약을 넣으시면 여기에 보장 내용이 자동으로 정리됩니다.</div>';
+    box.innerHTML = '<div class="note">① 고객정보에서 <b>상품제안서를 불러오시거나</b> 보험 · 특약을 넣으시면 ' +
+      '여기에 특약별 설명과 증상별 보장금액이 자동으로 정리됩니다.</div>';
     return;
   }
-  let h = '<div class="tscroll"><table class="form"><tr>' +
-    '<th style="width:150px">구분</th><th style="width:190px">특약 · 주계약</th>' +
-    '<th style="width:110px">가입금액</th><th>보장받을 수 있는 영역</th><th style="width:260px">지급보험금</th></tr>';
-  rows.forEach(function (c) {
-    const pays = c.found && c.pays.length
-      ? c.pays.map(function (p) {
-        return '<div>' + esc(p.when) + ' → <b style="color:var(--rose)">' +
-          manwon(p.amount) + (p.per ? ' (' + esc(p.per) + ')' : '') + '</b>' +
-          (p.cut ? ' <span style="color:var(--org)">감액기간</span>' : '') + '</div>';
-      }).join('')
-      : (c.found
-        ? '<span class="gsub">약관에 금액이 정해져 있지 않은 급부입니다 — 가입설계서 · 회사 시스템에서 확인하세요</span>'
-        : '<span style="color:var(--org)">사전에 없는 특약입니다 — [보험 · 약관 고치기]에서 넣어 주세요</span>');
-    h += '<tr><td class="gk" style="width:150px">' + esc(c.plan || '-') +
-      '<div class="gsub">' + (c.main ? '주계약' : '특약') + '</div></td>' +
-      '<td>' + esc(c.name) + (c.found ? '<div class="gsub">' + esc(c.label) + '</div>' : '') + '</td>' +
-      '<td style="text-align:right;white-space:nowrap">' + (c.amt ? won(c.amt) + '만원' : '-') + '</td>' +
-      '<td>' + (c.found ? c.areas.map(function (a) { return '· ' + esc(a); }).join('<br>') : '-') +
-      (c.waitEnd ? '<div class="gsub" style="color:var(--red)">면책 : ' + ymd(c.waitEnd) + ' 까지 보장 안 됨</div>' : '') +
-      (c.limit ? '<div class="gsub" style="color:var(--org)">한도 : ' + esc(c.limit) + '</div>' : '') +
-      (c.note ? '<div class="gsub">' + esc(c.note) + '</div>' : '') + '</td>' +
-      '<td>' + pays + '</td></tr>';
-  });
-  h += '</table></div>';
+
+  const totAmt = rows.reduce(function (t, c) { return t + (c.amt || 0); }, 0);
+  const totPrem = rows.reduce(function (t, c) { return t + (numOf(c.prem) || 0); }, 0);
+  let h = '<div class="kpi" style="margin-bottom:6px">' +
+    '<div><div class="n">' + rows.filter(function (c) { return c.main; }).length + '</div><div class="t">보험</div></div>' +
+    '<div><div class="n">' + rows.filter(function (c) { return !c.main; }).length + '</div><div class="t">특약</div></div>' +
+    '<div><div class="n">' + won(totAmt) + '</div><div class="t">가입금액 합계 (만원)</div></div>' +
+    (totPrem ? '<div><div class="n">' + won(totPrem) + '</div><div class="t">보험료 합계 (원)</div></div>' : '') +
+    '</div>';
+
+  h += (covMode === 'card') ? rows.map(covCard).join('') : covTable(rows);
+
   if (cov.unknown.length) {
-    h += '<div class="warn" style="margin-top:10px"><b>사전에 없는 특약 ' + cov.unknown.length + '건</b> — ' +
+    h += '<div class="warn" style="margin-top:10px"><b>지급기준을 모르는 특약 ' + cov.unknown.length + '건</b> — ' +
       esc(cov.unknown.map(function (c) { return c.name; }).join(', ')) +
-      '<br>[⚙ 특약 사전 고치기]에서 보장영역과 지급률을 넣어 주시면 다음부터 자동으로 계산됩니다.</div>';
+      '<br>상품제안서를 불러오시면 그 제안서에 적힌 금액으로 정확히 정리됩니다.</div>';
   }
-  $('covBox').innerHTML = h;
+  h += '<div class="hint" style="margin-top:12px">위 금액은 <b>참고용</b>입니다. ' +
+    '실제 지급 여부와 금액은 약관과 회사 시스템에서 최종 확인하신 뒤 안내해 주세요.</div>';
+  box.innerHTML = h;
 }
+
+
+/* ===================== ③ 해약환급금 · 사망보험금 ===================== */
+
+function planNames() {
+  return getRows('plans').map(function (p) { return p.name; }).filter(Boolean);
+}
+
+function cashPlanName() {
+  const el = $('cashPlan');
+  return el ? String(el.value || '') : '';
+}
+
+function fillCashPlan() {
+  const el = $('cashPlan');
+  if (!el) return;
+  const cur = el.value;
+  const list = planNames();
+  el.innerHTML = (list.length ? list : ['']).map(function (n) {
+    return '<option>' + esc(n) + '</option>';
+  }).join('');
+  if (list.indexOf(cur) >= 0) el.value = cur;
+}
+
+function wonOrDash(v) { return v == null ? '-' : won(Math.round(v)) + '원'; }
+
+/* 지금 고른 보험의 계약일 · 가입 당시 나이 */
+function cashPlanInfo(name) {
+  const p = getRows('plans').filter(function (x) {
+    const a = String(x.name || '').replace(/\s/g, ''), b = String(name || '').replace(/\s/g, '');
+    return a && b && (a.indexOf(b) >= 0 || b.indexOf(a) >= 0);
+  })[0] || null;
+  const birth = normDate(V('p_birth'));
+  const join = p ? normDate(p.join) : '';
+  const ia = (birth && join) ? Calc.insAge(birth, join) : null;
+  return { plan: p, join: join, ageAtJoin: ia ? ia.age : null };
+}
+
+/* 표의 나이 칸으로도 가입 당시 나이를 짐작합니다 (생년월일을 안 넣으셨을 때) */
+function baseAge(table, info) {
+  if (info.ageAtJoin != null) return info.ageAtJoin;
+  const first = table.filter(function (r) { return r.age != null; })[0];
+  return first ? first.age - Math.floor(first.m / 12) : null;
+}
+
+function drawCash() {
+  const box = $('cashOut');
+  if (!box) return;
+  fillCashPlan();
+  const name = cashPlanName();
+  const rec = collect();
+  const table = Engine.cashTable(rec, name);
+
+  if (!table.length) {
+    box.innerHTML = '<div class="warn">이 보험의 <b>해약환급금 예시표가 아직 없습니다.</b><br>' +
+      '① 고객정보의 <b>[📄 제안서 불러오기]</b>로 상품제안서를 넣으시거나, 아래 표에 직접 넣어 주세요.<br>' +
+      '<span class="gsub">프로그램이 임의로 계산하지 않습니다 — 회사가 제시한 금액만 보여드립니다.</span></div>';
+    return;
+  }
+
+  const info = cashPlanInfo(name);
+  const b0 = baseAge(table, info);
+
+  /* 경과년수 · 나이 중 넣으신 쪽을 씁니다 */
+  let m = null;
+  const yv = V('cashYear'), av = V('cashAge');
+  if (yv !== '') m = Math.round(parseFloat(yv) * 12);
+  else if (av !== '' && b0 != null) m = Math.round((parseFloat(av) - b0) * 12);
+  if (m == null || !isFinite(m) || m < 0) m = table[0].m;
+
+  const hit = Engine.cashAt(table, m);
+  const r = hit.row;
+  const rate = r.rate != null ? r.rate : (r.paid ? (r.cv || 0) / r.paid * 100 : null);
+  const diff = (r.cv != null && r.paid != null) ? r.cv - r.paid : null;
+
+  /* 넣지 않은 쪽 칸을 채워 드립니다 */
+  if ($('cashYear') && yv === '') $('cashYear').value = Math.floor(m / 12);
+  if ($('cashAge') && av === '' && r.age != null) $('cashAge').value = r.age;
+
+  const when = info.join ? ymd(Engine.addMonths(info.join, m)) : '';
+  const tag = hit.exact ? '<span class="gsub">제안서 표에 있는 금액</span>'
+    : hit.before ? '<span style="color:var(--org)">표의 첫 줄보다 이른 시점이라 첫 줄을 보여드립니다</span>'
+      : hit.after ? '<span style="color:var(--org)">표의 마지막 줄보다 늦은 시점이라 마지막 줄을 보여드립니다</span>'
+        : '<span style="color:var(--org)">표에 없는 시점이라 앞뒤 줄 사이를 이어 셈한 <b>참고값</b>입니다</span>';
+
+  let h = '<div class="kpi">' +
+    '<div><div class="n">' + Engine.monthText(m) + '</div>' +
+      '<div class="t">경과' + (r.age != null ? ' · ' + r.age + '세' : '') + '</div></div>' +
+    '<div><div class="n" style="font-size:20px">' + wonOrDash(r.paid) + '</div><div class="t">그때까지 낸 보험료</div></div>' +
+    '<div><div class="n" style="font-size:20px;color:var(--rose)">' + wonOrDash(r.cv) + '</div><div class="t">해약환급금</div></div>' +
+    '<div><div class="n" style="color:' + (rate != null && rate >= 100 ? 'var(--brand)' : 'var(--org)') + '">' +
+      (rate == null ? '-' : rate.toFixed(1) + '%') + '</div><div class="t">환급률</div></div>' +
+    '<div><div class="n" style="font-size:20px">' + wonOrDash(r.death) + '</div><div class="t">사망시 지급액</div></div>' +
+    '</div>';
+
+  h += '<div class="hint" style="margin-top:10px">' + tag +
+    (when ? ' · 달력으로는 <b>' + when + '</b> 무렵입니다.' : '') +
+    (diff != null ? '<br>낸 보험료보다 <b style="color:' + (diff >= 0 ? 'var(--brand)' : 'var(--red)') + '">' +
+      won(Math.abs(Math.round(diff))) + '원 ' + (diff >= 0 ? '많습니다' : '적습니다') + '</b>.' : '') +
+    (hit.between ? '<br><span class="gsub">사이에 둔 두 줄 : ' + esc(hit.between[0].year) + ' · ' +
+      esc(hit.between[1].year) + '</span>' : '') +
+    '</div>';
+
+  /* 짚어 드릴 만한 시점 */
+  const even = Engine.breakEven(table);
+  const payend = Engine.marked(table, '납입완료');
+  const mat = Engine.marked(table, '만기');
+  const last = table[table.length - 1];
+  const notes = [];
+  if (payend) notes.push('<b>납입이 끝나는 ' + esc(payend.year) + '</b>에 해약환급금은 ' +
+    wonOrDash(payend.cv) + ' (환급률 ' + (payend.rate == null ? '-' : payend.rate.toFixed(1) + '%') + ') 입니다.');
+  if (mat) notes.push('<b>만기 ' + esc(mat.year) + '</b>의 만기환급금은 ' + wonOrDash(mat.cv) + ' 입니다.');
+  if (even) notes.push('낸 보험료만큼 돌려받게 되는 때는 <b>' + esc(even.year) + '</b> 입니다 (환급률 ' +
+    (even.rate == null ? '-' : even.rate.toFixed(1) + '%') + ').');
+  else notes.push('<b style="color:var(--red)">이 표에서는 환급률이 끝까지 100%에 이르지 않습니다.</b> ' +
+    '저축이 아니라 <b>보장</b>을 위한 보험이라는 점을 꼭 함께 말씀해 주세요 — ' +
+    '중도에 해지하시면 낸 보험료보다 적게 돌려받으십니다.');
+  notes.push('표의 마지막은 <b>' + esc(last.year) + '</b>' + (last.age != null ? ' (' + last.age + '세)' : '') + ' 입니다.');
+  h += '<div class="note" style="margin-top:12px">' + notes.join('<br>') + '</div>';
+
+  /* 표 전체 — 지금 고른 줄을 짚어 줍니다 */
+  h += '<div class="tscroll" style="margin-top:14px;max-height:460px;overflow:auto">' +
+    '<table class="dt"><tr><th style="width:90px">경과</th><th style="width:70px">나이</th>' +
+    '<th>낸 보험료</th><th>해약환급금</th><th style="width:80px">환급률</th><th>사망시 지급액</th><th style="width:90px">구분</th></tr>' +
+    table.map(function (x) {
+      const on = hit.exact ? x.m === m : (hit.between && (x === hit.between[0] || x === hit.between[1]));
+      const rt = x.rate != null ? x.rate : (x.paid ? (x.cv || 0) / x.paid * 100 : null);
+      return '<tr' + (on ? ' style="background:var(--rosebg);font-weight:700"' : '') + '>' +
+        '<td>' + esc(x.year) + '</td><td>' + (x.age == null ? '-' : x.age + '세') + '</td>' +
+        '<td style="text-align:right">' + wonOrDash(x.paid) + '</td>' +
+        '<td style="text-align:right">' + wonOrDash(x.cv) + '</td>' +
+        '<td style="text-align:right">' + (rt == null ? '-' : rt.toFixed(1) + '%') + '</td>' +
+        '<td style="text-align:right">' + wonOrDash(x.death) + '</td>' +
+        '<td>' + esc(x.mark) + '</td></tr>';
+    }).join('') + '</table></div>';
+
+  box.innerHTML = h;
+}
+
+/* 자주 보는 시점으로 바로 옮기기 */
+function cashJump(kind) {
+  const rec = collect();
+  const table = Engine.cashTable(rec, cashPlanName());
+  if (!table.length) { toast('먼저 해약환급금 예시표를 넣어 주세요.', true); return; }
+  const info = cashPlanInfo(cashPlanName());
+  let target = null;
+  if (kind === 'now') {
+    if (!info.join) { toast('계약일을 넣으시면 지금 시점을 셀 수 있습니다.', true); return; }
+    const d = new Date(todayStr + 'T00:00:00'), j = new Date(info.join + 'T00:00:00');
+    target = Math.max(0, (d.getFullYear() - j.getFullYear()) * 12 + (d.getMonth() - j.getMonth()));
+  } else if (kind === 'payend') {
+    const r = Engine.marked(table, '납입완료');
+    if (!r) { toast('표에 «납입완료» 로 표시된 줄이 없습니다.', true); return; }
+    target = r.m;
+  } else if (kind === 'even') {
+    const r = Engine.breakEven(table);
+    if (!r) { toast('이 표에서는 환급률이 100%에 이르지 않습니다.', true); return; }
+    target = r.m;
+  } else if (kind === 'last') {
+    target = table[table.length - 1].m;
+  }
+  if (target == null) return;
+  $('cashYear').value = Math.floor(target / 12);
+  $('cashAge').value = '';
+  drawCash();
+}
+
+/* ===================== 📄 상품제안서 불러오기 ===================== */
+
+let impReady = null;
+
+function impShow(on) {
+  const c = $('impCard');
+  if (c) c.style.display = on ? '' : 'none';
+  if (!on) { impReady = null; $('impMsg').innerHTML = ''; $('btnImpApply').style.display = 'none'; }
+}
+
+function impRead() {
+  const r = Importer.parse(V('impText') || $('impText').value);
+  const msg = $('impMsg');
+  if (!r.ok) {
+    impReady = null;
+    $('btnImpApply').style.display = 'none';
+    msg.innerHTML = '<div class="warn"><b>읽지 못했습니다.</b><br>' + esc(r.error) +
+      '<br><span class="gsub">설계 코드 전체({ 부터 } 까지)를 그대로 붙여넣으셨는지 확인해 주세요.</span></div>';
+    return;
+  }
+  const rec = Importer.toRecord(r.data);
+  impReady = rec;
+  const sm = rec.summary;
+  let h = '<div class="note"><b>이렇게 들어갑니다</b><br>' +
+    (sm.cust ? '고객 : <b>' + esc(sm.cust) + '</b><br>' : '') +
+    '보험 <b>' + sm.plans + '건</b> · 특약 <b>' + sm.riders + '건</b> · 해약환급금 예시표 <b>' + sm.cash + '줄</b>' +
+    (sm.prem ? '<br>보험료 합계 <b>' + won(Math.round(sm.prem)) + '원</b>' : '') + '</div>';
+  h += '<div class="tscroll" style="margin-top:10px;max-height:300px;overflow:auto"><table class="dt">' +
+    '<tr><th style="width:70px">구분</th><th class="l">이름</th><th style="width:110px">가입금액</th><th style="width:110px">보험료</th></tr>' +
+    rec.rows.plans.map(function (x) {
+      return '<tr><td>주계약</td><td class="l">' + esc(x.name) + '</td>' +
+        '<td style="text-align:right">' + (x.amt === '' ? '-' : won(x.amt) + '만원') + '</td>' +
+        '<td style="text-align:right">' + (x.prem === '' ? '-' : won(x.prem) + '원') + '</td></tr>';
+    }).join('') +
+    rec.rows.riders.map(function (x) {
+      return '<tr><td>특약</td><td class="l">' + esc(x.name) + '</td>' +
+        '<td style="text-align:right">' + (x.amt === '' ? '-' : won(x.amt) + '만원') + '</td>' +
+        '<td style="text-align:right">' + (x.prem === '' ? '-' : won(x.prem) + '원') + '</td></tr>';
+    }).join('') + '</table></div>';
+  if (sm.warn.length) h += '<div class="warn" style="margin-top:10px">' + sm.warn.map(esc).join('<br>') + '</div>';
+  h += '<div class="hint" style="margin-top:10px">[✔ 이대로 넣기]를 누르시면 ' +
+    '<b>가입설계 · 특약 · 환급금표</b>가 채워지고, 이 제안서의 지급기준이 <b>보험 · 약관</b> 목록에 저장됩니다. ' +
+    '지금 화면에 있던 같은 항목은 덮어씁니다.</div>';
+  msg.innerHTML = h;
+  $('btnImpApply').style.display = '';
+}
+
+function impApply() {
+  if (!impReady) return;
+  const r = impReady;
+
+  /* 1. 이 제안서의 지급기준을 보험 · 약관 목록에 넣습니다 */
+  if (r.products && r.products.length) storeProducts(Importer.mergeProducts(loadProducts(), r.products));
+
+  /* 2. 고객 인적사항 — 값이 있는 것만 채웁니다 (이미 적어 두신 것은 지우지 않습니다) */
+  Object.keys(r.f).forEach(function (k) {
+    const e = $(k);
+    if (e && String(r.f[k]).trim()) e.value = r.f[k];
+  });
+
+  /* 3. 가입설계 · 특약 · 환급금표 */
+  ['plans', 'riders', 'cash'].forEach(function (k) {
+    if (r.rows[k] && r.rows[k].length) setRows(k, r.rows[k]);
+  });
+
+  moneyRefresh(); fillSelects(document); calcAll(); drawCoverage(); fillCashPlan(); markDirty();
+  impShow(false);
+  toast('제안서를 불러왔습니다 — 보험 ' + r.summary.plans + '건 · 특약 ' + r.summary.riders + '건');
+  tab(2);
+}
+
 
 /* ===================== 알림 ===================== */
 
@@ -660,7 +1034,7 @@ function apply(o) {
   PREPS.concat(EXTRAS).forEach(function (p) { const e = chkEl(p.id); if (e) e.checked = !!(o.chk && o.chk[p.id]); });
   const rows = o.rows || {};
   RSETS.forEach(function (s) { setRows(s.key, rows[s.key]); });
-  moneyRefresh(); calcAll(); drawCoverage(); saveDraft();
+  moneyRefresh(); calcAll(); drawCoverage(); fillCashPlan(); drawCash(); saveDraft();
 }
 
 function resetAll() {
@@ -669,7 +1043,7 @@ function resetAll() {
   RSETS.forEach(function (s) { setRows(s.key, []); });
   editId = null;
   $('saveState').textContent = '';
-  initDefaults(); calcAll(); drawCoverage();
+  initDefaults(); calcAll(); drawCoverage(); fillCashPlan(); drawCash();
 }
 
 function initDefaults() {
@@ -903,20 +1277,51 @@ function downloadXlsx(rec) {
   RSETS.forEach(function (set) { sheets.push(sheetOf(set, Schema.pruneRows(set, (rec.rows || {})[set.key]))); });
 
   /* 보장 요약 */
-  const cov = Engine.coverage(rec, { today: todayStr, dict: loadDict() });
-  const cr = [[{ v: '보장 요약 (참고용 — 약관 확인 필요)', s: S.title }], [],
+  const cov = Engine.coverage(rec, { today: todayStr, dict: loadDict(), products: loadProducts() });
+  const cr = [[{ v: '보장 설명 (참고용 — 약관 확인 필요)', s: S.title }], [],
     [{ v: '구분', s: S.head }, { v: '특약 · 주계약', s: S.head }, { v: '가입금액(만원)', s: S.head },
-      { v: '보장영역', s: S.head }, { v: '지급보험금', s: S.head }]];
-  cov.mains.concat(cov.riders).filter(function (c) { return c.name; }).forEach(function (c) {
+      { v: '보험료(원)', s: S.head }, { v: '쉬운 설명', s: S.head }, { v: '보장영역', s: S.head },
+      { v: '증상별 보장금액', s: S.head }, { v: '보장시작 · 감액 · 갱신 · 한도', s: S.head }]];
+  covRows(cov).forEach(function (c) {
     cr.push([
       { v: c.main ? '주계약' : (c.plan || '특약'), s: S.label },
       { v: c.name, s: S.val },
       { v: c.amt || '', s: S.valNum, n: true },
+      { v: numOf(c.prem) || '', s: S.valNum, n: true },
+      { v: c.easy || '', s: S.wrap },
       { v: c.areas.join('\n'), s: S.wrap },
-      { v: c.pays.map(function (p) { return p.when + ' → ' + manwon(p.amount) + (p.per ? '(' + p.per + ')' : ''); }).join('\n'), s: S.wrap }
+      { v: c.pays.map(function (p) { return p.when + ' → ' + manwon(p.amount) + (p.per ? '(' + p.per + ')' : ''); }).join('\n'), s: S.wrap },
+      { v: covWhen(c).map(function (w) { return w.k + ' : ' + w.v + (w.sub ? ' — ' + w.sub : ''); }).join('\n'), s: S.wrap }
     ]);
   });
-  sheets.push({ name: '보장요약', cols: [{ w: 14 }, { w: 26 }, { w: 14 }, { w: 40 }, { w: 40 }], rows: cr });
+  sheets.push({ name: '보장설명',
+    cols: [{ w: 14 }, { w: 26 }, { w: 13 }, { w: 12 }, { w: 44 }, { w: 40 }, { w: 34 }, { w: 44 }], rows: cr });
+
+  /* 환급금 요약 — 짚어 드릴 만한 시점만 따로 */
+  const cashSheet = [[{ v: '해약환급금 — 상품제안서 예시표에서 찾은 금액', s: S.title }], [],
+    [{ v: '보험', s: S.head }, { v: '시점', s: S.head }, { v: '경과', s: S.head }, { v: '나이', s: S.head },
+      { v: '낸 보험료', s: S.head }, { v: '해약환급금', s: S.head }, { v: '환급률(%)', s: S.head },
+      { v: '사망시 지급액', s: S.head }]];
+  Schema.pruneRows(RSMAP.plans, (rec.rows || {}).plans).forEach(function (p) {
+    const tb = Engine.cashTable(rec, p.name);
+    if (!tb.length) return;
+    const marks = [['납입 완료', Engine.marked(tb, '납입완료')], ['만기', Engine.marked(tb, '만기')],
+      ['낸 돈만큼 되는 때', Engine.breakEven(tb)], ['표의 마지막', tb[tb.length - 1]]];
+    marks.forEach(function (m) {
+      if (!m[1]) return;
+      const x = m[1];
+      cashSheet.push([{ v: p.name, s: S.val }, { v: m[0], s: S.label }, { v: x.year, s: S.val },
+        { v: x.age == null ? '' : x.age, s: S.valNum, n: true },
+        { v: x.paid == null ? '' : x.paid, s: S.valNum, n: true },
+        { v: x.cv == null ? '' : x.cv, s: S.valNum, n: true },
+        { v: x.rate == null ? '' : x.rate, s: S.valNum, n: true },
+        { v: x.death == null ? '' : x.death, s: S.valNum, n: true }]);
+    });
+  });
+  if (cashSheet.length > 3) {
+    sheets.push({ name: '환급금요약',
+      cols: [{ w: 32 }, { w: 18 }, { w: 11 }, { w: 8 }, { w: 16 }, { w: 16 }, { w: 11 }, { w: 16 }], rows: cashSheet });
+  }
 
   /* 알림 */
   const al = Engine.alerts(rec, { today: todayStr });
@@ -988,7 +1393,38 @@ initDefaults(); calcAll(); drawCoverage();
 
 $('btnSave').addEventListener('click', saveRecord);
 $('btnNew').addEventListener('click', newRecord);
-$('btnCalc').addEventListener('click', function () { calcAll(); drawCoverage(); toast('보장을 다시 계산했습니다.'); });
+$('btnCalc').addEventListener('click', function () { calcAll(); drawCoverage(); toast('보장 설명을 다시 정리했습니다.'); });
+$('btnCovMode').addEventListener('click', function () {
+  covMode = (covMode === 'card') ? 'table' : 'card';
+  this.textContent = (covMode === 'card') ? '표로 보기' : '카드로 보기';
+  drawCoverage();
+});
+$('btnPrintCov').addEventListener('click', function () { window.print(); });
+
+/* ---------- 📄 상품제안서 불러오기 ---------- */
+$('btnImpOpen').addEventListener('click', function () {
+  const on = $('impCard').style.display === 'none';
+  impShow(on);
+  if (on) $('impText').focus();
+});
+$('btnImpClose').addEventListener('click', function () { impShow(false); });
+$('btnImpRead').addEventListener('click', impRead);
+$('btnImpApply').addEventListener('click', impApply);
+$('btnImpSample').addEventListener('click', function () {
+  impShow(true);
+  $('impText').value = JSON.stringify(Importer.SAMPLE, null, 2);
+  impRead();
+  $('impCard').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+});
+
+/* ---------- ③ 환급금 ---------- */
+$('cashPlan').addEventListener('change', function () { $('cashYear').value = ''; $('cashAge').value = ''; drawCash(); });
+$('cashYear').addEventListener('input', function () { $('cashAge').value = ''; drawCash(); });
+$('cashAge').addEventListener('input', function () { $('cashYear').value = ''; drawCash(); });
+document.addEventListener('click', function (e) {
+  const b = e.target.closest && e.target.closest('[data-cashjump]');
+  if (b) { e.preventDefault(); cashJump(b.dataset.cashjump); }
+});
 $('btnAlert').addEventListener('click', function () { drawAlerts(); toast('알림을 다시 계산했습니다.'); });
 /* ---------- 보험 · 약관 편집기 단추 ---------- */
 $('btnProd').addEventListener('click', function () {
@@ -1090,7 +1526,11 @@ document.addEventListener('change', function (e) {
 }, true);
 
 document.addEventListener('change', function (e) {
-  if (e.target.closest && (e.target.closest('#rsb_plans') || e.target.closest('#rsb_riders'))) { calcPlans(); drawCoverage(); }
+  const t = e.target.closest && e.target.closest('#rsb_plans, #rsb_riders, #rsb_cash');
+  if (!t) return;
+  if (t.id !== 'rsb_cash') { calcPlans(); drawCoverage(); }
+  fillCashPlan();
+  if ($('p3') && $('p3').classList.contains('on')) drawCash();
 }, true);
 document.addEventListener('input', markDirty, true);
 document.addEventListener('change', markDirty, true);

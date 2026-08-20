@@ -83,14 +83,34 @@
     },
     {
       key: 'riders', label: '가입설계 — 특약', sheet: '특약',
-      sub: '특약명과 가입금액을 넣으면 아래에 보장영역과 지급보험금이 자동으로 정리됩니다.',
+      sub: '특약명과 가입금액을 넣으면 ② 보장설명에 쉬운 설명 · 증상별 보장금액 · 면책 · 보장개시일 · 갱신이 자동으로 정리됩니다. 갱신형은 보험기간(10년만기 등)이 갱신주기가 되고, 갱신 종료나이는 상품제안서에 적힌 값을 넣어 주세요.',
       rows: 4, addLabel: '＋ 특약 추가',
       cols: [
         { k: 'plan', label: '보험명', type: 'select', opt: 'planNames', ph: '어느 보험의 특약인지', w: 22 },
         { k: 'name', label: '특약명', type: 'select', opt: 'riderNames', ph: '암진단특약', w: 26 },
         { k: 'amt', label: '가입금액', type: 'number', unit: '만원', w: 14 },
+        { k: 'prem', label: '보험료', type: 'number', unit: '원', w: 13 },
         { k: 'payterm', label: '납입기간', type: 'select', opt: 'payterms', w: 14 },
-        { k: 'insterm', label: '보험기간', type: 'select', opt: 'insterms', w: 14 }
+        { k: 'insterm', label: '보험기간', type: 'select', opt: 'insterms', w: 14 },
+        { k: 'renewend', label: '갱신 종료나이', type: 'number', unit: '세', w: 13 }
+      ]
+    },
+    {
+      key: 'cash', label: '해약환급금 예시표', sheet: '환급금예시',
+      sub: '상품제안서(가입설계서)에 인쇄된 표를 그대로 옮긴 값입니다. ' +
+        '프로그램이 계산한 금액이 아니라 회사가 제시한 금액이라 그대로 안내하셔도 됩니다. ' +
+        '[📄 제안서 불러오기]로 넣으면 한 번에 채워집니다. ' +
+        '금액은 제안서의 「주계약＋특약」 쪽 값을 넣어 주세요.',
+      rows: 1, addLabel: '＋ 줄 추가',
+      cols: [
+        { k: 'plan', label: '보험명', type: 'select', opt: 'planNames', ph: '어느 보험의 표인지', w: 22 },
+        { k: 'year', label: '경과기간', type: 'text', ph: '1년 · 3개월', w: 12 },
+        { k: 'age', label: '나이', type: 'number', unit: '세', w: 9 },
+        { k: 'paid', label: '납입보험료 누계', type: 'number', unit: '원', w: 17 },
+        { k: 'cv', label: '해약환급금', type: 'number', unit: '원', w: 17 },
+        { k: 'rate', label: '환급률', type: 'number', unit: '%', w: 11 },
+        { k: 'death', label: '사망시 지급액', type: 'number', unit: '원', w: 17 },
+        { k: 'mark', label: '구분', type: 'text', ph: '납입완료 · 만기', w: 13 }
       ]
     },
     {
@@ -205,7 +225,7 @@
     { k: 'p_anniv', label: '기념일' }, { k: 'p_route', label: '가입경로' },
     { k: '_plans', label: '보험건수' }, { k: '_planNames', label: '보험명' },
     { k: '_join', label: '계약일' }, { k: '_amt', label: '주계약합계(만원)' },
-    { k: '_prem', label: '월보험료합계' },
+    { k: '_prem', label: '월보험료합계' }, { k: '_cash', label: '환급금표' },
     { k: '_riders', label: '특약건수' }, { k: '_riderNames', label: '특약명' },
     { k: '_claims', label: '청구건수' }, { k: '_payamt', label: '지급액합계' },
     { k: '_touches', label: '터치횟수' },
@@ -225,11 +245,15 @@
         return d[0] || '';
       }
       case '_amt': return sumNum(plans, 'amt');
-      case '_prem': return sumNum(plans, 'prem');
+      case '_prem': return sumNum(plans, 'prem') + sumNum(rowsOf(rec, 'riders'), 'prem');
       case '_riders': return rowsOf(rec, 'riders').length;
       case '_riderNames': return rowsOf(rec, 'riders').map(function (r) { return r.name; }).filter(Boolean).join(' / ');
       case '_claims': return rowsOf(rec, 'claims').length;
       case '_payamt': return sumNum(rowsOf(rec, 'claims'), 'payamt');
+      case '_cash': {
+        const n = rowsOf(rec, 'cash').length;
+        return n ? n + '줄' : '';
+      }
       case '_touches': return rowsOf(rec, 'touches').length;
       case '_follow': return rowsOf(rec, 'follows').map(function (x) { return x.what; }).filter(Boolean).join(' / ');
       case '_due': {
