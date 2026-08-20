@@ -241,6 +241,39 @@ textarea#script{height:340px;font-size:15.5px;line-height:1.7;white-space:pre-wr
 .tscroll table.form.rs th{white-space:nowrap}
 .tscroll table.form.rs input,.tscroll table.form.rs select{width:100%;box-sizing:border-box}
 
+/* ─────────────────────────────────────────────────────────────
+ * 글씨 키우기 — 이 프로그램은 표가 많아 같은 크기라도 작아 보입니다.
+ * 태블릿에서 편히 읽히도록 한 단계씩 올렸습니다.
+ * ───────────────────────────────────────────────────────────── */
+body{font-size:18.5px}
+header h1{font-size:28px}
+header p{font-size:16px}
+.tabs button{font-size:17px;padding:12px 21px}
+h2{font-size:20.5px}
+h2 .no{font-size:14.5px}
+h2 .ico{font-size:19.5px}
+.sub{font-size:15.5px}
+.gsub{font-size:14.5px}
+label{font-size:14.5px}
+input,select,textarea{font-size:17.5px}
+
+table.form{font-size:16.5px}
+table.form th{font-size:15.5px}
+table.form td.gk{font-size:15px}
+table.form input,table.form select{font-size:16.5px}
+table.form.rs th.rsno,table.form.rs td.rsno{font-size:14.5px}
+
+table.dt{font-size:15.5px}
+table.dt th{font-size:14.5px}
+
+.hint{font-size:14.5px}
+button.b{font-size:17px}
+.sm{font-size:15.5px;padding:8px 16px}
+.note,.warn,.err{font-size:15.5px}
+.rstop{font-size:16.5px}
+.toast{font-size:16.5px}
+.kpi .n{font-size:27px}.kpi .t{font-size:14.5px}
+
 </style>
 </head>
 <body>
@@ -3367,6 +3400,14 @@ function saveDict() {
   drawCoverage();
 }
 
+/* 만원 단위가 1보다 작으면 원으로 적어 줍니다 (입원 1일당 3,000원 같은 경우) */
+function manwon(v) {
+  const n = Number(v) || 0;
+  if (!n) return '-';
+  if (n >= 1) return won(n) + '만원';
+  return won(n * 10000) + '원';
+}
+
 /* ===================== 보장 요약 ===================== */
 
 function drawCoverage() {
@@ -3394,7 +3435,7 @@ function drawCoverage() {
     const pays = c.found && c.pays.length
       ? c.pays.map(function (p) {
         return '<div>' + esc(p.when) + ' → <b style="color:var(--rose)">' +
-          (p.amount ? won(p.amount) + '만원' : '-') + (p.per ? ' (' + esc(p.per) + ')' : '') + '</b>' +
+          manwon(p.amount) + (p.per ? ' (' + esc(p.per) + ')' : '') + '</b>' +
           (p.cut ? ' <span style="color:var(--org)">감액기간</span>' : '') + '</div>';
       }).join('')
       : (c.found
@@ -3725,7 +3766,7 @@ function downloadXlsx(rec) {
       { v: c.name, s: S.val },
       { v: c.amt || '', s: S.valNum, n: true },
       { v: c.areas.join('\n'), s: S.wrap },
-      { v: c.pays.map(function (p) { return p.when + ' → ' + won(p.amount) + '만원' + (p.per ? '(' + p.per + ')' : ''); }).join('\n'), s: S.wrap }
+      { v: c.pays.map(function (p) { return p.when + ' → ' + manwon(p.amount) + (p.per ? '(' + p.per + ')' : ''); }).join('\n'), s: S.wrap }
     ]);
   });
   sheets.push({ name: '보장요약', cols: [{ w: 14 }, { w: 26 }, { w: 14 }, { w: 40 }, { w: 40 }], rows: cr });
@@ -3926,7 +3967,7 @@ $('btnDemo').addEventListener('click', function () {
   setRows('riders', [
     { plan: '교보 K-실속종신보험 (무배당)', name: 'New(무)암진단특약(갱신형)Ⅱ', amt: '3000', payterm: '20년납', insterm: '80세만기' },
     { plan: '교보 K-실속종신보험 (무배당)', name: '(무)교보뇌혈관질환진단특약(갱신형)Ⅱ', amt: '2000', payterm: '20년납', insterm: '80세만기' },
-    { plan: '교보 K-실속종신보험 (무배당)', name: '(무)입원특약Ⅲ', amt: '3', payterm: '20년납', insterm: '80세만기' },
+    { plan: '교보 K-실속종신보험 (무배당)', name: '(무)입원특약Ⅲ', amt: '1000', payterm: '20년납', insterm: '80세만기' },
     { plan: '교보 K-밸류업종신보험 (무배당)', name: '(무)교보재해골절특약', amt: '100', payterm: '20년납', insterm: '80세만기' }
   ]);
   setRows('talks', [{ date: todayStr, note: '신규 가입 · 증권 전달 예정' }]);

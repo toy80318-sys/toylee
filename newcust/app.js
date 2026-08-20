@@ -540,6 +540,14 @@ function saveDict() {
   drawCoverage();
 }
 
+/* 만원 단위가 1보다 작으면 원으로 적어 줍니다 (입원 1일당 3,000원 같은 경우) */
+function manwon(v) {
+  const n = Number(v) || 0;
+  if (!n) return '-';
+  if (n >= 1) return won(n) + '만원';
+  return won(n * 10000) + '원';
+}
+
 /* ===================== 보장 요약 ===================== */
 
 function drawCoverage() {
@@ -567,7 +575,7 @@ function drawCoverage() {
     const pays = c.found && c.pays.length
       ? c.pays.map(function (p) {
         return '<div>' + esc(p.when) + ' → <b style="color:var(--rose)">' +
-          (p.amount ? won(p.amount) + '만원' : '-') + (p.per ? ' (' + esc(p.per) + ')' : '') + '</b>' +
+          manwon(p.amount) + (p.per ? ' (' + esc(p.per) + ')' : '') + '</b>' +
           (p.cut ? ' <span style="color:var(--org)">감액기간</span>' : '') + '</div>';
       }).join('')
       : (c.found
@@ -898,7 +906,7 @@ function downloadXlsx(rec) {
       { v: c.name, s: S.val },
       { v: c.amt || '', s: S.valNum, n: true },
       { v: c.areas.join('\n'), s: S.wrap },
-      { v: c.pays.map(function (p) { return p.when + ' → ' + won(p.amount) + '만원' + (p.per ? '(' + p.per + ')' : ''); }).join('\n'), s: S.wrap }
+      { v: c.pays.map(function (p) { return p.when + ' → ' + manwon(p.amount) + (p.per ? '(' + p.per + ')' : ''); }).join('\n'), s: S.wrap }
     ]);
   });
   sheets.push({ name: '보장요약', cols: [{ w: 14 }, { w: 26 }, { w: 14 }, { w: 40 }, { w: 40 }], rows: cr });
@@ -1099,7 +1107,7 @@ $('btnDemo').addEventListener('click', function () {
   setRows('riders', [
     { plan: '교보 K-실속종신보험 (무배당)', name: 'New(무)암진단특약(갱신형)Ⅱ', amt: '3000', payterm: '20년납', insterm: '80세만기' },
     { plan: '교보 K-실속종신보험 (무배당)', name: '(무)교보뇌혈관질환진단특약(갱신형)Ⅱ', amt: '2000', payterm: '20년납', insterm: '80세만기' },
-    { plan: '교보 K-실속종신보험 (무배당)', name: '(무)입원특약Ⅲ', amt: '3', payterm: '20년납', insterm: '80세만기' },
+    { plan: '교보 K-실속종신보험 (무배당)', name: '(무)입원특약Ⅲ', amt: '1000', payterm: '20년납', insterm: '80세만기' },
     { plan: '교보 K-밸류업종신보험 (무배당)', name: '(무)교보재해골절특약', amt: '100', payterm: '20년납', insterm: '80세만기' }
   ]);
   setRows('talks', [{ date: todayStr, note: '신규 가입 · 증권 전달 예정' }]);

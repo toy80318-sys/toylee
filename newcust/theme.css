@@ -18,3 +18,36 @@
 /* 가입설계 표는 칸이 많아 화면 폭을 넘습니다 — 눌러 담지 말고 옆으로 밀어 보게 합니다 */
 .tscroll table.form.rs th{white-space:nowrap}
 .tscroll table.form.rs input,.tscroll table.form.rs select{width:100%;box-sizing:border-box}
+
+/* ─────────────────────────────────────────────────────────────
+ * 글씨 키우기 — 이 프로그램은 표가 많아 같은 크기라도 작아 보입니다.
+ * 태블릿에서 편히 읽히도록 한 단계씩 올렸습니다.
+ * ───────────────────────────────────────────────────────────── */
+body{font-size:18.5px}
+header h1{font-size:28px}
+header p{font-size:16px}
+.tabs button{font-size:17px;padding:12px 21px}
+h2{font-size:20.5px}
+h2 .no{font-size:14.5px}
+h2 .ico{font-size:19.5px}
+.sub{font-size:15.5px}
+.gsub{font-size:14.5px}
+label{font-size:14.5px}
+input,select,textarea{font-size:17.5px}
+
+table.form{font-size:16.5px}
+table.form th{font-size:15.5px}
+table.form td.gk{font-size:15px}
+table.form input,table.form select{font-size:16.5px}
+table.form.rs th.rsno,table.form.rs td.rsno{font-size:14.5px}
+
+table.dt{font-size:15.5px}
+table.dt th{font-size:14.5px}
+
+.hint{font-size:14.5px}
+button.b{font-size:17px}
+.sm{font-size:15.5px;padding:8px 16px}
+.note,.warn,.err{font-size:15.5px}
+.rstop{font-size:16.5px}
+.toast{font-size:16.5px}
+.kpi .n{font-size:27px}.kpi .t{font-size:14.5px}
