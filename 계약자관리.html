@@ -6,9 +6,9 @@
 <meta name="color-scheme" content="light">
 <meta name="application-name" content="계약자 관리">
 <meta name="apple-mobile-web-app-title" content="계약자 관리">
-<meta name="theme-color" content="#f6fdfb">
+<meta name="theme-color" content="#fffbf2">
 <title>계약자 관리</title>
-<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%23e2f7f1'/%3E%3Cellipse cx='11' cy='9' rx='2.6' ry='6' fill='%233aa892'/%3E%3Cellipse cx='21' cy='9' rx='2.6' ry='6' fill='%233aa892'/%3E%3Cellipse cx='11' cy='9.5' rx='1.2' ry='3.6' fill='%23e2f7f1'/%3E%3Cellipse cx='21' cy='9.5' rx='1.2' ry='3.6' fill='%23e2f7f1'/%3E%3Ccircle cx='16' cy='20' r='8.5' fill='%233aa892'/%3E%3Ccircle cx='12.8' cy='18.4' r='1.9' fill='%23fbfffe'/%3E%3Ccircle cx='19.2' cy='18.4' r='1.9' fill='%23fbfffe'/%3E%3Ccircle cx='12.8' cy='18.6' r='1.3' fill='%2338534d'/%3E%3Ccircle cx='19.2' cy='18.6' r='1.3' fill='%2338534d'/%3E%3Cellipse cx='16' cy='23.4' rx='4' ry='3' fill='%23fbfffe'/%3E%3Cellipse cx='16' cy='21.9' rx='1.4' ry='1' fill='%2338534d'/%3E%3C/svg%3E">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%23e3f3ee'/%3E%3Cellipse cx='11' cy='9' rx='2.6' ry='6' fill='%233aa892'/%3E%3Cellipse cx='21' cy='9' rx='2.6' ry='6' fill='%233aa892'/%3E%3Cellipse cx='11' cy='9.5' rx='1.2' ry='3.6' fill='%23e3f3ee'/%3E%3Cellipse cx='21' cy='9.5' rx='1.2' ry='3.6' fill='%23e3f3ee'/%3E%3Ccircle cx='16' cy='20' r='8.5' fill='%233aa892'/%3E%3Ccircle cx='12.8' cy='18.4' r='1.9' fill='%23fbfffe'/%3E%3Ccircle cx='19.2' cy='18.4' r='1.9' fill='%23fbfffe'/%3E%3Ccircle cx='12.8' cy='18.6' r='1.3' fill='%2338534d'/%3E%3Ccircle cx='19.2' cy='18.6' r='1.3' fill='%2338534d'/%3E%3Cellipse cx='16' cy='23.4' rx='4' ry='3' fill='%23fbfffe'/%3E%3Cellipse cx='16' cy='21.9' rx='1.4' ry='1' fill='%2338534d'/%3E%3C/svg%3E">
 <style>
 /* ===== public/style.css ===== */
 /* 평생든든 고객 정보파악 프로그램 — 화면 서식 (밝은 화면 / 어두운 화면 모두 지원)
@@ -223,17 +223,18 @@ textarea#script{height:340px;font-size:15.5px;line-height:1.7;white-space:pre-wr
 /* 계약자 관리 — 토끼 · 민트 (평생든든의 곰돌이 · 분홍과 짝이 되도록 같은 뼈대에 색만 갈아 끼웁니다) */
 :root{
   color-scheme:light;
-  --navy:#5cbfa9;--navy2:#48a993;--gold:#d3b06a;--ongold:#fff;
-  --rose:#3aa892;--rose2:#2c8b78;--rosebg:#e2f7f1;
-  --bg:#f6fdfb;--card:#fdfffe;--line:#d7eee8;--line2:#e6f6f2;
-  --surf1:#ecf9f5;--surf2:#f3fcf9;--surf3:#f9fefd;--hover:#eefaf7;
-  --field:#fff;--ib:#cfe8e1;--btnline:#c6e5dc;
-  --txt:#38534d;--sub:#7d968f;--brand:#39a08d;
-  --red:#c0563a;--org:#c08a2e;--grn:#3f9e86;--blue:#5b87a8;
-  --redbg:#fbeee9;--orgbg:#faf3e3;--grnbg:#e6f5f0;--bluebg:#eef3f7;
-  --mentbg:#eef9f5;--mentline:#c6e4da;--menttxt:#2f6255;
+  /* 강조색은 민트(토끼), 바탕은 평생든든과 같은 미색입니다 */
+  --navy:#5cbfa9;--navy2:#48a993;--gold:#c9a95f;--ongold:#fff;
+  --rose:#39a189;--rose2:#2b8471;--rosebg:#e3f3ee;
+  --bg:#fffbf2;--card:#fffbf2;--line:#e7e0d2;--line2:#efe9dc;
+  --surf1:#f4f1e8;--surf2:#f9f6ed;--surf3:#fdfbf5;--hover:#f5efe4;
+  --field:#fff;--ib:#ded6c6;--btnline:#d5d8c9;
+  --txt:#3d4a44;--sub:#88857a;--brand:#2f8f7b;
+  --red:#c0563a;--org:#b8862c;--grn:#3f9e86;--blue:#5b87a8;
+  --redbg:#fbeee9;--orgbg:#faf3e3;--grnbg:#eaf5f0;--bluebg:#eef3f7;
+  --mentbg:#eef6f1;--mentline:#c8dfd5;--menttxt:#2f6255;
   --basisbg:#faf6e8;--basisline:#e0d3a6;--basistxt:#96792c;
-  --warnbg:#eff9f6;--warnline:#c8e6dd;--warntxt:#358776;
+  --warnbg:#f2f7ee;--warnline:#d3dfc6;--warntxt:#3f7f6c;
 }
 
 /* 가입설계 표는 칸이 많아 화면 폭을 넘습니다 — 눌러 담지 말고 옆으로 밀어 보게 합니다 */
