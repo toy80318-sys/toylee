@@ -1,5 +1,5 @@
 /*
- * 기계약자 관리 — 화면 동작
+ * 계약자 관리 — 화면 동작
  * 자료는 이 기기의 브라우저 안(localStorage)에 쌓입니다. 서버가 필요 없습니다.
  */
 'use strict';
@@ -876,7 +876,7 @@ function sheetOf(set, rows) {
 
 function downloadXlsx(rec) {
   const sheets = [];
-  const info = [[{ v: '기계약자 관리 — ' + (rec.f.h_cust || '') + ' 님', s: S.title }], []];
+  const info = [[{ v: '계약자 관리 — ' + (rec.f.h_cust || '') + ' 님', s: S.title }], []];
   Schema.SECTIONS.forEach(function (sec) {
     info.push([{ v: (sec.no ? sec.no + '. ' : '') + sec.title, s: S.sec }]);
     sec.fields.forEach(function (fd) {

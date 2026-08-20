@@ -1,9 +1,9 @@
 #!/usr/bin/env node
 /*
- * 기계약자 관리 — 태블릿용 단일 파일 만들기
+ * 계약자 관리 — 태블릿용 단일 파일 만들기
  *   npm run build:new
  *
- * 공통 계산(shared) · 기계약자 관리 화면(newcust) · 엑셀 저장(standalone) 을
+ * 공통 계산(shared) · 계약자 관리 화면(newcust) · 엑셀 저장(standalone) 을
  * HTML 파일 하나로 묶습니다. 서버 없이 그 파일만 열면 바로 돌아갑니다.
  */
 'use strict';
@@ -14,7 +14,7 @@ const path = require('path');
 const ROOT = path.join(__dirname, '..');
 const read = function (p) { return fs.readFileSync(path.join(ROOT, p), 'utf8'); };
 
-const OUT = process.argv[2] || path.join(ROOT, '기계약자관리.html');
+const OUT = process.argv[2] || path.join(ROOT, '계약자관리.html');
 
 let html = read('newcust/index.html');
 
@@ -62,5 +62,5 @@ html = html.replace(scriptTags, scripts.map(function (p) {
 
 fs.writeFileSync(OUT, html, 'utf8');
 const kb = Math.round(fs.statSync(OUT).size / 1024);
-console.log('기계약자 관리 단일 파일을 만들었습니다 : ' + OUT + '  (' + kb + ' KB)');
+console.log('계약자 관리 단일 파일을 만들었습니다 : ' + OUT + '  (' + kb + ' KB)');
 console.log('이 파일 하나만 태블릿에 넣어 브라우저로 열면 됩니다.');
