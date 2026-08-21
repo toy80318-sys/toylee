@@ -1,0 +1,193 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<title>{{ doc.customer.name or '고객' }}님 보장 안내문</title>
+{% if inline_css %}<style>{{ inline_css }}</style>
+{% else %}<link rel="stylesheet" href="{{ url_for('static', filename='print.css') }}">{% endif %}
+</head>
+<body>
+<div class="toolbar no-print">
+  <span>A4 인쇄용 미리보기입니다. 인쇄 대화상자에서 <b>용지 A4 · 배율 100% · 배경 그래픽 켜기</b>를
+    선택하면 화면 그대로 나옵니다.</span>
+  <span>
+    <button onclick="window.print()">인쇄 / PDF로 저장</button>
+    {% if job_id %}<a href="{{ url_for('job_detail', job_id=job_id) }}">← 수정하러 가기</a>{% endif %}
+  </span>
+</div>
+
+<div class="sheet">
+  <!-- 표지 -->
+  <header class="cover">
+    <p class="eyebrow">보험 보장내용 쉬운 안내</p>
+    <h1>{{ doc.customer.name or '고객' }} 님의<br>보장 내용을 쉽게 정리했습니다</h1>
+    <table class="cover-info">
+      <tr><th>상품명</th><td>{{ doc.product or '-' }}</td>
+          <th>작성일</th><td>{{ doc.created_at }}</td></tr>
+      <tr><th>피보험자</th>
+          <td>{{ doc.customer.name or '-' }}
+            {%- if doc.customer.birth %} ({{ doc.customer.birth }}{% if doc.customer.gender %} · {{ doc.customer.gender }}{% endif %}){% endif %}</td>
+          <th>보장 건수</th><td>{{ doc.summary.total }}건</td></tr>
+      {% if doc.customer.memo %}
+      <tr><th>상담 메모</th><td colspan="3">{{ doc.customer.memo }}</td></tr>
+      {% endif %}
+    </table>
+    <p class="lead">
+      가입하신(또는 제안드린) 보장 하나하나에 대해 <b>어떤 병이 대상인지</b>,
+      <b>어떤 상황에서 보험금이 나오는지</b>, <b>무엇을 주의해야 하는지</b>를
+      약관에서 찾아 그대로 풀어 적었습니다. 궁금한 점은 언제든지 편하게 물어봐 주세요.
+    </p>
+  </header>
+
+  <!-- 요약표 -->
+  <section class="block">
+    <h2>한눈에 보기</h2>
+    <table class="summary">
+      <thead><tr><th style="width:34%">보장(특약)</th><th>가입금액</th><th>보험료</th>
+        <th style="width:38%">이런 보장입니다</th></tr></thead>
+      <tbody>
+      {% for n in doc.notes %}
+        <tr>
+          <td class="name">{{ n.matched_name or n.input_name }}</td>
+          <td class="num">{{ n.amount or '-' }}</td>
+          <td class="num">{{ n.premium or '-' }}</td>
+          <td class="desc">{{ n.headline }}</td>
+        </tr>
+      {% endfor %}
+      </tbody>
+    </table>
+    {% if doc.summary.total_premium %}
+    <p class="total">합계 보험료 {{ doc.summary.total_premium }}원</p>
+    {% endif %}
+  </section>
+
+  <!-- 특약별 상세 -->
+  {% for n in doc.notes %}
+  <section class="block rider-card">
+    <div class="rider-title">
+      <span class="badge">{{ n.type_label }}</span>
+      <h2>{{ n.matched_name or n.input_name }}</h2>
+      <span class="meta">
+        {%- if n.amount %}가입금액 {{ n.amount }}{% endif %}
+        {%- if n.premium %} · 보험료 {{ n.premium }}원{% endif %}
+        {%- if n.period %} · {{ n.period }}{% endif %}</span>
+    </div>
+
+    {% if n.unmatched %}
+      <p class="warn-box">약관에서 이 특약을 찾지 못했습니다. 특약명을 확인해 주세요.</p>
+    {% else %}
+    <p class="headline">{{ n.headline }}</p>
+
+    {% if n.definition %}
+    <div class="sec">
+      <h3>이 특약에서 말하는 대상</h3>
+      <p class="quote">{{ n.definition }}</p>
+      {% if doc.options.show_sources and n.definition_source %}
+        <p class="src">근거 {{ n.definition_source }}</p>{% endif %}
+    </div>
+    {% endif %}
+
+    {% for t in n.code_tables %}
+    <div class="sec">
+      <h3>어떤 병이 해당되나요? <span class="sub">— {{ t.name }} (총 {{ t.count }}개 항목)</span></h3>
+      <p class="ranges">
+        {% for r in t.ranges %}
+          <span class="code">{{ r.code }}</span>{% if r.meaning %}<span class="mean">{{ r.meaning }}</span>{% endif %}
+        {% endfor %}
+      </p>
+      {% set budget = 400 if doc.options.show_full_table else 20 %}
+      {% set shown = namespace(n=0) %}
+      {% for g in t.groups %}
+        {% set take = [budget - shown.n, 0] | max %}
+        {% if take > 0 %}
+          {% if t.groups|length > 1 %}<p class="grp">{{ g.group }}</p>{% endif %}
+          <table class="codes">
+            <thead><tr><th style="width:26%">질병분류코드</th><th>질병(약관 표기)</th>
+              <th style="width:30%">쉽게 말하면</th></tr></thead>
+            <tbody>
+            {% for it in g['items'][:take] %}
+              <tr><td class="c">{{ it.code }}</td><td>{{ it.label }}</td>
+                  <td class="plain">{{ it.plain }}</td></tr>
+            {% endfor %}
+            </tbody>
+          </table>
+          {% set shown.n = shown.n + (g['items'][:take] | length) %}
+        {% endif %}
+      {% endfor %}
+      {% if t.count > shown.n %}
+        <p class="more">…외 {{ t.count - shown.n }}개 항목이 더 있습니다.
+          위 <b>코드 범위</b> 안에 드는 질병이면 보장 대상입니다(전체 목록은 약관 분류표 참고).</p>
+      {% endif %}
+      <p class="tip">진단서에 적힌 <b>질병분류코드</b>가 위 코드에 들어가면 보장 대상입니다.
+        코드가 애매하면 진단서·검사기록을 함께 확인해 주세요.</p>
+    </div>
+    {% endfor %}
+
+    {% if n.payouts %}
+    <div class="sec">
+      <h3>이런 상황에서 보험금이 나옵니다</h3>
+      <ul class="list">
+        {% for p in n.payouts %}
+        <li>{{ p.text }}{% if doc.options.show_sources and p.source %}
+          <span class="src">({{ p.source }})</span>{% endif %}</li>
+        {% endfor %}
+      </ul>
+    </div>
+    {% endif %}
+
+    {% if n.cautions %}
+    <div class="sec caution">
+      <h3>꼭 확인해 주세요</h3>
+      <ul class="list">
+        {% for c in n.cautions %}
+        <li>{{ c.text }}{% if doc.options.show_sources and c.source %}
+          <span class="src">({{ c.source }})</span>{% endif %}</li>
+        {% endfor %}
+      </ul>
+    </div>
+    {% endif %}
+
+    <div class="two">
+      {% if n.exclusions %}
+      <div class="sec">
+        <h3>이럴 때는 보험금이 나오지 않습니다</h3>
+        <ul class="list small">{% for e in n.exclusions %}<li>{{ e.text }}</li>{% endfor %}</ul>
+      </div>
+      {% endif %}
+      {% if n.documents %}
+      <div class="sec">
+        <h3>청구할 때 필요한 서류</h3>
+        <ul class="list small">{% for d in n.documents %}<li>{{ d }}</li>{% endfor %}</ul>
+      </div>
+      {% endif %}
+    </div>
+
+    {% if n.note %}<p class="memo">설계사 메모 · {{ n.note }}</p>{% endif %}
+    {% if doc.options.show_sources %}
+      <p class="src foot-src">약관 출처: {{ n.product }} · {{ n.source_label }}</p>
+    {% endif %}
+    {% endif %}
+  </section>
+  {% endfor %}
+
+  <!-- 맺음 -->
+  <section class="block closing">
+    <h2>마무리 안내</h2>
+    <p>{{ doc.options.greeting or
+      (doc.customer.name ~ ' 님, 오늘 설명드린 내용을 다시 보실 수 있도록 정리했습니다. 보험금 청구가 필요하실 때 이 안내문을 먼저 보시고, 헷갈리는 부분은 바로 연락 주세요.'
+       if doc.customer.name else '오늘 설명드린 내용을 다시 보실 수 있도록 정리했습니다. 보험금 청구가 필요하실 때 이 안내문을 먼저 보시고, 헷갈리는 부분은 바로 연락 주세요.') }}</p>
+    <table class="cover-info">
+      <tr><th>담당 설계사</th><td>{{ doc.planner.name or '-' }}</td>
+          <th>연락처</th><td>{{ doc.planner.phone or '-' }}</td></tr>
+      <tr><th>소속</th><td colspan="3">{{ doc.planner.org or '-' }}</td></tr>
+    </table>
+    <p class="disclaimer">
+      ※ 이 안내문은 약관 내용을 고객이 이해하기 쉽도록 정리한 <b>참고 자료</b>이며,
+      보험계약의 내용은 <b>약관 원문</b>이 기준입니다. 보장 여부는 진단서·진료기록 등
+      실제 서류와 회사의 심사 기준에 따라 달라질 수 있습니다.
+      질병분류코드는 한국표준질병·사인분류(KCD) 개정에 따라 바뀔 수 있습니다.
+    </p>
+  </section>
+</div>
+</body>
+</html>

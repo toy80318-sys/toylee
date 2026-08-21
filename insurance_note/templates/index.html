@@ -1,0 +1,82 @@
+{% extends "layout.html" %}
+{% block content %}
+<section class="card hero">
+  <h1>고객정보와 상품제안서만 넣으면,<br>고객이 이해하기 쉬운 보장 안내문이 만들어집니다.</h1>
+  <p class="sub">약관 PDF에서 이 특약이 <b>어떤 질병(질병분류코드)</b>을 보장하는지,
+     <b>어떤 상황</b>에서 보험금이 나오는지, <b>무엇을 주의</b>해야 하는지를 자동으로 찾아
+     A4 한 장짜리 안내문으로 정리해 드립니다.</p>
+</section>
+
+{% if not index_ready %}
+<section class="card alert">
+  <b>먼저 약관 색인을 만들어 주세요.</b>
+  터미널에서 <code>python3 build_index.py</code> 를 한 번 실행하면 됩니다(약 1~2분).
+</section>
+{% endif %}
+
+<form class="card" method="post" action="{{ url_for('analyze') }}" enctype="multipart/form-data">
+  <h2>1. 고객정보</h2>
+  <div class="grid4">
+    <label>고객 성함<input name="customer_name" placeholder="예: 홍길동"></label>
+    <label>생년월일<input name="customer_birth" placeholder="예: 1980-01-01"></label>
+    <label>성별
+      <select name="customer_gender">
+        <option value="">선택</option><option>남</option><option>여</option>
+      </select>
+    </label>
+    <label>연락처<input name="customer_phone" placeholder="010-0000-0000"></label>
+  </div>
+  <label>고객 메모(안내문에 함께 인쇄됩니다)
+    <input name="customer_memo" placeholder="예: 부친 뇌졸중 병력, 뇌·심장 보장 중점 상담">
+  </label>
+
+  <h2>2. 상품제안서</h2>
+  <div class="grid2">
+    <label class="file">제안서 파일 업로드 (PDF · 스캔 이미지)
+      <input type="file" name="proposal" accept=".pdf,.png,.jpg,.jpeg,.tif,.tiff,.txt">
+      <span class="hint">스캔본이면 자동으로 글자 인식(OCR)을 시도합니다.</span>
+    </label>
+    <label>상품명(비워두면 제안서에서 찾습니다)
+      <input name="product" placeholder="예: 교보평생건강보험 PLUS">
+    </label>
+  </div>
+  <details>
+    <summary>파일 대신 제안서 내용을 붙여넣기</summary>
+    <textarea name="pasted_text" rows="6"
+      placeholder="특약명, 가입금액, 보험료가 한 줄씩 들어 있으면 됩니다."></textarea>
+  </details>
+  <label class="check"><input type="checkbox" name="force_ocr"> 텍스트가 있어도 무조건 OCR로 읽기</label>
+
+  <h2>3. 안내문 설정</h2>
+  <div class="grid4">
+    <label>설계사 성함<input name="planner_name"></label>
+    <label>연락처<input name="planner_phone"></label>
+    <label>소속<input name="planner_org"></label>
+    <label class="check"><input type="checkbox" name="show_sources" checked> 근거 조문 표시</label>
+  </div>
+  <label class="check"><input type="checkbox" name="show_full_table">
+    부록에 질병분류표 전체 싣기(코드가 많은 특약은 길어집니다)</label>
+  <label>맺음 인사말
+    <input name="greeting" placeholder="비워두면 기본 인사말이 들어갑니다">
+  </label>
+
+  <div class="actions"><button class="primary" type="submit">분석해서 안내문 만들기</button></div>
+</form>
+
+{% if recent %}
+<section class="card">
+  <h2>최근 작업</h2>
+  <table class="list">
+    <tr><th>고객</th><th>상품</th><th>특약</th><th>저장시각</th><th></th></tr>
+    {% for r in recent %}
+    <tr>
+      <td>{{ r.customer_name or '-' }}</td><td>{{ r.product or '-' }}</td>
+      <td>{{ r.riders }}건</td><td>{{ r.saved_at }}</td>
+      <td><a href="{{ url_for('job_detail', job_id=r.job_id) }}">열기</a>
+          · <a href="{{ url_for('report', job_id=r.job_id) }}" target="_blank">안내문</a></td>
+    </tr>
+    {% endfor %}
+  </table>
+</section>
+{% endif %}
+{% endblock %}

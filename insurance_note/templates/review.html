@@ -1,0 +1,131 @@
+{% extends "layout.html" %}
+{% block title %}검토 · 안내문 만들기{% endblock %}
+{% block content %}
+<section class="card head">
+  <div>
+    <h1>2단계 · 내용 확인</h1>
+    <p class="sub">자동으로 찾은 약관 내용을 확인하고, 필요하면 특약을 바꾸거나 메모를 넣으세요.
+      다 되었으면 <b>안내문 미리보기</b>에서 A4로 인쇄(또는 PDF 저장)하면 됩니다.</p>
+  </div>
+  <div class="head-actions">
+    <button class="ghost" id="btn-save">변경사항 저장</button>
+    <a class="primary" id="btn-report" href="{{ url_for('report', job_id=job_id) }}"
+       target="_blank">안내문 미리보기 / 인쇄</a>
+  </div>
+</section>
+
+{% for w in warnings %}<div class="card alert">{{ w }}</div>{% endfor %}
+
+<section class="card">
+  <div class="grid4">
+    <label>고객 성함<input id="c-name" value="{{ doc.customer.name }}"></label>
+    <label>생년월일<input id="c-birth" value="{{ doc.customer.birth }}"></label>
+    <label>성별<input id="c-gender" value="{{ doc.customer.gender }}"></label>
+    <label>연락처<input id="c-phone" value="{{ doc.customer.phone }}"></label>
+  </div>
+  <div class="grid4">
+    <label>상품명<input id="p-product" value="{{ doc.product }}"></label>
+    <label>설계사<input id="p-name" value="{{ doc.planner.name }}"></label>
+    <label>연락처<input id="p-phone" value="{{ doc.planner.phone }}"></label>
+    <label>소속<input id="p-org" value="{{ doc.planner.org }}"></label>
+  </div>
+  <div class="grid2">
+    <label>고객 메모<input id="c-memo" value="{{ doc.customer.memo }}"></label>
+    <label>맺음 인사말<input id="o-greeting" value="{{ doc.options.greeting }}"></label>
+  </div>
+  <label class="check"><input type="checkbox" id="o-sources"
+    {% if doc.options.show_sources %}checked{% endif %}> 근거 조문 표시</label>
+  <label class="check"><input type="checkbox" id="o-fulltable"
+    {% if doc.options.show_full_table %}checked{% endif %}> 부록에 질병분류표 전체 싣기</label>
+</section>
+
+<section class="card">
+  <h2>특약 {{ doc.notes|length }}건
+    <span class="chip {{ 'warn' if doc.summary.unmatched else 'ok' }}">
+      약관 매칭 {{ doc.summary.matched }} / {{ doc.summary.total }}</span>
+  </h2>
+  <div id="riders">
+  {% for n in doc.notes %}
+    <article class="rider {{ 'unmatched' if n.unmatched else '' }}" data-section="{{ n.section_id or '' }}">
+      <div class="rider-head">
+        <div class="grow">
+          <input class="r-name" value="{{ n.input_name }}" placeholder="특약명">
+          <div class="matched">
+            {% if n.unmatched %}
+              <span class="chip warn">약관을 찾지 못했습니다 — 아래에서 검색해 지정해 주세요</span>
+            {% else %}
+              <span class="chip ok">{{ n.product }} · {{ n.matched_name }}</span>
+              <span class="chip muted">일치도 {{ (n.confidence * 100) | round(0) | int }}%</span>
+              <span class="chip muted">{{ n.type_label }}형</span>
+            {% endif %}
+          </div>
+        </div>
+        <input class="r-amount" value="{{ n.amount }}" placeholder="가입금액">
+        <input class="r-premium" value="{{ n.premium }}" placeholder="보험료">
+        <input class="r-period" value="{{ n.period }}" placeholder="기간">
+        <button class="ghost r-del" title="삭제">✕</button>
+      </div>
+      <div class="rider-body">
+        <p class="headline">{{ n.headline }}</p>
+        {% if n.code_tables %}
+          <p class="codes">보장 대상 코드:
+          {% for t in n.code_tables %}
+            <b>{{ t.name }}</b>
+            {% for r in t.ranges[:8] %}<span class="code">{{ r.code }}</span>{% endfor %}
+            {% if t.ranges|length > 8 %}<span class="muted">외 {{ t.ranges|length - 8 }}개</span>{% endif %}
+          {% endfor %}
+          </p>
+        {% endif %}
+        {% if n.cautions %}
+          <ul class="mini">{% for c in n.cautions[:3] %}<li>{{ c.text }}</li>{% endfor %}</ul>
+        {% endif %}
+        <div class="row">
+          <input class="r-search" placeholder="다른 특약으로 바꾸기 - 이름 검색">
+          <select class="r-alt">
+            <option value="">— 검색 결과 —</option>
+            {% for a in n.alternatives %}
+              <option value="{{ a.section_id }}">{{ a.product }} · {{ a.name }}</option>
+            {% endfor %}
+          </select>
+          {% if n.section_id %}
+            <a class="ghost" href="{{ url_for('api_section', section_id=n.section_id) }}"
+               target="_blank">약관 원문</a>
+          {% endif %}
+        </div>
+        <input class="r-note" value="{{ n.note }}" placeholder="이 특약에 대한 설계사 메모(안내문에 인쇄)">
+      </div>
+    </article>
+  {% endfor %}
+  </div>
+  <div class="actions">
+    <button class="ghost" id="btn-add">+ 특약 직접 추가</button>
+    <button class="primary" id="btn-refresh">다시 분석</button>
+  </div>
+</section>
+
+<template id="tpl-rider">
+  <article class="rider unmatched" data-section="">
+    <div class="rider-head">
+      <div class="grow">
+        <input class="r-name" placeholder="특약명">
+        <div class="matched"><span class="chip warn">특약명을 입력하고 [다시 분석]을 누르세요</span></div>
+      </div>
+      <input class="r-amount" placeholder="가입금액">
+      <input class="r-premium" placeholder="보험료">
+      <input class="r-period" placeholder="기간">
+      <button class="ghost r-del">✕</button>
+    </div>
+    <div class="rider-body">
+      <div class="row">
+        <input class="r-search" placeholder="특약 이름 검색">
+        <select class="r-alt"><option value="">— 검색 결과 —</option></select>
+      </div>
+      <input class="r-note" placeholder="설계사 메모">
+    </div>
+  </article>
+</template>
+{% endblock %}
+{% block scripts %}
+<script>window.JOB_ID = "{{ job_id }}";</script>
+<script src="{{ url_for('static', filename='app.js') }}"></script>
+{% endblock %}
