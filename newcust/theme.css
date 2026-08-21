@@ -1,0 +1,53 @@
+/* 계약자 관리 — 토끼 · 민트 (평생든든의 곰돌이 · 분홍과 짝이 되도록 같은 뼈대에 색만 갈아 끼웁니다) */
+:root{
+  color-scheme:light;
+  /* 강조색은 민트(토끼), 바탕은 평생든든과 같은 미색입니다 */
+  --navy:#5cbfa9;--navy2:#48a993;--gold:#c9a95f;--ongold:#fff;
+  --rose:#39a189;--rose2:#2b8471;--rosebg:#e3f3ee;
+  --bg:#fffbf2;--card:#fffbf2;--line:#e7e0d2;--line2:#efe9dc;
+  --surf1:#f4f1e8;--surf2:#f9f6ed;--surf3:#fdfbf5;--hover:#f5efe4;
+  --field:#fff;--ib:#ded6c6;--btnline:#d5d8c9;
+  --txt:#3d4a44;--sub:#88857a;--brand:#2f8f7b;
+  --red:#c0563a;--org:#b8862c;--grn:#3f9e86;--blue:#5b87a8;
+  --redbg:#fbeee9;--orgbg:#faf3e3;--grnbg:#eaf5f0;--bluebg:#eef3f7;
+  --mentbg:#eef6f1;--mentline:#c8dfd5;--menttxt:#2f6255;
+  --basisbg:#faf6e8;--basisline:#e0d3a6;--basistxt:#96792c;
+  --warnbg:#f2f7ee;--warnline:#d3dfc6;--warntxt:#3f7f6c;
+}
+
+/* 가입설계 표는 칸이 많아 화면 폭을 넘습니다 — 눌러 담지 말고 옆으로 밀어 보게 합니다 */
+.tscroll table.form.rs th{white-space:nowrap}
+.tscroll table.form.rs input,.tscroll table.form.rs select{width:100%;box-sizing:border-box}
+
+/* ─────────────────────────────────────────────────────────────
+ * 글씨 키우기 — 이 프로그램은 표가 많아 같은 크기라도 작아 보입니다.
+ * 태블릿에서 편히 읽히도록 한 단계씩 올렸습니다.
+ * ───────────────────────────────────────────────────────────── */
+body{font-size:18.5px}
+header h1{font-size:28px}
+header p{font-size:16px}
+.tabs button{font-size:17px;padding:12px 21px}
+h2{font-size:20.5px}
+h2 .no{font-size:14.5px}
+h2 .ico{font-size:19.5px}
+.sub{font-size:15.5px}
+.gsub{font-size:14.5px}
+label{font-size:14.5px}
+input,select,textarea{font-size:17.5px}
+
+table.form{font-size:16.5px}
+table.form th{font-size:15.5px}
+table.form td.gk{font-size:15px}
+table.form input,table.form select{font-size:16.5px}
+table.form.rs th.rsno,table.form.rs td.rsno{font-size:14.5px}
+
+table.dt{font-size:15.5px}
+table.dt th{font-size:14.5px}
+
+.hint{font-size:14.5px}
+button.b{font-size:17px}
+.sm{font-size:15.5px;padding:8px 16px}
+.note,.warn,.err{font-size:15.5px}
+.rstop{font-size:16.5px}
+.toast{font-size:16.5px}
+.kpi .n{font-size:27px}.kpi .t{font-size:14.5px}

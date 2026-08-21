@@ -1,0 +1,386 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="color-scheme" content="light">
+<meta name="application-name" content="계약자 관리">
+<meta name="apple-mobile-web-app-title" content="계약자 관리">
+<meta name="theme-color" content="#fffbf2">
+<title>계약자 관리</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%20192%20192%27%3E%3Crect%20width%3D%27192%27%20height%3D%27192%27%20rx%3D%2736%27%20fill%3D%27%23e3f3ee%27%2F%3E%3Cg%20transform%3D%27rotate%28-12%2066%2048%29%27%3E%3Cellipse%20cx%3D%2766%27%20cy%3D%2748%27%20rx%3D%2715%27%20ry%3D%2734%27%20fill%3D%27%232b8471%27%2F%3E%3Cellipse%20cx%3D%2766%27%20cy%3D%2750%27%20rx%3D%277.5%27%20ry%3D%2724%27%20fill%3D%27%23ffebec%27%2F%3E%3C%2Fg%3E%3Cg%20transform%3D%27rotate%2812%20126%2048%29%27%3E%3Cellipse%20cx%3D%27126%27%20cy%3D%2748%27%20rx%3D%2715%27%20ry%3D%2734%27%20fill%3D%27%232b8471%27%2F%3E%3Cellipse%20cx%3D%27126%27%20cy%3D%2750%27%20rx%3D%277.5%27%20ry%3D%2724%27%20fill%3D%27%23ffebec%27%2F%3E%3C%2Fg%3E%3Cellipse%20cx%3D%2796%27%20cy%3D%27116%27%20rx%3D%2756%27%20ry%3D%2750%27%20fill%3D%27%233aa892%27%2F%3E%3Cellipse%20cx%3D%2756%27%20cy%3D%27130%27%20rx%3D%2713%27%20ry%3D%279%27%20fill%3D%27%23f69ca0%27%20opacity%3D%27.85%27%2F%3E%3Cellipse%20cx%3D%27136%27%20cy%3D%27130%27%20rx%3D%2713%27%20ry%3D%279%27%20fill%3D%27%23f69ca0%27%20opacity%3D%27.85%27%2F%3E%3Ccircle%20cx%3D%2775%27%20cy%3D%27108%27%20r%3D%2712%27%20fill%3D%27%23fffbf2%27%2F%3E%3Ccircle%20cx%3D%27117%27%20cy%3D%27108%27%20r%3D%2712%27%20fill%3D%27%23fffbf2%27%2F%3E%3Ccircle%20cx%3D%2775%27%20cy%3D%27109%27%20r%3D%278.4%27%20fill%3D%27%233d4a44%27%2F%3E%3Ccircle%20cx%3D%27117%27%20cy%3D%27109%27%20r%3D%278.4%27%20fill%3D%27%233d4a44%27%2F%3E%3Ccircle%20cx%3D%2771.5%27%20cy%3D%27105.5%27%20r%3D%273.6%27%20fill%3D%27%23fffbf2%27%2F%3E%3Ccircle%20cx%3D%27113.5%27%20cy%3D%27105.5%27%20r%3D%273.6%27%20fill%3D%27%23fffbf2%27%2F%3E%3Cg%20stroke%3D%27%23fffbf2%27%20stroke-width%3D%272.2%27%20stroke-linecap%3D%27round%27%3E%3Cpath%20d%3D%27M70%20135%2050%20130M70%20140%2048%20140M70%20145%2050%20150%27%2F%3E%3Cpath%20d%3D%27M122%20135%20142%20130M122%20140%20144%20140M122%20145%20142%20150%27%2F%3E%3C%2Fg%3E%3Cellipse%20cx%3D%2796%27%20cy%3D%27140%27%20rx%3D%2725%27%20ry%3D%2717%27%20fill%3D%27%23fffbf2%27%2F%3E%3Crect%20x%3D%2790.5%27%20y%3D%27145.5%27%20width%3D%2711%27%20height%3D%2713%27%20rx%3D%273%27%20fill%3D%27%233d4a44%27%2F%3E%3Crect%20x%3D%2792%27%20y%3D%27147%27%20width%3D%273.4%27%20height%3D%2710%27%20rx%3D%271.6%27%20fill%3D%27%23fffbf2%27%2F%3E%3Crect%20x%3D%2796.6%27%20y%3D%27147%27%20width%3D%273.4%27%20height%3D%2710%27%20rx%3D%271.6%27%20fill%3D%27%23fffbf2%27%2F%3E%3Cellipse%20cx%3D%2796%27%20cy%3D%27131%27%20rx%3D%278%27%20ry%3D%276%27%20fill%3D%27%233d4a44%27%2F%3E%3Cpath%20d%3D%27M96%20136v5%27%20stroke%3D%27%233d4a44%27%20stroke-width%3D%272.6%27%20stroke-linecap%3D%27round%27%2F%3E%3Cpath%20d%3D%27M96.5%20141a5.5%205.5%200%200%201-11%200M96.5%20141a5.5%205.5%200%200%200%2011%200%27%20fill%3D%27none%27%20stroke%3D%27%233d4a44%27%20stroke-width%3D%272.6%27%20stroke-linecap%3D%27round%27%2F%3E%3Cg%20transform%3D%27rotate%2832%20158%20163%29%27%3E%3Cellipse%20cx%3D%27158%27%20cy%3D%27163%27%20rx%3D%279%27%20ry%3D%2715%27%20fill%3D%27%23e88a4a%27%2F%3E%3C%2Fg%3E%3Cg%20transform%3D%27rotate%2830%20167%20150%29%27%3E%3Cellipse%20cx%3D%27167%27%20cy%3D%27150%27%20rx%3D%274%27%20ry%3D%277%27%20fill%3D%27%237ab260%27%2F%3E%3C%2Fg%3E%3Cg%20transform%3D%27rotate%28-8%20160%20147%29%27%3E%3Cellipse%20cx%3D%27160%27%20cy%3D%27147%27%20rx%3D%273.6%27%20ry%3D%276.5%27%20fill%3D%27%237ab260%27%2F%3E%3C%2Fg%3E%3C%2Fsvg%3E">
+<link rel="stylesheet" href="/style.css">
+<link rel="stylesheet" href="/newcust/theme.css">
+</head>
+<body>
+
+<header><div class="wrap">
+  <div class="dots noprint"><i></i><i></i><i></i></div>
+  <div class="ttl">
+    <span class="bear" aria-hidden="true">🐰</span>
+    <h1>계약자 관리</h1>
+    <span class="bear" aria-hidden="true">🐰</span>
+  </div>
+  <p><b>상품제안서</b>를 불러오면 → 특약과 금액이 한 번에 들어가고 → <b>쉬운 설명 · 증상별 보장금액 · 면책 · 보장개시일 · 갱신</b>이 자동으로 정리되며 → <b>해약환급금 · 사망보험금</b>을 경과년수별로 바로 찾아보실 수 있습니다.</p>
+  <div class="tabs noprint">
+    <button id="tb1" class="on" data-tab="1">① 고객정보</button>
+    <button id="tb2" data-tab="2">② 보장설명</button>
+    <button id="tb3" data-tab="3">③ 환급금</button>
+    <button id="tb4" data-tab="4">④ 청구내역</button>
+    <button id="tb5" data-tab="5">⑤ 상담메모</button>
+    <button id="tb6" data-tab="6">⑥ 고객터치</button>
+    <button id="tb7" data-tab="7">⑦ 누적통계</button>
+  </div>
+</div></header>
+
+<div class="wrap sheet">
+
+<!-- ============ ① 고객정보 ============ -->
+<div class="pane on" id="p1">
+<div id="restoreBar" class="warn noprint" style="display:none;margin-top:16px"></div>
+
+<div class="card">
+  <div class="grid g3">
+    <div><label>고객 성명</label><input id="h_cust" placeholder="홍길동"></div>
+    <div><label>지점 · F P</label><input id="h_fp" placeholder="교보생명 평촌지점 추진이 FP"></div>
+    <div><label>작성일</label><input id="h_date" data-date></div>
+  </div>
+  <div class="btns noprint" style="margin-top:11px">
+    <button class="b b-main sm" id="btnSave">💾 이 고객 저장</button>
+    <button class="b b-gold sm" data-tab="7">📂 저장된 고객 불러오기</button>
+    <button class="b b-sub sm" id="btnNew">🆕 새 고객 시작</button>
+    <button class="b b-sub sm" id="btnDemo">예시 입력</button>
+    <span class="hint" id="saveState" style="align-self:center"></span>
+  </div>
+</div>
+
+<div class="card">
+  <h2><span class="ico">📄</span>상품제안서 불러오기</h2>
+  <p class="sub">특약을 하나씩 고르고 금액을 두드리지 않으셔도 됩니다.
+    <b>상품제안서 사진을 대화창에 올려 받은 「설계 코드」</b>를 아래에 붙여넣고 [불러오기]를 누르시면
+    보험 · 특약 · 가입금액 · 보험료 · <b>해약환급금 예시표</b>가 한 번에 들어갑니다.</p>
+  <div class="btns noprint" style="margin-bottom:10px">
+    <button class="b b-main sm" id="btnShotOpen">📷 사진으로 바로 읽기</button>
+    <button class="b b-gold sm" id="btnImpOpen">📋 설계 코드 붙여넣기</button>
+    <button class="b b-sub sm" id="btnImpSample">예시 코드 넣어보기</button>
+  </div>
+
+  <div id="shotCard" style="display:none;margin-bottom:14px">
+    <div class="card" style="margin:0 0 12px">
+      <h2 style="font-size:17px"><span class="no">1</span>Claude API 키 <span class="gsub">— 맨 처음 한 번만</span></h2>
+      <p class="sub">제안서를 읽어 주는 곳에 연결하는 열쇠입니다.
+        <b>이 기기 브라우저에만 저장</b>되고 다른 곳으로 나가지 않습니다.</p>
+      <div class="btns" style="margin-bottom:8px">
+        <input id="apiKey" type="password" placeholder="sk-ant-..." autocomplete="off"
+               style="max-width:340px;font-family:ui-monospace,Menlo,Consolas,monospace">
+        <button class="b b-main sm" id="btnKeySave">저장</button>
+        <button class="b b-sub sm" id="btnKeyTest">연결 시험</button>
+        <button class="b b-red sm" id="btnKeyClear">키 지우기</button>
+      </div>
+      <div class="hint" id="keyMsg">키는 <b>console.anthropic.com</b> → API Keys 에서 만드실 수 있습니다.
+        키를 쓰면 읽을 때마다 <b>소액 요금</b>이 그 계정으로 청구됩니다.</div>
+    </div>
+
+    <div class="card" style="margin:0 0 12px">
+      <h2 style="font-size:17px"><span class="no">2</span>제안서 페이지 넣기</h2>
+      <p class="sub">필요한 쪽만 사진으로 찍거나 캡처해서 넣으세요 —
+        <b>표지 · 기본 계약정보 · 보장 내용 · 해약환급금 예시표</b> 네 군데면 충분합니다.
+        (사진 jpg · png, 또는 PDF)</p>
+      <div class="btns" style="margin-bottom:10px">
+        <input type="file" id="shotFiles" accept="image/*,application/pdf" multiple style="max-width:320px">
+        <button class="b b-sub sm" id="btnShotClear">전부 빼기</button>
+      </div>
+      <div id="shotList"></div>
+    </div>
+
+    <div class="card" style="margin:0">
+      <h2 style="font-size:17px"><span class="no">3</span>읽어들이기</h2>
+      <div class="btns" style="margin-bottom:10px">
+        <button class="b b-main sm" id="btnShotRun">🔍 제안서 읽기</button>
+        <button class="b b-sub sm" id="btnShotClose">닫기</button>
+      </div>
+      <div id="shotMsg"></div>
+    </div>
+  </div>
+  <div id="impCard" style="display:none">
+    <textarea id="impText" rows="8" placeholder="여기에 설계 코드를 붙여넣으세요 ( { 로 시작하는 부분 )"
+      style="width:100%;font-family:ui-monospace,Menlo,Consolas,monospace;font-size:14px"></textarea>
+    <div class="btns" style="margin-top:10px">
+      <button class="b b-main sm" id="btnImpRead">📋 읽어보기</button>
+      <button class="b b-gold sm" id="btnImpApply" style="display:none">✔ 이대로 넣기</button>
+      <button class="b b-sub sm" id="btnImpClose">닫기</button>
+    </div>
+    <div id="impMsg" style="margin-top:11px"></div>
+  </div>
+</div>
+
+<div class="card">
+  <h2><span class="ico">♥</span><span class="no">1</span>고객 정보</h2>
+  <p class="sub">생년월일을 넣으면 <b>보험나이</b>와 <b>상령일</b>(나이가 한 살 오르는 날)이 자동으로 잡힙니다.</p>
+  <table class="form">
+    <tr><td class="gk w1">생년월일</td><td><input id="p_birth" data-date></td>
+        <td class="gk w1">성별</td><td><select id="p_sex"><option value=""></option><option>남</option><option>여</option></select></td>
+        <td class="gk w1">보험나이</td><td><input id="p_age" type="number" class="autoval"></td></tr>
+    <tr><td class="gk">전화번호</td><td><input id="p_phone" placeholder="010-0000-0000" inputmode="tel"></td>
+        <td class="gk">이메일</td><td><input id="p_email"></td>
+        <td class="gk">직 업</td><td><input id="p_job"></td></tr>
+    <tr><td class="gk">주 소</td><td colspan="5"><input id="p_addr"></td></tr>
+    <tr><td class="gk">기념일</td><td><input id="p_anniv" placeholder="결혼기념일 05-06"></td>
+        <td class="gk">가족사항</td><td><input id="p_family" placeholder="배우자 · 자녀 나이"></td>
+        <td class="gk">가입 경로</td><td><input id="p_route" placeholder="소개 · DB"></td></tr>
+    <tr><td class="gk">납입방법<br>이체일</td><td><input id="p_pay" placeholder="카드 / 매월 25일"></td>
+        <td class="gk">특이사항</td><td colspan="3"><textarea id="p_memo" rows="2"></textarea></td></tr>
+  </table>
+  <div class="hint" id="ageMsg" style="margin-top:7px"></div>
+</div>
+
+<div class="card">
+  <h2><span class="ico">✿</span><span class="no">2</span>가입설계 내역</h2>
+  <p class="sub">보험(주계약)을 먼저 넣고, 그 아래에 특약을 넣으세요. <b>보험명</b>을 같게 적으면 특약이 그 보험에 붙습니다.</p>
+  <div id="rs_plans"></div>
+  <div class="hint" id="planMsg" style="margin-top:7px"></div>
+
+  <div class="rsblock">
+    <div class="rshd"><b>특약</b><span class="gsub">가입금액을 넣으면 아래 보장 요약에 지급보험금이 계산됩니다</span></div>
+    <div id="rs_riders"></div>
+  </div>
+</div>
+
+<div class="card note noprint">
+  가입설계를 넣으셨으면 <b>② 보장설명</b>에서 특약별 쉬운 설명과 증상별 보장금액을,
+  <b>③ 환급금</b>에서 경과년수별 해약환급금 · 사망보험금을 보실 수 있습니다.
+</div>
+</div><!-- /p1 -->
+
+
+
+<!-- ============ ② 보장설명 ============ -->
+<div class="pane" id="p2">
+
+<div class="card">
+  <h2><span class="ico">★</span><span class="no">1</span>보장 설명 <span class="gsub">— 고객께 그대로 보여드리는 화면</span></h2>
+  <p class="sub">특약마다 <b>쉬운 한 줄 설명 · 어떤 증상에 얼마가 나오는지 · 언제부터 보장되는지 · 갱신은 언제인지</b>를
+    자동으로 정리했습니다.</p>
+  <div class="btns noprint" style="margin-bottom:10px">
+    <button class="b b-main sm" id="btnCalc">📊 다시 정리</button>
+    <button class="b b-gold sm" id="btnPrintCov">🖨 인쇄 · PDF로 저장</button>
+    <button class="b b-sub sm" id="btnCovMode">표로 보기</button>
+    <button class="b b-sub sm" id="btnProd">📕 보험 · 약관 고치기</button>
+    <button class="b b-sub sm" id="btnDict">⚙ 특약 사전 고치기</button>
+  </div>
+  <div id="covBox"></div>
+</div>
+
+<div class="card noprint" id="prodCard" style="display:none">
+  <h2><span class="ico">📕</span>보험 · 약관</h2>
+  <p class="sub">여기에 넣은 <b>보험명</b>이 ②의 드롭다운에 뜹니다. 보험을 고르면 <b>그 약관의 지급기준</b>으로 보험금이 계산됩니다.</p>
+  <div class="btns" style="margin-bottom:10px">
+    <select id="prodPick" style="max-width:280px"></select>
+    <button class="b b-sub sm" id="btnProdAdd">＋ 보험 추가</button>
+    <button class="b b-sub sm" id="btnProdRider">＋ 특약 추가</button>
+    <button class="b b-red sm" id="btnProdDel">이 보험 삭제</button>
+  </div>
+  <div id="prodBox"></div>
+  <div class="btns" style="margin-top:10px">
+    <button class="b b-main sm" id="btnProdSave">저장</button>
+    <button class="b b-sub sm" id="btnProdReset">기본값으로 되돌리기</button>
+    <button class="b b-sub sm" id="btnProdClose">닫기</button>
+  </div>
+</div>
+
+<div class="card noprint" id="dictCard" style="display:none">
+  <h2><span class="ico">⚙</span>특약 사전</h2>
+  <p class="sub">여기 값으로 지급보험금이 계산됩니다. <b>약관의 실제 지급률로 고쳐 두시면</b> 이 기기에 저장되어 계속 쓰입니다.</p>
+  <div id="dictBox"></div>
+  <div class="btns" style="margin-top:10px">
+    <button class="b b-main sm" id="btnDictSave">저장</button>
+    <button class="b b-sub sm" id="btnDictReset">기본값으로 되돌리기</button>
+    <button class="b b-sub sm" id="btnDictClose">닫기</button>
+  </div>
+</div>
+
+</div><!-- /p2 -->
+
+
+<!-- ============ ③ 환급금 ============ -->
+<div class="pane" id="p3">
+
+<div class="card">
+  <h2><span class="ico">💰</span><span class="no">1</span>해약환급금 · 사망보험금 찾아보기</h2>
+  <p class="sub">경과년수나 나이를 넣으시면 그때 <b>낸 보험료 · 해약환급금 · 환급률 · 사망시 지급액</b>이 바로 나옵니다.
+    <b>상품제안서에 인쇄된 예시표에서 찾은 금액</b>이라 그대로 안내하셔도 됩니다.</p>
+  <div class="btns noprint" style="margin-bottom:12px;align-items:flex-end">
+    <div><label>보험</label><select id="cashPlan" style="max-width:300px"></select></div>
+    <div><label>경과년수</label><input id="cashYear" type="number" min="0" step="1" style="max-width:110px" placeholder="10"></div>
+    <div><label>또는 나이</label><input id="cashAge" type="number" min="0" step="1" style="max-width:110px" placeholder="53"></div>
+  </div>
+  <div class="btns noprint" style="margin-bottom:12px">
+    <button class="b b-sub sm" data-cashjump="now">지금 해지하면</button>
+    <button class="b b-sub sm" data-cashjump="payend">납입 끝나면</button>
+    <button class="b b-sub sm" data-cashjump="even">낸 돈만큼 되는 때</button>
+    <button class="b b-sub sm" data-cashjump="last">표의 마지막</button>
+  </div>
+  <div id="cashOut"></div>
+</div>
+
+<div class="card">
+  <h2><span class="ico">✦</span><span class="no">2</span>해약환급금 예시표</h2>
+  <p class="sub">상품제안서의 표를 그대로 옮긴 것입니다. 제안서를 불러오시면 자동으로 채워집니다.</p>
+  <div id="rs_cash"></div>
+</div>
+
+<div class="card note">
+  <b>왜 계산하지 않고 표에서 찾나요?</b> ·
+  해약환급금은 <b>예정해약환급금 · 공시이율로 쌓인 적립액 · 최저보증액 중 큰 금액</b>에서 보증비용을 뺀 값이고,
+  저해약환급금형이면 납입기간 중에는 여기에 <b>해지지급률</b>까지 곱합니다. 공시이율은 매달 바뀝니다.
+  프로그램이 어림잡아 계산하면 회사 금액과 어긋나 <b>잘못 안내</b>하게 되므로,
+  <b>회사가 제안서에 찍어 드린 금액</b>을 그대로 찾아 보여드립니다.
+</div>
+</div><!-- /p3 -->
+
+<!-- ============ ④ 사고보험금 청구내역 ============ -->
+<div class="pane" id="p4">
+  <div class="card">
+    <h2><span class="ico">✦</span><span class="no">1</span>사고보험금 청구내역</h2>
+    <p class="sub">청구한 건과 지급받은 내역을 남겨 두면 ⑤ 누적통계에서 합계가 잡힙니다.</p>
+    <div id="rs_claims"></div>
+    <div id="claimSum" style="margin-top:12px"></div>
+  </div>
+  <div class="card note">
+    보험금 청구권의 <b>소멸시효는 3년</b>입니다. 오래된 건부터 확인해 주세요.
+    청구 후 지급까지 시간이 걸리는 건은 <b>상태</b> 칸에 접수 · 심사 · 지급으로 남겨 두시면 놓치지 않습니다.
+  </div>
+</div>
+
+
+<!-- ============ ⑤ 방문준비 · 상담메모 ============ -->
+<div class="pane" id="p5">
+  <div class="card">
+    <h2><span class="ico">♥</span><span class="no">1</span>방문 전 준비물</h2>
+    <div class="grid g4" id="prepBox"></div>
+  </div>
+
+  <div class="card">
+    <h2><span class="ico">✿</span><span class="no">2</span>상담 메모</h2>
+    <div id="rs_talks"></div>
+    <table class="form" style="margin-top:14px">
+      <tr><td class="gk w1">고객 요청사항</td><td colspan="3"><textarea id="m_req" rows="2"></textarea></td></tr>
+      <tr><td class="gk">상담 메모</td><td colspan="3"><textarea id="m_note" rows="3"></textarea></td></tr>
+    </table>
+    <div class="rsblock">
+      <div class="rshd"><b>후속조치</b><span class="gsub">처리기한을 넣으면 ④ 고객터치에 알림으로 뜹니다</span></div>
+      <div id="rs_follows"></div>
+    </div>
+    <table class="form" style="margin-top:14px">
+      <tr><td class="gk w1">고객 등급</td>
+        <td><select id="m_grade"><option value="">선택</option>
+          <option value="A">A (적극 관리)</option><option value="B">B (정기 관리)</option><option value="C">C (유지)</option></select></td>
+        <td class="gk w1">차기 방문예정일</td><td><input id="m_next" data-date></td></tr>
+    </table>
+  </div>
+
+  <div class="card">
+    <h2><span class="ico">★</span><span class="no">3</span>신규계약 후 챙길 것</h2>
+    <div class="grid g2" id="extraBox"></div>
+  </div>
+</div>
+
+
+<!-- ============ ⑥ 고객터치 ============ -->
+<div class="pane" id="p6">
+  <div class="card">
+    <h2><span class="ico">🔔</span><span class="no">1</span>알림 <span class="gsub">— 챙겨야 할 날</span></h2>
+    <p class="sub">생일 · 기념일 · <b>상령일</b> · <b>특약별 보장 개시일</b>(면책 종료) · <b>감액 종료일</b> · 만기일 · 납입 만료일이 가까운 순서로 나옵니다.</p>
+    <div class="btns noprint" style="margin-bottom:10px">
+      <button class="b b-main sm" id="btnAlert">🔔 알림 다시 계산</button>
+      <span class="hint" style="align-self:center">30일 안쪽은 <b style="color:var(--rose)">분홍</b>, 지난 것은 <b style="color:var(--red)">빨강</b>으로 표시됩니다</span>
+    </div>
+    <div id="alertBox"></div>
+  </div>
+
+  <div class="card">
+    <h2><span class="ico">✿</span><span class="no">2</span>고객터치 기록</h2>
+    <p class="sub">연락하거나 만난 기록입니다. 알림을 처리하시면 여기에 한 줄 남겨 두세요.</p>
+    <div id="rs_touches"></div>
+  </div>
+</div>
+
+
+<!-- ============ ⑦ 누적통계 ============ -->
+<div class="pane" id="p7">
+  <div class="card">
+    <h2><span class="ico">✦</span><span class="no">1</span>누적 통계</h2>
+    <div class="kpi" id="s_kpi"></div>
+  </div>
+
+  <div class="card">
+    <h2><span class="ico">🔔</span><span class="no">2</span>이번 달 챙길 고객 <span class="gsub">— 전체 고객 기준</span></h2>
+    <p class="sub">저장해 두신 모든 고객의 알림 중 <b>30일 안쪽</b>에 있는 것만 모았습니다.</p>
+    <div id="s_alert"></div>
+  </div>
+
+  <div class="card">
+    <h2><span class="ico">🐰</span><span class="no">3</span>저장된 고객</h2>
+    <div class="btns noprint" style="margin-bottom:11px">
+      <input id="q" placeholder="고객명 · 보험명 검색" style="max-width:240px">
+      <button class="b b-sub sm" id="btnReload">🔄 새로고침</button>
+      <button class="b b-gold sm" id="btnBackup">📦 전체 백업 파일 저장</button>
+      <button class="b b-sub sm" id="btnRestorePick">📂 백업 파일 복원</button>
+      <input type="file" id="rf" accept=".json" style="display:none">
+      <button class="b b-sub sm" id="btnCsv">📑 CSV 내보내기</button>
+      <button class="b b-sub sm" id="btnLedger">📊 누적 관리대장 (.xlsx)</button>
+      <button class="b b-red sm" id="btnWipe">전체 삭제</button>
+    </div>
+    <div class="warn noprint" style="margin-bottom:12px">
+      <b>보관 안내</b> · 자료는 <b>이 기기의 브라우저 안</b>에 쌓입니다. 브라우저 기록을 지우면 함께 사라지니
+      주 1회 <b>[전체 백업 파일 저장]</b>을 눌러 파일로 남겨 두세요.
+    </div>
+    <div id="dbBox"></div>
+  </div>
+
+  <div class="card">
+    <h2><span class="ico">✦</span><span class="no">4</span>월별 신규 추이</h2>
+    <div id="s_month"></div>
+  </div>
+
+  <div class="card noprint">
+    <h2><span class="ico">🐰</span><span class="no">5</span>바탕화면 아이콘</h2>
+    <p class="sub">바탕화면 바로가기에 쓸 토끼 그림입니다. <b>그림을 꾹 눌러 [이미지 저장]</b>을 고르시면 사진첩에 저장됩니다.</p>
+    <div style="display:flex;gap:18px;align-items:center;flex-wrap:wrap">
+      <img id="iconImg" alt="계약자 관리 토끼 아이콘" width="150" height="150"
+           style="border-radius:26px;border:1px solid var(--line);background:var(--field)">
+      <div class="hint" style="max-width:420px;line-height:1.8">
+        <b>바탕화면에 놓는 방법</b><br>
+        ① 위 그림을 꾹 눌러 <b>[이미지 저장]</b><br>
+        ② 바로가기 만드는 앱에서 <b>아이콘 → 갤러리</b>로 이 그림 고르기<br>
+        ③ 이름은 <b>계약자 관리</b><br><br>
+        삼성 인터넷에서 이 파일을 연 채 <b>[홈 화면에 추가]</b>를 하시면 이 그림이 그대로 아이콘이 됩니다.
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="card note">
+  <b>안내</b> · 특약별 보장영역과 지급보험금은 <b>특약 사전</b>에 들어 있는 값으로 계산한 <b>참고용</b>입니다.
+  실제 지급 여부와 금액은 <b>반드시 약관과 회사 시스템에서 최종 확인</b>하신 뒤 고객께 안내해 주세요.
+  고객 개인정보가 담기므로 백업 파일은 회사 보안 규정에 따라 관리해 주세요.
+</div>
+
+</div><!-- /wrap -->
+
+<div class="toast" id="toast"></div>
+<input type="date" id="pickHelper" style="position:fixed;left:-9999px;top:0;width:1px;height:1px;opacity:0">
+
+<script src="/shared/calc.js"></script>
+<script src="/newcust/schema.js"></script>
+<script src="/newcust/products-gen.js"></script>
+<script src="/newcust/products.js"></script>
+<script src="/newcust/riders.js"></script>
+<script src="/newcust/engine.js"></script>
+<script src="/standalone/anthropic-sdk.js"></script>
+<script src="/newcust/importer.js"></script>
+<script src="/newcust/reader.js"></script>
+<script src="/standalone/xlsx-lite.js"></script>
+<script src="/newcust/app.js"></script>
+</body>
+</html>

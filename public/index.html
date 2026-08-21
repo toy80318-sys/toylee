@@ -1,0 +1,403 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="color-scheme" content="light">
+<meta name="application-name" content="평생든든">
+<meta name="apple-mobile-web-app-title" content="평생든든">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="theme-color" content="#fffbf2">
+<!-- 태블릿 바탕화면 바로가기 아이콘 (곰돌이) -->
+<link rel="apple-touch-icon" sizes="192x192" href="data:image/png;base64,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">
+<link rel="icon" type="image/png" sizes="192x192" href="data:image/png;base64,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">
+<title>평생든든 방문활동 사전준비 · 자동분석 프로그램</title>
+<link rel="stylesheet" href="/style.css">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27 viewBox%3D%270 0 32 32%27%3E%3Crect width%3D%2732%27 height%3D%2732%27 rx%3D%277%27 fill%3D%27%23fbe2e7%27%2F%3E%3Ccircle cx%3D%279.5%27 cy%3D%2710%27 r%3D%274.3%27 fill%3D%27%23b85c78%27%2F%3E%3Ccircle cx%3D%2722.5%27 cy%3D%2710%27 r%3D%274.3%27 fill%3D%27%23b85c78%27%2F%3E%3Ccircle cx%3D%279.5%27 cy%3D%2710%27 r%3D%272.3%27 fill%3D%27%23fbe2e7%27%2F%3E%3Ccircle cx%3D%2722.5%27 cy%3D%2710%27 r%3D%272.3%27 fill%3D%27%23fbe2e7%27%2F%3E%3Ccircle cx%3D%2716%27 cy%3D%2718.2%27 r%3D%279%27 fill%3D%27%23d85b7e%27%2F%3E%3Ccircle cx%3D%2712.4%27 cy%3D%2716.4%27 r%3D%272%27 fill%3D%27%23fffbf2%27%2F%3E%3Ccircle cx%3D%2719.6%27 cy%3D%2716.4%27 r%3D%272%27 fill%3D%27%23fffbf2%27%2F%3E%3Ccircle cx%3D%2712.4%27 cy%3D%2716.6%27 r%3D%271.35%27 fill%3D%27%233d4f48%27%2F%3E%3Ccircle cx%3D%2719.6%27 cy%3D%2716.6%27 r%3D%271.35%27 fill%3D%27%233d4f48%27%2F%3E%3Cellipse cx%3D%2716%27 cy%3D%2722.2%27 rx%3D%274.3%27 ry%3D%273.2%27 fill%3D%27%23fffbf2%27%2F%3E%3Cellipse cx%3D%2716%27 cy%3D%2720.6%27 rx%3D%271.5%27 ry%3D%271.1%27 fill%3D%27%233d4f48%27%2F%3E%3Cpath d%3D%27M16 21.6 v1.1 M16 22.7 a1 1 0 0 1 -1.6 0 M16 22.7 a1 1 0 0 0 1.6 0%27 stroke%3D%27%233d4f48%27 stroke-width%3D%27.5%27 fill%3D%27none%27 stroke-linecap%3D%27round%27%2F%3E%3C%2Fsvg%3E">
+</head>
+<body>
+
+<header><div class="wrap">
+  <div class="dots noprint"><i></i><i></i><i></i></div>
+  <div class="ttl">
+    <span class="bear" aria-hidden="true">🧸</span>
+    <h1>평생든든 방문활동 사전준비</h1>
+    <span class="bear" aria-hidden="true">🧸</span>
+  </div>
+  <p>회사 양식(앞면·뒷면)을 그대로 입력하면 → 숨은보험금·할인 대상 자동 판정 → 고객 안내 멘트와 제안 근거 → 준비물 자동 체크 → <b>고객별 누적 저장</b>까지 한 번에 처리합니다.</p>
+  <div class="tabs noprint">
+    <button id="tb1" class="on" data-tab="1">① 고객 입력</button>
+    <button id="tb2" data-tab="2">② 진단 결과</button>
+    <button id="tb3" data-tab="3">③ 방문준비 · 상담메모</button>
+    <button id="tb4" data-tab="4">④ 고객 누적 DB</button>
+    <button id="tb5" data-tab="5">⑤ 누적 통계</button>
+  </div>
+</div></header>
+
+<div class="wrap sheet">
+
+<!-- ================= TAB 1 : 입력 ================= -->
+<div class="pane on" id="p1">
+
+<div id="netWarn" class="err noprint" style="display:none;margin-top:16px"></div>
+<div id="restoreBar" class="warn noprint" style="display:none;margin-top:16px"></div>
+
+<div class="card">
+  <div class="grid g3">
+    <div><label>고객(계약자) 성명</label><input id="h_cust" placeholder="홍길동"></div>
+    <div><label>지점 · F P</label><input id="h_fp" placeholder="교보생명 평촌지점 추진이 FP">
+      <div class="hint">자동으로 채워집니다. 고쳐 넣으시면 다음부터 그 이름으로 기억합니다.</div></div>
+    <div><label>분석일</label><input id="h_adate" data-date></div>
+  </div>
+  <div class="btns noprint" style="margin-top:11px">
+    <button class="b b-main sm" id="btnSave">💾 이 고객 저장</button>
+    <button class="b b-gold sm" data-tab="4">📂 저장된 고객 불러오기</button>
+    <button class="b b-sub sm" id="btnNew">🆕 새 고객 시작</button>
+    <button class="b b-sub sm" id="btnDemo">예시 입력</button>
+    <span class="hint" id="saveState" style="align-self:center"></span>
+  </div>
+  <div class="hint" style="margin-top:7px">
+    ※ 한 고객의 가입 계약을 <b>한 장에 모아</b> 적는 양식입니다. 계약은 아래 ②의 [가입건수] 표에 건별로 넣으세요.
+    입력하시는 내용은 <b>이 기기에 자동으로 임시 보관</b>되고, [저장]을 누르면 <b>고객 누적 DB</b>에 기록됩니다.
+  </div>
+</div>
+
+<div class="card">
+  <h2><span class="ico">♥</span><span class="no">1</span>인적사항</h2>
+  <p class="sub">고객 연락 정보입니다. 주소가 바뀌었으면 변경 전·후를 함께 남겨 두세요.</p>
+  <table class="form">
+    <tr><td class="gk w1">전화번호</td><td><input id="p_phone" placeholder="010-0000-0000" inputmode="tel"></td>
+        <td class="gk w1">직 업</td><td><input id="p_job"></td></tr>
+    <tr><td class="gk">고객생일</td><td><input id="p_bday" placeholder="03-20 또는 1971-03-20"></td>
+        <td class="gk">기념일</td><td><input id="p_anniv" placeholder="결혼기념일 05-06"></td></tr>
+    <tr><td class="gk" rowspan="2">주 소</td><td colspan="3"><div class="addr"><span>변경 전 :</span><input id="p_addr0"></div></td></tr>
+    <tr><td colspan="3"><div class="addr"><span>변경 후 :</span><input id="p_addr1"></div></td></tr>
+  </table>
+</div>
+
+<div class="card">
+  <h2><span class="ico">✿</span><span class="no">2</span>계약사항</h2>
+  <p class="sub">가입하신 계약을 건별로 적습니다. <b>가입일</b>은 2006년 2월 이전 여부를 자동 판정하는 데 쓰이므로 꼭 넣어 주세요.</p>
+  <div id="rs_contracts"></div>
+  <div class="hint" id="rs_contractsMsg" style="margin-top:7px"></div>
+
+  <div class="tscroll" style="margin-top:14px">
+  <table class="form">
+    <tr><th colspan="5">계약자</th><th colspan="5">주피보험자</th><th colspan="2">수익자</th></tr>
+    <tr><th class="wname">성명</th><th class="wsex">성별</th><th class="wbirth">생년월일</th><th class="wage">가입연령</th><th class="wage">현재연령</th>
+        <th class="wname">성명</th><th class="wsex">성별</th><th class="wbirth">생년월일</th><th class="wage">가입연령</th><th class="wage">현재연령</th>
+        <th class="wben">입원시</th><th class="wben">사망시</th></tr>
+    <tr>
+      <td><input id="c_on"></td>
+      <td><select id="c_os" class="sx"><option></option><option>남</option><option>여</option></select></td>
+      <td><input id="c_obirth" data-date></td>
+      <td><input id="c_oja" type="number"></td><td><input id="c_ona" type="number"></td>
+      <td><input id="c_in"></td>
+      <td><select id="c_is" class="sx"><option></option><option>남</option><option>여</option></select></td>
+      <td><input id="c_ibirth" data-date></td>
+      <td><input id="c_ija" type="number"></td><td><input id="c_ina" type="number"></td>
+      <td><input id="c_bh" placeholder="예: 본인"></td><td><input id="c_bd" placeholder="예: 배우자"></td>
+    </tr>
+  </table>
+  </div>
+  <div class="hint tscroll-hint">※ 화면이 좁으면 위 표를 <b>옆으로 밀어서</b> 나머지 칸을 보실 수 있습니다.</div>
+  <div class="hint" id="c_ageMsg" style="margin-top:7px">생년월일을 넣으시면 회사 기준(계약일 − 생년월일 → 6개월 미만은 버리고, 6개월 이상이면 한 살 올림)으로 가입연령·현재연령이 자동 계산됩니다.</div>
+
+  <table class="form" style="margin-top:12px">
+    <tr><td class="gk w1" rowspan="2">인수조건</td><th class="wuw">부담보</th><th class="wuw">할증</th><th class="wuw">삭감</th></tr>
+    <tr><td><input id="c_uwx" placeholder="부위 · 기간"></td>
+        <td><input id="c_uwu" placeholder="할증률 · 사유"></td>
+        <td><input id="c_uwc" placeholder="삭감 내용 · 기간"></td></tr>
+  </table>
+</div>
+
+<div class="card">
+  <h2><span class="ico">★</span><span class="no">3</span>계약 DB분석 <span class="gsub">— 앞면 : 할인 · 숨은보험금 · 헬스케어 · 납입/대출 · 보험금</span></h2>
+  <p class="sub">O / X 를 고르시면 아래 ② 진단 결과에서 <b>청구 가능한 숨은보험금과 할인 대상</b>이 자동으로 걸러집니다.</p>
+  <table class="form">
+    <tr><th class="wgk">구분</th><th class="it">항목</th><th class="wval">내용</th><th class="wprep">사전 자료준비</th></tr>
+
+    <tr><td class="gk" rowspan="3">건강체<br>할인</td>
+      <td>주계약 표준체 / 정상인수 여부</td>
+      <td><select id="f_std" class="ox"><option value=""></option><option>O</option><option>X</option></select></td>
+      <td class="prep" rowspan="3">변경후 보험료, 환급금<br>지원담당 문의 / FP.COM</td></tr>
+    <tr><td>건강체 변경시 보험료 / 환급금액 <span class="gsub">(총무, FP.com)</span></td>
+      <td><div class="grid g2" style="gap:4px"><input id="f_hprem" data-money placeholder="변경후 보험료">
+        <input id="f_href" data-money placeholder="환급금액"></div></td></tr>
+    <tr><td>현재 할인 적용 여부</td>
+      <td><select id="f_disc" class="ox"><option value=""></option><option>O</option><option>X</option></select></td></tr>
+
+    <tr><td class="gk">직장할인</td>
+      <td>직장명 / 단체명 확인 <span class="gsub">(고객)</span></td>
+      <td><input id="f_comp"></td>
+      <td class="prep">직장 계약 할인표</td></tr>
+
+    <tr><td class="gk" rowspan="2">수술급여금<br>찾아주기</td>
+      <td>수술특약 가입여부 <span class="gsub">(가입일 2006.02 이전)</span></td>
+      <td><select id="f_surg" class="ox"><option value=""></option><option>O</option><option>X</option></select></td>
+      <td class="prep" rowspan="2">수술특약 2종 50만원<br>(초진차트, 진단서)</td></tr>
+    <tr><td>임플란트 치조골이식 수술여부 확인</td>
+      <td><select id="f_impl" class="ox"><option value=""></option><option>O</option><option>X</option></select></td></tr>
+
+    <tr><td class="gk" rowspan="2">치아파절<br>보험금<br>찾아주기</td>
+      <td>재해치료비 특약 또는 골절치료 특약 가입여부 <span class="gsub">(가입일 2006.02 이전)</span></td>
+      <td><select id="f_acc" class="ox"><option value=""></option><option>O</option><option>X</option></select></td>
+      <td class="prep" rowspan="2">치아파절도<br>골절로 보험금 지급<br>(초진차트, 진단서)</td></tr>
+    <tr><td>치아파절 여부 확인 <span class="gsub">(고객)</span></td>
+      <td><select id="f_tooth" class="ox"><option value=""></option><option>O</option><option>X</option></select></td></tr>
+
+    <tr><td class="gk" rowspan="3">대장용종<br>보험금<br>찾아주기</td>
+      <td>21C 넘버원 암치료보험 가입여부 <span class="gsub">(가입시기 체크)</span></td>
+      <td><select id="f_c21" class="ox"><option value=""></option><option>O</option><option>X</option></select></td>
+      <td class="prep">주계약에서 200만 지급</td></tr>
+    <tr><td>베스트라이프 암보험, 굿라이프 암치료보험,<br>폰나이스 암보험에 양성종양 특약 가입여부</td>
+      <td><select id="f_ben" class="ox"><option value=""></option><option>O</option><option>X</option></select></td>
+      <td class="prep">특약에서 100만 지급</td></tr>
+    <tr><td>대장용종 수술여부 확인 <span class="gsub">(고객)</span></td>
+      <td><select id="f_polyp" class="ox"><option value=""></option><option>O</option><option>X</option></select></td>
+      <td class="prep">수술특약도 보험금 지급<br>신청서 스캔 누락 확인</td></tr>
+
+    <tr><td class="gk">헬스케어<br>서비스</td>
+      <td>헬스케어서비스 회원가입 여부</td>
+      <td><select id="f_hc" class="ox"><option value=""></option><option>O</option><option>X</option></select></td>
+      <td class="prep">헬스케어 바인딩 ·<br>안내전단지</td></tr>
+
+    <tr><td class="gk">납입관련</td><td>기납입보험료 / 해약환급금</td>
+      <td><div class="grid g2" style="gap:4px"><input id="b_paid" data-money placeholder="기납입">
+        <input id="b_surr" data-money placeholder="해약환급금"></div></td><td class="prep">-</td></tr>
+
+    <tr><td class="gk" rowspan="4">대출</td>
+      <td>대출가능금액</td>
+      <td><input id="b_lavl" data-money placeholder="대출가능금액"></td>
+      <td class="prep" rowspan="4">-</td></tr>
+    <tr><td>현재 대출액 <span class="gsub">(신용 / 약대)</span></td>
+      <td><div class="grid g2" style="gap:4px">
+        <select id="b_ltype"><option value=""></option><option>신용</option><option>약대</option></select>
+        <input id="b_lbal" data-money placeholder="현재 대출액"></div></td></tr>
+    <tr><td>대출이율 <span class="gsub">(%)</span></td>
+      <td><input id="b_lrate" type="number" step="0.01" placeholder="5.9"></td></tr>
+    <tr><td>월 납입이자 / 총 납입이자</td>
+      <td><div class="grid g2" style="gap:4px"><input id="b_lmi" data-money placeholder="월이자">
+        <input id="b_lti" data-money placeholder="총이자"></div></td></tr>
+
+    <tr><td class="gk">중도인출</td><td>기인출금액 / 인출가능금액</td>
+      <td><div class="grid g2" style="gap:4px"><input id="b_wd" data-money placeholder="기인출">
+        <input id="b_wdavl" data-money placeholder="인출가능"></div></td><td class="prep">-</td></tr>
+
+    <tr><td class="gk" rowspan="2">생존보험금</td>
+      <td>중도보험금 : 수령예정일 / 금액</td>
+      <td><div class="grid g2" style="gap:4px"><input id="b_middt" data-date><input id="b_midamt" data-money placeholder="금액"></div></td>
+      <td class="prep" rowspan="2">생존보험금 신청서<br>지참</td></tr>
+    <tr><td>만기보험금 : 만기일 / 금액</td>
+      <td><div class="grid g2" style="gap:4px"><input id="b_matdt" data-date><input id="b_matamt" data-money placeholder="금액"></div></td></tr>
+
+    <tr><td class="gk">계약변경</td><td>수금자 변경이력 / 계약사항 변경이력</td>
+      <td><div class="grid g2" style="gap:4px"><input id="b_pch" placeholder="수금자 변경"><input id="b_cch" placeholder="계약사항 변경"></div></td>
+      <td class="prep">계약사항 변경신청서</td></tr>
+  </table>
+</div>
+
+<div class="card">
+  <h2><span class="ico">★</span><span class="no">3</span>계약 DB분석 <span class="gsub">— 뒷면 : 사고보험금 · 변액 · 보장만기</span></h2>
+  <p class="sub">과거 지급이력과 펀드 내역, 보장이 끝나는 시점입니다. 날짜를 넣으면 만기 도래 여부를 자동으로 계산합니다.</p>
+
+  <div class="rsblock">
+    <div class="rshd"><b>사고보험금</b><span class="gsub">보험금 청구서 지참</span></div>
+    <div id="rs_claims"></div>
+  </div>
+
+  <div class="rsblock">
+    <div class="rshd"><b>변액안내</b><span class="gsub">펀드수익률표 · 펀드가입내역/적립비율 (FP.COM 출력)</span></div>
+    <div id="rs_funds"></div>
+  </div>
+
+  <div class="rsblock">
+    <div class="rshd"><b>보장만기</b><span class="gsub">주요보장 급부 만기시점 · 보장분석으로 대체 가능</span></div>
+    <div id="rs_covers"></div>
+  </div>
+
+  <div class="btns noprint" style="margin-top:14px;justify-content:center">
+    <button class="b b-main" id="btnAnalyze" style="padding:12px 40px;font-size:15px">📊 분석 실행 → 진단 결과 보기</button>
+  </div>
+</div>
+</div><!-- /p1 -->
+
+
+<!-- ================= TAB 2 : 진단 결과 ================= -->
+<div class="pane" id="p2">
+  <div class="card">
+    <h2><span class="ico">✦</span><span class="no">4</span>진단 요약</h2>
+    <p class="sub" id="r_head"></p>
+    <div class="kpi" id="r_kpi"></div>
+    <div style="margin-top:13px" id="r_sum"></div>
+  </div>
+
+  <div class="card">
+    <h2><span class="ico">✦</span><span class="no">5</span>발견 항목 · 고객 안내 멘트 · 제안 근거</h2>
+    <p class="sub">급한 순서로 정렬했습니다. <b>초록 상자</b>는 고객님께 그대로 읽어드리는 문장, <b>노란 상자</b>는 왜 그런지에 대한 근거입니다.</p>
+    <div id="r_items"></div>
+  </div>
+
+  <div class="card">
+    <h2><span class="ico">✦</span><span class="no">6</span>확인이 안 된 항목 <span class="gsub">— 방문 전에 채워야 할 빈칸</span></h2>
+    <p class="sub">비워두신 항목입니다. 이 부분이 채워져야 숨은보험금 판정이 정확해집니다.</p>
+    <div id="r_blank"></div>
+  </div>
+
+  <div class="btns noprint card" style="justify-content:center">
+    <button class="b b-gold" data-tab="3">③ 방문준비 · 상담메모로 이동 →</button>
+    <button class="b b-sub" id="btnPrint2">🖨 인쇄 / PDF 저장</button>
+  </div>
+</div>
+
+
+<!-- ================= TAB 3 : 준비물 · 메모 ================= -->
+<div class="pane" id="p3">
+  <div class="card">
+    <h2><span class="ico">♥</span><span class="no">4</span>방문 전 준비물 체크</h2>
+    <p class="sub">진단 결과에 따라 <b style="color:var(--rose)">분홍색으로 자동 체크</b>된 항목은 이번 방문에 반드시 챙기셔야 할 자료입니다.</p>
+    <div class="grid g4" id="prepBox"></div>
+  </div>
+
+  <div class="card">
+    <h2><span class="ico">✿</span><span class="no">5</span>상담 메모 및 후속조치</h2>
+
+    <div class="rsblock">
+      <div class="rshd"><b>상담내용</b></div>
+      <div id="rs_talks"></div>
+    </div>
+
+    <div class="rsblock">
+      <div class="rshd"><b>숨은보험금 발견</b>
+        <span class="btns noprint"><button class="b b-sub sm" id="btnFillHidden">진단 결과에서 자동으로 채우기</button></span>
+        <span class="hint">발견 예상액 합계 : <b id="m_hidamt">0</b> 원</span></div>
+      <div id="rs_hiddens"></div>
+    </div>
+
+    <table class="form" style="margin-top:14px">
+      <tr><td class="gk w1">고객 요청사항</td><td colspan="3"><textarea id="m_req" rows="2"></textarea></td></tr>
+    </table>
+
+    <div class="rsblock">
+      <div class="rshd"><b>후속조치</b><span class="gsub">처리기한을 넣으면 ⑤ 통계 탭에서 기한 관리가 됩니다</span></div>
+      <div id="rs_follows"></div>
+    </div>
+
+    <table class="form" style="margin-top:14px">
+      <tr><td class="gk w1">방문결과 등급</td>
+        <td><select id="m_grade">
+          <option value="">선택</option>
+          <option value="A">A (즉시 제안 가능)</option>
+          <option value="B">B (추후 재접촉)</option>
+          <option value="C">C (유지관리)</option></select>
+          <div class="hint" id="m_gradeHint"></div></td>
+        <td class="gk w1">재접촉 사유</td><td><input id="m_reason"></td></tr>
+      <tr><td class="gk">방문일</td>
+        <td><input id="m_vdate" data-date title="방문일"></td>
+        <td class="gk">차기 방문예정일</td><td><input id="m_next" data-date></td></tr>
+    </table>
+  </div>
+
+  <div class="card">
+    <h2><span class="ico">★</span><span class="no">6</span>추가 점검사항 <span class="gsub">— 고객관리 · 놓치기 쉬운 항목</span></h2>
+    <div class="grid g2" id="extraBox"></div>
+  </div>
+
+  <div class="card">
+    <h2><span class="ico">✎</span><span class="no">7</span>상담 스크립트 <span class="gsub">— 복사해서 사용</span></h2>
+    <p class="sub">인사부터 마무리까지 순서대로 정리된 대본입니다. 전문용어는 괄호 안에 쉬운 말로 함께 넣었습니다.</p>
+    <textarea id="script" readonly></textarea>
+    <div class="btns noprint" style="margin-top:9px">
+      <button class="b b-gold" id="btnCopy">📋 스크립트 복사</button>
+      <button class="b b-sub" id="btnRebuild">🔄 스크립트 다시 만들기</button>
+    </div>
+  </div>
+
+  <div class="card noprint" style="text-align:center">
+    <div class="btns" style="justify-content:center">
+      <button class="b b-main" id="btnSave2" style="padding:12px 36px;font-size:15px">💾 이 고객 저장 (누적 DB에 기록)</button>
+      <button class="b b-sub" id="btnPrint3">🖨 인쇄 / PDF</button>
+    </div>
+    <div class="hint" style="margin-top:8px">저장하면 ④ 고객 누적 DB에 쌓입니다. 같은 고객을 다시 방문하시면 불러와서 이어 쓰세요.</div>
+  </div>
+</div>
+
+
+<!-- ================= TAB 4 : 고객 DB ================= -->
+<div class="pane" id="p4">
+  <div class="card">
+    <h2><span class="ico">🧸</span><span class="no">8</span>고객 누적 DB</h2>
+    <p class="sub">저장한 방문기록이 고객별로 쌓입니다.</p>
+    <div class="btns noprint" style="margin-bottom:11px">
+      <input id="q" placeholder="고객명 · 상품명 검색" style="max-width:240px">
+      <button class="b b-sub sm" id="btnReload">🔄 새로고침</button>
+      <button class="b b-gold sm" id="btnBackup">📦 전체 백업 파일 저장</button>
+      <button class="b b-sub sm" id="btnRestorePick">📂 백업 파일 복원</button>
+      <input type="file" id="rf" accept=".json" style="display:none">
+      <button class="b b-sub sm" id="btnCsv">📑 CSV 내보내기</button>
+      <button class="b b-red sm" id="btnWipe">전체 삭제</button>
+    </div>
+
+    <div class="card" style="margin:0 0 12px;background:var(--surf2)">
+      <b style="color:var(--brand)">엑셀 서식</b>
+      <div class="btns noprint" style="margin-top:8px">
+        <button class="b b-gold sm" id="btnTemplate">📄 빈 서식 내려받기 (.xlsx)</button>
+        <button class="b b-sub sm" id="btnImportPick">📤 작성한 서식 올리기</button>
+        <input type="file" id="xf" accept=".xlsx" style="display:none">
+        <button class="b b-sub sm" id="btnLedger">📊 누적 관리대장 내려받기 (.xlsx)</button>
+      </div>
+      <div class="hint" style="margin-top:7px">
+        컴퓨터가 없는 자리에서는 <b>빈 서식</b>을 인쇄해 손으로 적어 오신 뒤, 사무실에서 엑셀에 옮겨 <b>[작성한 서식 올리기]</b>로 한 번에 등록하실 수 있습니다.
+        각 고객의 <b>[엑셀]</b> 단추를 누르면 진단 결과와 상담 스크립트까지 담긴 파일이 만들어집니다.
+      </div>
+    </div>
+
+    <div class="warn noprint" style="margin-bottom:12px">
+      <b>보관 안내</b> · 자료는 <span id="dbPathHint">data/kyobo.db</span> 에 저장됩니다.
+      고객 개인정보가 담기므로 <b>주 1회 정도 [전체 백업 파일 저장]</b>으로 파일을 따로 남겨 두시고, 회사 보안 규정에 따라 관리해 주세요.
+    </div>
+    <div id="dbBox"></div>
+  </div>
+</div>
+
+
+<!-- ================= TAB 5 : 통계 ================= -->
+<div class="pane" id="p5">
+  <div class="card">
+    <h2><span class="ico">✦</span><span class="no">9</span>누적 활동 통계</h2>
+    <p class="sub">저장된 전체 방문기록을 기준으로 집계합니다.</p>
+    <div class="kpi" id="s_kpi"></div>
+  </div>
+  <div class="card">
+    <h2><span class="no">10</span>방문결과 등급 분포 · 숨은보험금 발견 현황</h2>
+    <div id="s_dist"></div>
+  </div>
+  <div class="card">
+    <h2><span class="no">11</span>후속조치 관리 <span class="gsub">— 처리기한 · 차기방문</span></h2>
+    <p class="sub">기한이 지났거나 임박한 건을 먼저 보여드립니다.</p>
+    <div id="s_follow"></div>
+  </div>
+  <div class="card">
+    <h2><span class="no">12</span>월별 방문 추이</h2>
+    <div id="s_month"></div>
+  </div>
+</div>
+
+<div class="card note">
+  <b>안내</b> · 본 프로그램의 판정 기준(2006.02 이전 가입 여부, 수술특약 2종 50만원, 대장용종 주계약 200만·특약 100만 등)은
+  회사 양식 「평생든든 방문활동 사전준비」에 기재된 내용을 그대로 옮긴 것입니다.
+  실제 지급 여부와 금액은 <b>반드시 약관(보험 계약 내용을 적어둔 문서)과 회사 시스템에서 최종 확인</b>하신 뒤 안내해 주세요.
+  고객 개인정보가 담기므로 백업 파일은 회사 보안 규정에 따라 관리하시고, 공용 PC에서는 사용 후 브라우저를 닫아 주세요.
+</div>
+
+</div><!-- /wrap -->
+
+<div class="toast" id="toast"></div>
+<input type="date" id="pickHelper" style="position:fixed;left:-9999px;top:0;width:1px;height:1px;opacity:0">
+
+<script src="/shared/calc.js"></script>
+<script src="/shared/schema.js"></script>
+<script src="/shared/analysis.js"></script>
+<script src="/app.js"></script>
+</body>
+</html>
