@@ -11,7 +11,8 @@
     "build:tablet": "node scripts/build-standalone.js",
     "build:web": "node scripts/build-pages.js",
     "build:new": "node scripts/build-newcust.js",
-    "icons:rabbit": "node scripts/make-rabbit-icons.js"
+    "icons:rabbit": "node scripts/make-rabbit-icons.js",
+    "vendor:sdk": "esbuild scripts/anthropic-entry.js --bundle --format=iife --global-name=AnthropicSDK --platform=browser --target=es2020 --minify --alias:node:fs=./scripts/browser-stub/node-fs.js --alias:node:path=./scripts/browser-stub/node-path.js --outfile=standalone/anthropic-sdk.js"
   },
   "dependencies": {
     "better-sqlite3": "^13.0.3",
@@ -21,5 +22,9 @@
   },
   "engines": {
     "node": ">=20"
+  },
+  "devDependencies": {
+    "@anthropic-ai/sdk": "^0.120.0",
+    "esbuild": "^0.27.0"
   }
 }

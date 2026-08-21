@@ -35,9 +35,14 @@ scripts.forEach(function (p) {
   }
 });
 
+/* 붙일 내용을 함수로 넘깁니다.
+ * 글자로 넘기면 그 안의 `$&` · `$1` 같은 조각을 replace 가 「찾은 자리」로 바꿔치기해
+ * 코드가 망가집니다 (실제로 Anthropic SDK 의 정규식 안 `$&` 때문에 깨졌습니다).
+ */
 /* 1. 스타일 인라인 */
-html = html.replace('<link rel="stylesheet" href="/style.css">',
-  '<style>\n' + css + '\n</style>');
+html = html.replace('<link rel="stylesheet" href="/style.css">', function () {
+  return '<style>\n' + css + '\n</style>';
+});
 
 /* 2. 스크립트 인라인 */
 const scriptTags = [
@@ -49,9 +54,9 @@ const scriptTags = [
 if (html.indexOf(scriptTags) < 0) {
   throw new Error('public/index.html 의 스크립트 부분을 찾지 못했습니다. 빌드 스크립트를 맞춰 주세요.');
 }
-html = html.replace(scriptTags, scripts.map(function (p) {
+html = html.replace(scriptTags, function () { return scripts.map(function (p) {
   return '<script>\n/* ===== ' + p + ' ===== */\n' + read(p) + '\n</script>';
-}).join('\n'));
+}).join('\n'); });
 
 /* 3. 태블릿용 문구로 손질 */
 html = html

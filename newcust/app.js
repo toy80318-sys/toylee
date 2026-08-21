@@ -5,7 +5,7 @@
 'use strict';
 
 const Calc = KB.Calc, Xlsx = KB.Xlsx, Schema = NC.Schema, Riders = NC.Riders, Engine = NC.Engine,
-  Products = NC.Products, Importer = NC.Importer;
+  Products = NC.Products, Importer = NC.Importer, Reader = NC.Reader;
 const $ = function (id) { return document.getElementById(id); };
 const V = function (id) { const e = $(id); return e ? String(e.value || '').trim() : ''; };
 const won = Calc.won, normDate = Calc.normDate, ymd = Calc.ymd, numOf = Calc.numOf;
@@ -797,7 +797,7 @@ function drawCash() {
 
   if (!table.length) {
     box.innerHTML = '<div class="warn">이 보험의 <b>해약환급금 예시표가 아직 없습니다.</b><br>' +
-      '① 고객정보의 <b>[📄 제안서 불러오기]</b>로 상품제안서를 넣으시거나, 아래 표에 직접 넣어 주세요.<br>' +
+      '① 고객정보에서 <b>[📷 사진으로 바로 읽기]</b>로 제안서를 넣으시거나, 아래 표에 직접 넣어 주세요.<br>' +
       '<span class="gsub">프로그램이 임의로 계산하지 않습니다 — 회사가 제시한 금액만 보여드립니다.</span></div>';
     return;
   }
@@ -978,6 +978,163 @@ function impApply() {
   impShow(false);
   toast('제안서를 불러왔습니다 — 보험 ' + r.summary.plans + '건 · 특약 ' + r.summary.riders + '건');
   tab(2);
+}
+
+
+
+/* ===================== 📷 제안서 사진으로 바로 읽기 ===================== */
+
+const KEYSTORE = 'kyobo_newcust_key_v1';
+let SHOTS = [];                       /* [{ name, kind, deg, img|pdf, thumb, bytes }] */
+
+function keyGet() {
+  try { return (STORE && STORE.getItem(KEYSTORE)) || ''; } catch (e) { return ''; }
+}
+function keySet(v) {
+  try { if (v) STORE.setItem(KEYSTORE, v); else STORE.removeItem(KEYSTORE); } catch (e) { /* 무시 */ }
+}
+
+function shotShow(on) {
+  const c = $('shotCard');
+  if (c) c.style.display = on ? '' : 'none';
+  if (on) {
+    const k = keyGet();
+    if (k && !V('apiKey')) $('apiKey').value = k;
+    drawShots();
+  }
+}
+
+function keyMsg(html, tone) {
+  const el = $('keyMsg');
+  el.innerHTML = html;
+  el.style.color = tone === 'bad' ? 'var(--red)' : tone === 'ok' ? 'var(--brand)' : '';
+}
+
+/* ---------- 넣은 페이지 목록 ---------- */
+
+function drawShots() {
+  const box = $('shotList');
+  if (!box) return;
+  if (!SHOTS.length) {
+    box.innerHTML = '<div class="hint">아직 넣은 페이지가 없습니다. 위에서 사진이나 PDF를 고르세요.</div>';
+    return;
+  }
+  const est = Reader.estimate(SHOTS.map(function (x) {
+    return x.kind === 'pdf' ? { kind: 'pdf' } : { kind: 'image', w: x.w, h: x.h };
+  }));
+  box.innerHTML = '<div style="display:flex;flex-wrap:wrap;gap:10px">' +
+    SHOTS.map(function (x, i) {
+      return '<div style="width:132px;border:1px solid var(--line);border-radius:9px;padding:7px;background:var(--surf2)">' +
+        (x.thumb
+          ? '<img src="' + x.thumb + '" style="width:100%;height:96px;object-fit:contain;background:#fff;border-radius:5px">'
+          : '<div style="height:96px;display:flex;align-items:center;justify-content:center;font-size:30px">📕</div>') +
+        '<div class="gsub" style="margin:5px 0;word-break:break-all;font-size:12px">' +
+          (i + 1) + '. ' + esc(x.name.length > 16 ? x.name.slice(0, 15) + '…' : x.name) + '</div>' +
+        '<div class="btns" style="gap:4px">' +
+          (x.kind === 'pdf' ? '' : '<button type="button" class="b b-sub sm" data-shotrot="' + i +
+            '" style="padding:4px 7px;font-size:12.5px" title="90도 돌리기">돌리기</button>') +
+          '<button type="button" class="b b-red sm" data-shotdel="' + i + '" style="padding:4px 8px">✕</button>' +
+        '</div></div>';
+    }).join('') + '</div>' +
+    '<div class="hint" style="margin-top:10px">' + SHOTS.length + '장 · 읽는 데 <b>' +
+      est.krw.toLocaleString('ko-KR') + '원쯤</b> (약 $' + est.usd.toFixed(2) + ') 듭니다. ' +
+      '사진이 거꾸로거나 옆으로 누워 있으면 <b>[돌리기]</b>로 바로 세워 주세요 — 똑바로 있어야 잘 읽습니다.</div>';
+}
+
+/* 파일을 받아 사진으로 다듬어 목록에 넣습니다 */
+function addShots(files) {
+  const list = [].slice.call(files || []);
+  if (!list.length) return;
+  const jobs = list.map(function (f) {
+    const isPdf = /pdf$/i.test(f.type) || /\.pdf$/i.test(f.name);
+    return Reader.readAsDataURL(f).then(function (url) {
+      const b64 = url.slice(url.indexOf(',') + 1);
+      if (isPdf) {
+        const mb = b64.length * 0.75 / 1048576;
+        if (mb > Reader.MAX_PDF_MB) {
+          throw new Error(f.name + ' 은(는) ' + mb.toFixed(0) + 'MB 라 너무 큽니다 (' +
+            Reader.MAX_PDF_MB + 'MB까지). 필요한 쪽만 사진으로 찍어 주세요.');
+        }
+        return { name: f.name, kind: 'pdf', data: b64, thumb: '' };
+      }
+      return Reader.loadImage(url).then(function (im) {
+        const o = { name: f.name, kind: 'image', deg: 0, src: im };
+        const prepped = Reader.prepImage(im, 0);
+        o.data = prepped.data; o.w = prepped.w; o.h = prepped.h;
+        o.thumb = 'data:image/jpeg;base64,' + prepped.data;
+        return o;
+      });
+    });
+  });
+  Promise.all(jobs).then(function (added) {
+    SHOTS = SHOTS.concat(added);
+    if (SHOTS.length > Reader.MAX_PAGES) {
+      SHOTS = SHOTS.slice(0, Reader.MAX_PAGES);
+      toast('한 번에 ' + Reader.MAX_PAGES + '장까지만 됩니다.', true);
+    }
+    drawShots();
+  }).catch(function (e) {
+    toast(e.message, true);
+    drawShots();
+  });
+}
+
+function rotateShot(i) {
+  const x = SHOTS[i];
+  if (!x || x.kind === 'pdf' || !x.src) return;
+  x.deg = (x.deg + 90) % 360;
+  const p = Reader.prepImage(x.src, x.deg);
+  x.data = p.data; x.w = p.w; x.h = p.h;
+  x.thumb = 'data:image/jpeg;base64,' + p.data;
+  drawShots();
+}
+
+/* ---------- 읽기 ---------- */
+
+let shotBusy = false;
+
+function shotRun() {
+  if (shotBusy) return;
+  const key = V('apiKey') || keyGet();
+  if (!key) { keyMsg('먼저 API 키를 넣고 [저장]을 눌러 주세요.', 'bad'); $('apiKey').focus(); return; }
+  if (!SHOTS.length) { toast('읽을 페이지를 먼저 넣어 주세요.', true); return; }
+
+  const msg = $('shotMsg');
+  shotBusy = true;
+  $('btnShotRun').disabled = true;
+  const t0 = Date.now();
+  msg.innerHTML = '<div class="note">제안서를 읽고 있습니다… <b id="shotProg">시작하는 중</b><br>' +
+    '<span class="gsub">해약환급금표가 길면 1~2분쯤 걸립니다. 이 화면을 닫지 마세요.</span></div>';
+
+  const pages = SHOTS.map(function (x) {
+    return x.kind === 'pdf'
+      ? { kind: 'pdf', data: x.data }
+      : { kind: 'image', data: x.data, media: 'image/jpeg', w: x.w, h: x.h };
+  });
+
+  Reader.read(key, pages, function (n) {
+    const p = $('shotProg');
+    if (p) p.textContent = n.toLocaleString('ko-KR') + '자 받는 중';
+  }).then(function (r) {
+    const secs = Math.round((Date.now() - t0) / 1000);
+    $('impText').value = r.text;
+    impShow(true);
+    impRead();
+    const u = r.usage || {};
+    const cost = ((u.input_tokens || 0) * 5 / 1e6) + ((u.output_tokens || 0) * 25 / 1e6);
+    msg.innerHTML = '<div class="note"><b>다 읽었습니다.</b> ' + secs + '초 걸렸습니다' +
+      (u.input_tokens ? ' · 실제 비용 약 ' + Math.round(cost * 1450).toLocaleString('ko-KR') + '원' : '') + '.<br>' +
+      '아래 <b>[📋 설계 코드 붙여넣기]</b> 칸에 결과가 들어갔습니다. ' +
+      '<b>내용을 한 번 훑어보시고</b> [✔ 이대로 넣기]를 눌러 주세요.</div>' +
+      '<div class="warn" style="margin-top:10px">사진에서 읽어낸 값이라 <b>잘못 읽은 곳이 있을 수 있습니다.</b> ' +
+      '특히 <b>가입금액 · 보험료 · 해약환급금 표</b>는 제안서와 눈으로 맞춰 보신 뒤 쓰세요.</div>';
+    $('impCard').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+  }).catch(function (e) {
+    msg.innerHTML = '<div class="warn"><b>읽지 못했습니다.</b><br>' + esc(Reader.explain(e)) + '</div>';
+  }).then(function () {
+    shotBusy = false;
+    $('btnShotRun').disabled = false;
+  });
 }
 
 
@@ -1415,6 +1572,44 @@ $('btnImpSample').addEventListener('click', function () {
   $('impText').value = JSON.stringify(Importer.SAMPLE, null, 2);
   impRead();
   $('impCard').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+});
+
+/* ---------- 📷 제안서 사진으로 바로 읽기 ---------- */
+$('btnShotOpen').addEventListener('click', function () {
+  const on = $('shotCard').style.display === 'none';
+  shotShow(on);
+  if (on) $('shotCard').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+});
+$('btnShotClose').addEventListener('click', function () { shotShow(false); });
+$('btnKeySave').addEventListener('click', function () {
+  const k = V('apiKey');
+  if (!k) { keyMsg('키를 넣어 주세요.', 'bad'); return; }
+  keySet(k);
+  keyMsg('이 기기에 저장했습니다. [연결 시험]으로 잘 되는지 확인해 보세요.', 'ok');
+});
+$('btnKeyClear').addEventListener('click', function () {
+  keySet(''); $('apiKey').value = '';
+  keyMsg('키를 지웠습니다.', 'ok');
+});
+$('btnKeyTest').addEventListener('click', function () {
+  const k = V('apiKey') || keyGet();
+  if (!k) { keyMsg('키를 먼저 넣어 주세요.', 'bad'); return; }
+  keyMsg('연결해 보는 중…');
+  this.disabled = true;
+  const btn = this;
+  Reader.testKey(k)
+    .then(function () { keySet(k); keyMsg('잘 연결됩니다. 이제 제안서를 넣으시면 됩니다.', 'ok'); })
+    .catch(function (e) { keyMsg('연결하지 못했습니다 — ' + esc(Reader.explain(e)), 'bad'); })
+    .then(function () { btn.disabled = false; });
+});
+$('shotFiles').addEventListener('change', function () { addShots(this.files); this.value = ''; });
+$('btnShotClear').addEventListener('click', function () { SHOTS = []; drawShots(); });
+$('btnShotRun').addEventListener('click', shotRun);
+document.addEventListener('click', function (e) {
+  const r = e.target.closest && e.target.closest('[data-shotrot]');
+  if (r) { e.preventDefault(); rotateShot(+r.dataset.shotrot); return; }
+  const d = e.target.closest && e.target.closest('[data-shotdel]');
+  if (d) { e.preventDefault(); SHOTS.splice(+d.dataset.shotdel, 1); drawShots(); }
 });
 
 /* ---------- ③ 환급금 ---------- */

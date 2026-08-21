@@ -60,8 +60,47 @@
     <b>상품제안서 사진을 대화창에 올려 받은 「설계 코드」</b>를 아래에 붙여넣고 [불러오기]를 누르시면
     보험 · 특약 · 가입금액 · 보험료 · <b>해약환급금 예시표</b>가 한 번에 들어갑니다.</p>
   <div class="btns noprint" style="margin-bottom:10px">
-    <button class="b b-main sm" id="btnImpOpen">📄 제안서 불러오기</button>
+    <button class="b b-main sm" id="btnShotOpen">📷 사진으로 바로 읽기</button>
+    <button class="b b-gold sm" id="btnImpOpen">📋 설계 코드 붙여넣기</button>
     <button class="b b-sub sm" id="btnImpSample">예시 코드 넣어보기</button>
+  </div>
+
+  <div id="shotCard" style="display:none;margin-bottom:14px">
+    <div class="card" style="margin:0 0 12px">
+      <h2 style="font-size:17px"><span class="no">1</span>Claude API 키 <span class="gsub">— 맨 처음 한 번만</span></h2>
+      <p class="sub">제안서를 읽어 주는 곳에 연결하는 열쇠입니다.
+        <b>이 기기 브라우저에만 저장</b>되고 다른 곳으로 나가지 않습니다.</p>
+      <div class="btns" style="margin-bottom:8px">
+        <input id="apiKey" type="password" placeholder="sk-ant-..." autocomplete="off"
+               style="max-width:340px;font-family:ui-monospace,Menlo,Consolas,monospace">
+        <button class="b b-main sm" id="btnKeySave">저장</button>
+        <button class="b b-sub sm" id="btnKeyTest">연결 시험</button>
+        <button class="b b-red sm" id="btnKeyClear">키 지우기</button>
+      </div>
+      <div class="hint" id="keyMsg">키는 <b>console.anthropic.com</b> → API Keys 에서 만드실 수 있습니다.
+        키를 쓰면 읽을 때마다 <b>소액 요금</b>이 그 계정으로 청구됩니다.</div>
+    </div>
+
+    <div class="card" style="margin:0 0 12px">
+      <h2 style="font-size:17px"><span class="no">2</span>제안서 페이지 넣기</h2>
+      <p class="sub">필요한 쪽만 사진으로 찍거나 캡처해서 넣으세요 —
+        <b>표지 · 기본 계약정보 · 보장 내용 · 해약환급금 예시표</b> 네 군데면 충분합니다.
+        (사진 jpg · png, 또는 PDF)</p>
+      <div class="btns" style="margin-bottom:10px">
+        <input type="file" id="shotFiles" accept="image/*,application/pdf" multiple style="max-width:320px">
+        <button class="b b-sub sm" id="btnShotClear">전부 빼기</button>
+      </div>
+      <div id="shotList"></div>
+    </div>
+
+    <div class="card" style="margin:0">
+      <h2 style="font-size:17px"><span class="no">3</span>읽어들이기</h2>
+      <div class="btns" style="margin-bottom:10px">
+        <button class="b b-main sm" id="btnShotRun">🔍 제안서 읽기</button>
+        <button class="b b-sub sm" id="btnShotClose">닫기</button>
+      </div>
+      <div id="shotMsg"></div>
+    </div>
   </div>
   <div id="impCard" style="display:none">
     <textarea id="impText" rows="8" placeholder="여기에 설계 코드를 붙여넣으세요 ( { 로 시작하는 부분 )"
@@ -338,7 +377,9 @@
 <script src="/newcust/products.js"></script>
 <script src="/newcust/riders.js"></script>
 <script src="/newcust/engine.js"></script>
+<script src="/standalone/anthropic-sdk.js"></script>
 <script src="/newcust/importer.js"></script>
+<script src="/newcust/reader.js"></script>
 <script src="/standalone/xlsx-lite.js"></script>
 <script src="/newcust/app.js"></script>
 </body>

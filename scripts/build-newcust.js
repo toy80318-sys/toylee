@@ -26,7 +26,9 @@ const scripts = [
   'newcust/products.js',
   'newcust/riders.js',
   'newcust/engine.js',
+  'standalone/anthropic-sdk.js',
   'newcust/importer.js',
+  'newcust/reader.js',
   'standalone/xlsx-lite.js',
   'newcust/app.js'
 ];
@@ -38,6 +40,10 @@ scripts.forEach(function (p) {
   }
 });
 
+/* 붙일 내용을 함수로 넘깁니다.
+ * 글자로 넘기면 그 안의 `$&` · `$1` 같은 조각을 replace 가 「찾은 자리」로 바꿔치기해
+ * 코드가 망가집니다 (실제로 Anthropic SDK 의 정규식 안 `$&` 때문에 깨졌습니다).
+ */
 /* 1. 스타일 인라인 */
 const linkTags = [
   '<link rel="stylesheet" href="/style.css">',
@@ -46,9 +52,9 @@ const linkTags = [
 if (html.indexOf(linkTags) < 0) {
   throw new Error('newcust/index.html 의 스타일 부분을 찾지 못했습니다. 빌드 스크립트를 맞춰 주세요.');
 }
-html = html.replace(linkTags, styles.map(function (p) {
+html = html.replace(linkTags, function () { return styles.map(function (p) {
   return '<style>\n/* ===== ' + p + ' ===== */\n' + read(p) + '\n</style>';
-}).join('\n'));
+}).join('\n'); });
 
 /* 2. 스크립트 인라인 */
 const scriptTags = scripts.map(function (p) {
@@ -57,9 +63,9 @@ const scriptTags = scripts.map(function (p) {
 if (html.indexOf(scriptTags) < 0) {
   throw new Error('newcust/index.html 의 스크립트 부분을 찾지 못했습니다. 빌드 스크립트를 맞춰 주세요.');
 }
-html = html.replace(scriptTags, scripts.map(function (p) {
+html = html.replace(scriptTags, function () { return scripts.map(function (p) {
   return '<script>\n/* ===== ' + p + ' ===== */\n' + read(p) + '\n</script>';
-}).join('\n'));
+}).join('\n'); });
 
 fs.writeFileSync(OUT, html, 'utf8');
 const kb = Math.round(fs.statSync(OUT).size / 1024);
