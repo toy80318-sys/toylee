@@ -77,6 +77,7 @@
               <div class="memo-line">
                 <b>대상 코드</b>
                 {% for c in n.code_summary %}<span class="code sm">{{ c }}</span>{% endfor %}
+                {% if n.code_more %}<span class="muted-inline">외 {{ n.code_more }}개 범위</span>{% endif %}
                 {% if n.code_total %}<span class="muted-inline">(총 {{ n.code_total }}개 항목)</span>{% endif %}
               </div>
               {% endif %}

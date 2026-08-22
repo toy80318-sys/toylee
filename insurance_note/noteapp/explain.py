@@ -97,6 +97,7 @@ class RiderNote:
     source_label: str = ""
     group_label: str = ""                # 표의 '구분'
     code_summary: list[str] = field(default_factory=list)   # I60~I69 …
+    code_more: int = 0                   # 표에 다 싣지 못한 코드 범위 수
     code_total: int = 0
     pay_basis: str = ""                  # 지급 금액·횟수 한 줄 요약
     key_rules: list[str] = field(default_factory=list)      # 표 안 짧은 주의 태그
@@ -551,7 +552,8 @@ def fill_table_memo(note: "RiderNote") -> None:
         for r in tbl.get("ranges", []):
             if r["code"] not in codes:
                 codes.append(r["code"])
-    note.code_summary = codes[:8]
+    note.code_summary = codes[:6]
+    note.code_more = max(0, len(codes) - 6)
     note.code_total = total
     tags = [f.tag for f in note.cautions if f.tag]
     # 갱신 주기는 제안서에 적힌 값(예: 5년갱신)이 이 계약의 실제 조건이므로 우선한다.
