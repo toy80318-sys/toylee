@@ -244,6 +244,40 @@ def parse_text(text: str) -> Proposal:
     return prop
 
 
+def merge(parts: list[Proposal]) -> Proposal:
+    """여러 파일에서 읽은 결과를 하나로 합친다(스캔본이 여러 장일 때)."""
+    parts = [p for p in parts if p is not None]
+    if not parts:
+        return Proposal()
+    if len(parts) == 1:
+        return parts[0]
+
+    out = Proposal()
+    seen: set[tuple[str, str, str]] = set()
+    for part in parts:
+        out.customer_name = out.customer_name or part.customer_name
+        out.birth = out.birth or part.birth
+        out.gender = out.gender or part.gender
+        out.product = out.product or part.product
+        out.total_premium = out.total_premium or part.total_premium
+        out.used_ocr = out.used_ocr or part.used_ocr
+        out.pages += part.pages
+        out.raw_text = (out.raw_text + "\n" + part.raw_text).strip()
+        for rider in part.riders:
+            # 페이지가 겹쳐 같은 줄이 두 번 읽히는 경우만 걸러낸다.
+            key = (compact(rider.name), rider.amount, rider.premium)
+            if key in seen:
+                continue
+            seen.add(key)
+            out.riders.append(rider)
+    return out
+
+
+def parse_files(paths: list[Path], force_ocr: bool = False) -> Proposal:
+    """제안서 파일 여러 개를 한 번에 읽는다."""
+    return merge([parse_file(Path(p), force_ocr=force_ocr) for p in paths])
+
+
 def parse_file(path: Path, force_ocr: bool = False) -> Proposal:
     pages, used_ocr = read_document(Path(path), force_ocr=force_ocr)
     text = "\n".join(pages)

@@ -106,6 +106,28 @@ def test_proposal_numbering() -> None:
           key("허혈성심장질환진단특약L(무해약환급금형/간편N355)") == key("허혈심장질환진단특약L"))
 
 
+def test_multi_file() -> None:
+    print("[제안서 여러 장 합치기]")
+    base = Path(__file__).resolve().parent.parent / "samples" / "제안서_간편마이플랜.txt"
+    rows = base.read_text(encoding="utf-8").splitlines()
+    import tempfile
+
+    with tempfile.TemporaryDirectory() as tmp:
+        first = Path(tmp) / "1장.txt"
+        second = Path(tmp) / "2장.txt"
+        first.write_text("\n".join(rows[:12]), encoding="utf-8")
+        second.write_text("\n".join(rows[:3] + rows[8:]), encoding="utf-8")  # 겹치게 자름
+        one = proposal.parse_file(base)
+        merged = proposal.parse_files([first, second])
+
+    check("여러 장을 합쳐도 특약 수가 같음",
+          len(merged.riders) == len(one.riders),
+          f"{len(merged.riders)} vs {len(one.riders)}")
+    names = [r.name for r in merged.riders]
+    check("겹친 페이지의 중복 제거", len(names) == len(set(names)), str(names))
+    check("고객 정보 유지", merged.customer_name == one.customer_name, merged.customer_name)
+
+
 def test_with_index() -> None:
     store = default_store()
     if not store.ready:
@@ -147,6 +169,7 @@ def main() -> int:
     test_explain_helpers()
     test_proposal()
     test_proposal_numbering()
+    test_multi_file()
     test_with_index()
     print("-" * 46)
     print(f"통과 {passed}건 / 실패 {failed}건")

@@ -73,13 +73,19 @@ def analyze():
 
     parsed = None
     warnings: list[str] = []
-    upload = request.files.get("proposal")
+    uploads = [f for f in request.files.getlist("proposal") if f and f.filename]
     pasted = form.get("pasted_text", "").strip()
     try:
-        if upload and upload.filename:
-            dest = config.UPLOAD_DIR / f"{jobs.new_job_id()}_{Path(upload.filename).name}"
-            upload.save(dest)
-            parsed = proposal.parse_file(dest, force_ocr=form.get("force_ocr") == "on")
+        if uploads:
+            saved: list[Path] = []
+            for upload in uploads:
+                dest = config.UPLOAD_DIR / f"{jobs.new_job_id()}_{Path(upload.filename).name}"
+                upload.save(dest)
+                saved.append(dest)
+            parsed = proposal.parse_files(saved, force_ocr=form.get("force_ocr") == "on")
+            if len(saved) > 1:
+                warnings.append(f"파일 {len(saved)}개를 읽어 특약 {len(parsed.riders)}건을 "
+                                f"모았습니다. 같은 특약이 여러 장에 걸쳐 있으면 한 번만 담습니다.")
             if parsed.used_ocr:
                 warnings.append("스캔본이라 OCR(글자 인식)로 읽었습니다. 특약 이름이 잘못 읽혔을 수 "
                                 "있으니 아래 목록을 꼭 확인해 주세요.")

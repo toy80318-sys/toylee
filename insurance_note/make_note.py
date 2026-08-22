@@ -26,7 +26,8 @@ from noteapp.store import default_store  # noqa: E402
 
 def main() -> int:
     ap = argparse.ArgumentParser(description="상품제안서 -> 고객용 보장 안내문(A4 HTML)")
-    ap.add_argument("--proposal", help="상품제안서 파일(PDF·스캔 이미지·txt)")
+    ap.add_argument("--proposal", action="append", default=[],
+                    help="상품제안서 파일(PDF·스캔 이미지·txt). 여러 장이면 여러 번 쓰세요.")
     ap.add_argument("--rider", action="append", default=[],
                     help="특약을 직접 지정(여러 번 사용 가능). 예: --rider '무배당 암진단특약H'")
     ap.add_argument("--name", default="", help="고객 성함")
@@ -55,9 +56,11 @@ def main() -> int:
     riders = [{"name": r} for r in args.rider]
     parsed = None
     if args.proposal:
-        parsed = proposal.parse_file(Path(args.proposal), force_ocr=args.force_ocr)
+        parsed = proposal.parse_files([Path(p) for p in args.proposal],
+                                      force_ocr=args.force_ocr)
         riders = [r.to_dict() for r in parsed.riders] + riders
-        print(f"제안서에서 특약 {len(parsed.riders)}건을 찾았습니다"
+        files = f"파일 {len(args.proposal)}개에서 " if len(args.proposal) > 1 else "제안서에서 "
+        print(f"{files}특약 {len(parsed.riders)}건을 찾았습니다"
               f"{' (OCR 사용)' if parsed.used_ocr else ''}.")
     if not riders:
         print("분석할 특약이 없습니다. --proposal 또는 --rider 를 지정하세요.")
