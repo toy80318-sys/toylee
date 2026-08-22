@@ -1,0 +1,35 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>{% block title %}고객 맞춤 보장분석 안내문{% endblock %}</title>
+<link rel="stylesheet" href="{{ url_for('static', filename='app.css') }}">
+{% block head %}{% endblock %}
+</head>
+<body>
+<header class="topbar">
+  <div class="wrap">
+    <a class="brand" href="{{ url_for('home') }}">
+      <span class="logo">보장</span>
+      <span>고객 맞춤 보장분석 안내문 만들기</span>
+    </a>
+    <div class="status">
+      {% if index_ready %}
+        <span class="chip ok">약관 색인 {{ index_stats.sections }}건</span>
+      {% else %}
+        <span class="chip warn">약관 색인 없음</span>
+      {% endif %}
+      <span class="chip {{ 'ok' if ocr_ready else 'muted' }}">
+        스캔 읽기(OCR) {{ '가능' if ocr_ready else '미설치' }}</span>
+    </div>
+  </div>
+</header>
+<main class="wrap">{% block content %}{% endblock %}</main>
+<footer class="foot wrap">
+  이 프로그램이 만드는 안내문은 약관 원문을 쉽게 풀어 쓴 <b>참고 자료</b>입니다.
+  실제 보장 여부는 반드시 약관 원문과 회사의 심사 기준에 따릅니다.
+</footer>
+{% block scripts %}{% endblock %}
+</body>
+</html>
