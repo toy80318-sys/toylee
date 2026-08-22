@@ -66,6 +66,8 @@ class Fact:
     text: str
     source: str = ""
     priority: int = 50          # 낮을수록 앞에 배치(고객이 먼저 알아야 할 내용)
+    kind: str = ""              # 규칙 종류(면책기간·감액·최초1회 …)
+    tag: str = ""               # 표 안에 넣을 짧은 표기
 
     def to_dict(self) -> dict:
         return asdict(self)
@@ -93,6 +95,11 @@ class RiderNote:
     exclusions: list[Fact] = field(default_factory=list)
     documents: list[str] = field(default_factory=list)
     source_label: str = ""
+    group_label: str = ""                # 표의 '구분'
+    code_summary: list[str] = field(default_factory=list)   # I60~I69 …
+    code_total: int = 0
+    pay_basis: str = ""                  # 지급 금액·횟수 한 줄 요약
+    key_rules: list[str] = field(default_factory=list)      # 표 안 짧은 주의 태그
     alternatives: list[dict] = field(default_factory=list)
     note: str = ""                       # 설계사 손글씨 메모
     unmatched: bool = False
@@ -256,8 +263,11 @@ def covered_terms(section: SectionData) -> list[str]:
     return terms[:4]
 
 
+_GENERIC_TERMS = ("수술", "입원", "진단", "치료", "통원", "검사", "보험금", "재해")
+
+
 def make_headline(name: str, type_label: str, terms: list[str], section: SectionData) -> str:
-    subject = terms[0] if terms else ""
+    subject = next((t for t in terms if compact(t) not in _GENERIC_TERMS), "")
     tmpl = glossary().get("특약유형", {}).get(type_label, "")
     if subject and type_label == "진단":
         return f"‘{subject}’으로 진단이 확정되면 약속한 진단보험금을 한 번에 드립니다."
@@ -315,7 +325,7 @@ def _rule_hits(section: SectionData) -> list[Fact]:
     seen: set[str] = set()
     kinds: set[str] = set()
 
-    def add(text: str, src: str, kind: str = "") -> None:
+    def add(text: str, src: str, kind: str = "", tag: str = "") -> None:
         """같은 종류(kind)의 주의사항은 한 번만 담는다."""
         t = normalize_space(text)
         if not t or t in seen or (kind and kind in kinds):
@@ -323,7 +333,7 @@ def _rule_hits(section: SectionData) -> list[Fact]:
         seen.add(t)
         if kind:
             kinds.add(kind)
-        facts.append(Fact(t, src, _PRIORITY.get(kind, 50)))
+        facts.append(Fact(t, src, _PRIORITY.get(kind, 50), kind, normalize_space(tag)))
 
     for art in section.articles:
         b = _body(art)                                   # 공백 없는 본문(숫자 규칙용)
@@ -336,75 +346,75 @@ def _rule_hits(section: SectionData) -> list[Fact]:
         if m:
             unit = "일" if m.group(2) == "일" else "년"
             add(f"이 보장은 가입일(계약일)을 포함해 {m.group(1)}{unit}이 지난 다음날부터 시작됩니다"
-                f"(그 전에 해당 진단을 받으면 이 보장은 받을 수 없습니다).", src, "면책기간")
+                f"(그 전에 해당 진단을 받으면 이 보장은 받을 수 없습니다).", src, "면책기간", f"가입 {m.group(1)}{unit} 후부터 보장")
             if re.search(r"다만,?재해로인한", b):
                 add("다만 재해(사고)로 생긴 경우에는 위 기다리는 기간 없이 계약일부터 보장합니다.",
-                    src, "면책예외")
+                    src, "면책예외", "재해는 기다리는 기간 없음")
 
         m = re.search(r"CDR척도[^。]{0,80}?검사결과가?(\d)점이상", b)
         if m:
             add(f"치매는 CDR(임상치매척도) 검사 결과가 {m.group(1)}점 이상이어야 보장 대상이 됩니다. "
-                f"진단서·검사지에 CDR 점수가 반드시 기재되어야 합니다.", src, "CDR")
+                f"진단서·검사지에 CDR 점수가 반드시 기재되어야 합니다.", src, "CDR", f"CDR {m.group(1)}점 이상")
 
         m = re.search(r"발생시점으로부터(\d+)일이상계속", b)
         if m:
             add(f"그 상태가 {m.group(1)}일 이상 계속되고 더 이상 좋아지기 어렵다고 판단되어야 "
-                f"보험금 지급 대상이 됩니다.", src, "지속기간")
+                f"보험금 지급 대상이 됩니다.", src, "지속기간", f"{m.group(1)}일 이상 지속")
 
         for m in re.finditer(r"(?:계약일|보험계약일)부터(\d+)년미만[^。]{0,60}?(\d{1,3})%", b):
             add(f"가입 후 {m.group(1)}년 안에 해당 사유가 생기면 보험금의 {m.group(2)}%만 지급됩니다"
-                f"(감액지급).", src, "감액")
+                f"(감액지급).", src, "감액", f"{m.group(1)}년 내 {m.group(2)}%만 지급")
         for m in re.finditer(r"(\d+)년미만인경우에는(\d{1,3})%감액", b):
-            add(f"가입 후 {m.group(1)}년 안에 해당되면 보험금의 {m.group(2)}%가 깎여 지급됩니다.", src, "감액")
+            add(f"가입 후 {m.group(1)}년 안에 해당되면 보험금의 {m.group(2)}%가 깎여 지급됩니다.", src, "감액", f"{m.group(1)}년 내 {m.group(2)}%만 지급")
 
         if re.search(r"최초1회의진단(확정)?에한", b):
-            add("이 보장은 최초 1회 진단에 대해서만 지급되고, 지급 후에는 해당 보장이 끝납니다.", src, "최초1회")
+            add("이 보장은 최초 1회 진단에 대해서만 지급되고, 지급 후에는 해당 보장이 끝납니다.", src, "최초1회", "최초 1회 한")
 
         m = re.search(r"연간(\d+)회에?한", b)
         if m:
-            add(f"1년에 최대 {m.group(1)}회까지만 지급됩니다(계약해당일 기준 1년 단위).", src, "연간한도")
+            add(f"1년에 최대 {m.group(1)}회까지만 지급됩니다(계약해당일 기준 1년 단위).", src, "연간한도", f"연 {m.group(1)}회 한도")
 
         m = re.search(r"1회입원당(\d+)일", b)
         if m:
-            add(f"입원보험금은 한 번 입원할 때 최대 {m.group(1)}일까지 지급됩니다.", src, "입원한도")
+            add(f"입원보험금은 한 번 입원할 때 최대 {m.group(1)}일까지 지급됩니다.", src, "입원한도", f"1회 입원 {m.group(1)}일 한도")
 
         m = re.search(r"(\d+)일이지난후개시한입원은새로운입원", b)
         if m:
             add(f"보험금이 지급된 마지막 입원의 퇴원일부터 {m.group(1)}일이 지난 뒤 다시 입원하면 "
-                f"새로운 입원으로 보아 한도가 다시 살아납니다.", src, "재입원")
+                f"새로운 입원으로 보아 한도가 다시 살아납니다.", src, "재입원", f"퇴원 {m.group(1)}일 후 재입원은 새 입원")
 
         if re.search(r"수술1회당", b):
-            add("수술보험금은 수술 1회마다 지급됩니다(같은 날 여러 수술은 약관 기준에 따릅니다).", src, "수술회당")
+            add("수술보험금은 수술 1회마다 지급됩니다(같은 날 여러 수술은 약관 기준에 따릅니다).", src, "수술회당", "수술 1회당 지급")
 
         m = re.search(r"장해지급률을더하여(\d{1,3})%이상", b)
         if m:
-            add(f"장해지급률을 합해 {m.group(1)}% 이상인 장해상태가 되면 이후 보험료 납입이 면제됩니다.", src, "납입면제")
+            add(f"장해지급률을 합해 {m.group(1)}% 이상인 장해상태가 되면 이후 보험료 납입이 면제됩니다.", src, "납입면제", f"장해 {m.group(1)}% 이상 시 납입면제")
 
         if "갱신" in compact(art["title"]):
             mm = re.search(r"보험기간은(\d+)년만기갱신", b)
             if mm:
                 add(f"{mm.group(1)}년마다 자동 갱신되는 보장입니다. 갱신할 때의 나이와 위험률로 "
-                    f"보험료가 다시 계산되므로 보험료가 오를 수 있습니다.", src, "갱신")
+                    f"보험료가 다시 계산되므로 보험료가 오를 수 있습니다.", src, "갱신", f"{mm.group(1)}년마다 갱신(보험료 변동)")
             mm = re.search(r"(\d{2,3})세계약해당일", b)
             if mm:
-                add(f"갱신은 최대 {mm.group(1)}세 계약해당일까지 가능합니다.", src, "갱신한도")
+                add(f"갱신은 최대 {mm.group(1)}세 계약해당일까지 가능합니다.", src, "갱신한도", f"최대 {mm.group(1)}세까지 갱신")
 
         excluded = re.search(
             r"다만,?\s*(.{5,90}?)\s*(?:으로|로)?\s*분류되는\s*경우에는\s*보장하지\s*않습니다", bs) \
             or re.search(r"다만,?\s*(.{5,90}?)\s*[은는이가]?\s*보장하지\s*않습니다", bs)
         if excluded:
             add(f"다만 {normalize_space(excluded.group(1))}은(는) 이 특약에서 보장하지 않습니다.",
-                src, "정의제외")
+                src, "정의제외", "일부 질병 제외")
 
         m = re.search(r"분류표\s*\(((?:[^()]|\([^()]*\))*?)\s*제외\s*\)", bs)
         if m:
             add(f"이 특약이 말하는 대상 질병에서 {normalize_space(m.group(1))}은(는) 제외됩니다. "
                 f"해당 진단을 받으면 다른 특약(예: 소액암·유사암 보장)에서 보장되는지 확인이 필요합니다.",
-                src, "대상제외")
+                src, "대상제외", "유사암 등 제외")
 
         if re.search(r"산정특례(대상자로)?등록", b):
             add("건강보험 산정특례 등록(또는 등록 기준 충족)이 지급 조건에 포함됩니다. "
-                "진단만으로는 부족할 수 있으니 등록 여부를 꼭 확인하세요.", src, "산정특례")
+                "진단만으로는 부족할 수 있으니 등록 여부를 꼭 확인하세요.", src, "산정특례", "산정특례 등록 필요")
 
         if re.search(r"(90|180)일이상(계속하여)?(진단|치료)", b):
             mm = re.search(r"(\d+)일이상", b)
@@ -500,6 +510,59 @@ def payouts_of(section: SectionData) -> list[Fact]:
     return out[:6]
 
 
+# ---------------------------------------------------------------- 표 안 메모
+
+_GROUP_BY_TYPE = {
+    "진단": "진단", "입원": "입원", "수술": "수술", "통원": "통원", "검사": "검사",
+    "치료": "치료", "간병": "간병", "요양": "요양", "골절": "재해", "화상": "재해",
+    "응급실": "통원", "사망": "사망", "납입면제": "보험료 면제",
+}
+
+
+def make_pay_basis(note: "RiderNote", tags: list[str]) -> str:
+    """'얼마를, 몇 번' 을 한 줄로. 가입금액이 있으면 금액을 그대로 쓴다."""
+    amount = note.amount.strip()
+    money = amount if amount else "약정한 보험금"
+    limits = [t for t in tags if any(k in t for k in ("한도", "1회", "회당", "지속"))]
+    tail = (" · " + " · ".join(dict.fromkeys(limits))) if limits else ""
+    t = note.type_label
+    if t == "진단":
+        return f"진단 확정 시 {money}{tail}"
+    if t == "입원":
+        return f"입원 1일당 정해진 보험금 지급(가입금액 {money} 기준){tail}"
+    if t == "수술":
+        return f"수술 1회마다 정해진 보험금 지급(가입금액 {money} 기준){tail}"
+    if t in ("통원", "검사", "치료"):
+        return f"해당 {t}를 받으면 정해진 보험금 지급(가입금액 {money} 기준){tail}"
+    if t == "납입면제":
+        return "정해진 사유가 생기면 이후 보험료를 내지 않아도 보장 유지"
+    if t == "사망":
+        return f"사망 시 {money} 지급"
+    return f"약관에서 정한 사유 발생 시 {money} 지급{tail}"
+
+
+def fill_table_memo(note: "RiderNote") -> None:
+    """제안서 표 안에 넣을 요약(구분·보장코드·지급기준·주의 태그)을 채운다."""
+    note.group_label = _GROUP_BY_TYPE.get(note.type_label, "기타")
+    codes: list[str] = []
+    total = 0
+    for tbl in note.code_tables:
+        total += tbl.get("count", 0)
+        for r in tbl.get("ranges", []):
+            if r["code"] not in codes:
+                codes.append(r["code"])
+    note.code_summary = codes[:8]
+    note.code_total = total
+    tags = [f.tag for f in note.cautions if f.tag]
+    # 갱신 주기는 제안서에 적힌 값(예: 5년갱신)이 이 계약의 실제 조건이므로 우선한다.
+    m = re.search(r"(\d+)\s*년\s*갱신", note.period or "")
+    if m:
+        tags = [t for t in tags if "갱신" not in t or "세까지" in t]
+        tags.insert(0, f"{m.group(1)}년마다 갱신(보험료 변동)")
+    note.key_rules = list(dict.fromkeys(tags))[:5]
+    note.pay_basis = make_pay_basis(note, tags)
+
+
 # ---------------------------------------------------------------- 조립
 
 def build_note(store: TermsStore, item: dict, product_hint: str | None = None,
@@ -548,4 +611,5 @@ def build_note(store: TermsStore, item: dict, product_hint: str | None = None,
     note.cautions = cautions[:10]
     note.exclusions = exclusions_of(section)
     note.documents = documents_of(section)
+    fill_table_memo(note)
     return note

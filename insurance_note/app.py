@@ -61,6 +61,7 @@ def analyze():
         "options": {
             "show_full_table": form.get("show_full_table") == "on",
             "show_sources": form.get("show_sources") == "on",
+            "table_only": form.get("table_only") == "on",
             "greeting": form.get("greeting", "").strip(),
         },
         "riders": [],

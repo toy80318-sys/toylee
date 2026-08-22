@@ -41,6 +41,8 @@ def main() -> int:
     ap.add_argument("--greeting", default="", help="맺음 인사말")
     ap.add_argument("--full-table", action="store_true", help="질병분류표 전체 싣기")
     ap.add_argument("--no-sources", action="store_true", help="근거 조문 숨기기")
+    ap.add_argument("--table-only", action="store_true",
+                    help="계약사항 표(메모 포함)만 인쇄하고 특약별 상세는 생략")
     ap.add_argument("--force-ocr", action="store_true", help="글자가 있어도 OCR로 읽기")
     ap.add_argument("--out", default="보장안내문.html", help="저장할 HTML 파일 경로")
     args = ap.parse_args()
@@ -71,6 +73,7 @@ def main() -> int:
         "total_premium": parsed.total_premium if parsed else "",
         "options": {"show_full_table": args.full_table,
                     "show_sources": not args.no_sources,
+                    "table_only": args.table_only,
                     "greeting": args.greeting},
         "riders": riders,
     }

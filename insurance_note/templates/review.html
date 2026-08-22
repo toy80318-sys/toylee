@@ -35,6 +35,8 @@
   </div>
   <label class="check"><input type="checkbox" id="o-sources"
     {% if doc.options.show_sources %}checked{% endif %}> 근거 조문 표시</label>
+  <label class="check"><input type="checkbox" id="o-tableonly"
+    {% if doc.options.table_only %}checked{% endif %}> 계약사항 표만 인쇄(상세 생략)</label>
   <label class="check"><input type="checkbox" id="o-fulltable"
     {% if doc.options.show_full_table %}checked{% endif %}> 부록에 질병분류표 전체 싣기</label>
 </section>

@@ -89,6 +89,23 @@ def test_proposal() -> None:
           any("36대생활습관병입원특약" in n for n in names), str(names))
 
 
+def test_proposal_numbering() -> None:
+    print("[제안서 표기 처리]")
+    lines = ("9. 25대생활습관병수술특약(간편N355/갱신형)   1,000만원   5년(최대100세)/5년갱신   1,450\n"
+             "13. New플러스보험료납입면제특약(간편N355)4형   *주석참조   20년납/20년만기   1,388\n")
+    riders = proposal.parse_riders(lines)
+    names = [r.name for r in riders]
+    check("목록번호만 제거(이름 속 숫자 유지)",
+          any(n.startswith("25대생활습관병수술특약") for n in names), str(names))
+    check("'*주석참조' 를 가입금액으로 처리",
+          any(r.amount == "주석 참조" for r in riders),
+          str([(r.name[:12], r.amount) for r in riders]))
+    check("갱신 기간 인식", any("갱신" in r.period for r in riders),
+          str([r.period for r in riders]))
+    check("상품 표기(무해약환급금형·간편N355)는 매칭에서 무시",
+          key("허혈성심장질환진단특약L(무해약환급금형/간편N355)") == key("허혈심장질환진단특약L"))
+
+
 def test_with_index() -> None:
     store = default_store()
     if not store.ready:
@@ -105,6 +122,19 @@ def test_with_index() -> None:
     check("갱신 안내 포함", "갱신" in texts)
     check("청구서류 안내", any("진단서" in d for d in note.documents), str(note.documents))
 
+    print("[표 안 메모]")
+    memo = build_note(store, {"name": "뇌혈관질환진단특약L(무해약환급금형/간편N355)",
+                              "amount": "1,000만원", "period": "20년납 / 100세만기"})
+    check("구분 자동 분류", memo.group_label == "진단", memo.group_label)
+    check("보장 대상 코드 요약", "I60~I69" in memo.code_summary, str(memo.code_summary))
+    check("지급 기준에 가입금액 표기", "1,000만원" in memo.pay_basis, memo.pay_basis)
+    check("주의 태그 생성", any("50%" in r for r in memo.key_rules), str(memo.key_rules))
+
+    renew = build_note(store, {"name": "NEW플러스수술특약(간편N355/갱신형)",
+                               "amount": "1,000만원", "period": "5년납 / 5년갱신"})
+    check("갱신 주기는 제안서 값 우선",
+          any(r.startswith("5년마다 갱신") for r in renew.key_rules), str(renew.key_rules))
+
     cancer = build_note(store, {"name": "무배당 암진단특약H"})
     ctexts = " ".join(f.text for f in cancer.cautions)
     check("암 90일 면책 안내", "90일" in ctexts, ctexts[:120])
@@ -116,6 +146,7 @@ def main() -> int:
     test_indexer()
     test_explain_helpers()
     test_proposal()
+    test_proposal_numbering()
     test_with_index()
     print("-" * 46)
     print(f"통과 {passed}건 / 실패 {failed}건")

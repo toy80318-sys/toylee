@@ -18,6 +18,7 @@
       options: {
         show_sources: $("#o-sources").checked,
         show_full_table: $("#o-fulltable").checked,
+        table_only: $("#o-tableonly").checked,
         greeting: $("#o-greeting").value,
       },
       riders: $$("#riders .rider").map((el) => ({

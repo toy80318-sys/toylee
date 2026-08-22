@@ -39,19 +39,56 @@
     </p>
   </header>
 
-  <!-- 요약표 -->
+  <!-- 계약사항 표(메모 포함) -->
   <section class="block">
-    <h2>한눈에 보기</h2>
+    <h2>계약사항 한눈에 보기</h2>
     <table class="summary">
-      <thead><tr><th style="width:34%">보장(특약)</th><th>가입금액</th><th>보험료</th>
-        <th style="width:38%">이런 보장입니다</th></tr></thead>
+      <thead>
+        <tr>
+          <th style="width:7%">구분</th>
+          <th style="width:22%">보장(특약)</th>
+          <th style="width:9%">가입금액</th>
+          <th style="width:11%">납입/보험기간</th>
+          <th style="width:8%">보험료</th>
+          <th>쉬운 설명 · 보장 대상 코드 · 지급 기준</th>
+        </tr>
+      </thead>
       <tbody>
       {% for n in doc.notes %}
         <tr>
-          <td class="name">{{ n.matched_name or n.input_name }}</td>
+          <td class="grp-cell">{{ n.group_label or '-' }}</td>
+          <td class="name">{{ n.input_name or n.matched_name }}
+            {% if n.matched_name and n.matched_name != n.input_name %}
+              <span class="based">약관: {{ n.matched_name }}</span>
+            {% endif %}
+            {% if doc.product_key and n.product and n.product != doc.product_key %}
+              <span class="based alt">{{ n.product }} 약관 기준</span>
+            {% endif %}
+          </td>
           <td class="num">{{ n.amount or '-' }}</td>
-          <td class="num">{{ n.premium or '-' }}</td>
-          <td class="desc">{{ n.headline }}</td>
+          <td class="num small">{{ n.period or '-' }}</td>
+          <td class="num">{{ n.premium or '-' }}{% if n.premium %}원{% endif %}</td>
+          <td class="memo-cell">
+            {% if n.unmatched %}
+              <span class="warn-inline">약관에서 찾지 못했습니다 — 특약명을 확인해 주세요.</span>
+            {% else %}
+              <div class="memo-line">{{ n.headline }}</div>
+              {% if n.code_summary %}
+              <div class="memo-line">
+                <b>대상 코드</b>
+                {% for c in n.code_summary %}<span class="code sm">{{ c }}</span>{% endfor %}
+                {% if n.code_total %}<span class="muted-inline">(총 {{ n.code_total }}개 항목)</span>{% endif %}
+              </div>
+              {% endif %}
+              <div class="memo-line"><b>지급</b> {{ n.pay_basis }}</div>
+              {% if n.key_rules %}
+              <div class="memo-line rules">
+                {% for r in n.key_rules %}<span class="rule">{{ r }}</span>{% endfor %}
+              </div>
+              {% endif %}
+              {% if n.note %}<div class="memo-line memo-hand">메모 · {{ n.note }}</div>{% endif %}
+            {% endif %}
+          </td>
         </tr>
       {% endfor %}
       </tbody>
@@ -59,9 +96,13 @@
     {% if doc.summary.total_premium %}
     <p class="total">합계 보험료 {{ doc.summary.total_premium }}원</p>
     {% endif %}
+    <p class="tip">위 표의 <b>대상 코드</b>는 약관 (별표) 질병분류표에서 가져온 것입니다.
+      진단서의 <b>질병분류코드</b>가 이 범위에 들어가면 보장 대상입니다.
+      자세한 내용은 다음 장부터 특약별로 정리했습니다.</p>
   </section>
 
   <!-- 특약별 상세 -->
+  {% if not doc.options.table_only %}
   {% for n in doc.notes %}
   <section class="block rider-card">
     <div class="rider-title">
@@ -169,6 +210,7 @@
     {% endif %}
   </section>
   {% endfor %}
+  {% endif %}
 
   <!-- 맺음 -->
   <section class="block closing">

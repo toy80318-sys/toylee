@@ -67,11 +67,24 @@ def join_lines(text: str) -> str:
     return "\n".join(out)
 
 
+# 상품 표기에만 쓰이고 보장 내용과 무관한 말들(매칭 전에 제거)
+_NOISE_WORDS = ("무해약환급금형", "저해약환급금형", "무해약환급금", "해약환급금미지급형",
+                "간편심사", "간편가입", "간편n355", "간편n", "n355", "간편")
+# 같은 보장을 다르게 적는 표기
+_SYNONYMS = (("허혈성", "허혈"), ("뇌졸증", "뇌졸중"), ("싸이버나이프", "사이버나이프"))
+
+
 def key(name: str) -> str:
     """특약명 비교용 키. 공백/기호/무배당 표기/로마숫자 차이를 없앤다."""
     s = unicodedata.normalize("NFKC", name or "")
     s = _apply_roman(s)
     s = _PUNCT.sub("", s)
+    low = s.lower()
+    for w in _NOISE_WORDS:
+        low = low.replace(w, "")
+    for a, b in _SYNONYMS:
+        low = low.replace(a, b)
+    s = low
     s = s.replace("무배당", "").replace("무", "무") if s.startswith("무배당") else s
     s = re.sub(r"^\(?무\)?(?=[가-힣A-Za-z])", "", s)
     s = s.replace("무배당", "")

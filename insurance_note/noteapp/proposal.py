@@ -77,7 +77,7 @@ def read_document(path: Path, force_ocr: bool = False) -> tuple[list[str], bool]
 MONEY = r"(?:\d{1,3}(?:,\d{3})+|\d+)"
 _AMOUNT = re.compile(rf"({MONEY}(?:\.\d+)?)\s*(억원|만원|천원|원|구좌|좌)")
 _PREMIUM_HINT = re.compile(r"(보험료|월납|월\s*보험료)")
-_PERIOD = re.compile(r"((?:\d+년|\d+세|전기|종신)\s*(?:납입|납|만기))")
+_PERIOD = re.compile(r"((?:\d+년|\d+세|전기|종신)\s*(?:납입|납|만기|갱신))")
 _BIRTH = re.compile(r"(\d{4})[.\-/년]\s*(\d{1,2})[.\-/월]\s*(\d{1,2})")
 _RRN = re.compile(r"(\d{6})\s*[-–]\s*(\d)\d{0,6}")
 _NAME_LINE = re.compile(r"(피보험자|계약자|고객)\s*(?:명|성명)?\s*[:：]?\s*([가-힣]{2,5})")
@@ -118,7 +118,10 @@ class Proposal:
 def _clean_name(text: str) -> str:
     text = normalize_space(text)
     text = re.sub(r"^[（(]\s*무\s*[)）]\s*", "무배당 ", text)   # (무) -> 무배당
-    text = re.sub(r"^[\d\W_]+(?=[가-힣A-Za-z])", "", text)     # 앞머리 번호·기호
+    text = re.sub(r"^\s*[\d]{1,2}\s*[.)]\s+", "", text)       # 앞머리 목록번호(1. / 2) …)
+    text = re.sub(r"^[\s*·\-–—]+", "", text)                    # 앞머리 기호
+    text = re.sub(r"[\s*]*주석\s*참조[\s*]*$", "", text)         # 꼬리의 '*주석참조'
+
     text = re.sub(r"\s{2,}", " ", text)
     text = re.sub(r"[·\-–—]{2,}", " ", text)
     return text.strip(" .·:|")
@@ -168,6 +171,8 @@ def parse_riders(text: str) -> list[Rider]:
             continue
         amounts = _AMOUNT.findall(values) or _AMOUNT.findall(line)
         amount = f"{amounts[0][0]}{amounts[0][1]}" if amounts else ""
+        if not amount and re.search(r"주석\s*참조", line):
+            amount = "주석 참조"
         period = " / ".join(dict.fromkeys(_PERIOD.findall(values or line)))
         premium = ""
         # 보험료: 값 부분의 숫자 중 금액·기간에 쓰이지 않은 마지막 숫자

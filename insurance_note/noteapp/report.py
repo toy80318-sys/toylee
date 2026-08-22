@@ -45,6 +45,7 @@ def build_document(store: TermsStore, payload: dict) -> dict:
         "options": {
             "show_full_table": bool(options.get("show_full_table", False)),
             "show_sources": bool(options.get("show_sources", True)),
+            "table_only": bool(options.get("table_only", False)),
             "greeting": options.get("greeting", ""),
         },
         "created_at": date.today().isoformat(),
