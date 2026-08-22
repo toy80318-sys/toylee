@@ -5,8 +5,11 @@
 """
 from __future__ import annotations
 
+import os
 import sys
+import threading
 import traceback
+import webbrowser
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
@@ -175,6 +178,22 @@ def not_found(_):
     return redirect(url_for("home"))
 
 
+def open_browser_soon(url: str, delay: float = 1.5) -> None:
+    """서버가 뜨면 브라우저를 자동으로 열어 준다(바탕화면 아이콘 실행용)."""
+    if os.environ.get("NOTE_OPEN_BROWSER", "1") == "0":
+        return
+
+    def _open() -> None:
+        try:
+            webbrowser.open(url)
+        except Exception:
+            pass                      # 브라우저가 없어도 서버는 계속 동작
+
+    t = threading.Timer(delay, _open)
+    t.daemon = True
+    t.start()
+
+
 def main() -> int:
     st = store()
     print("=" * 60)
@@ -187,9 +206,12 @@ def main() -> int:
     else:
         print(" ! 약관 색인이 없습니다. 먼저 'python3 build_index.py' 를 실행하세요.")
     print(f" OCR(스캔 읽기): {'사용 가능' if proposal.ocr_available() else '미설치'}")
-    print(" 브라우저에서 http://127.0.0.1:5000 로 접속하세요. (종료: Ctrl+C)")
-    app.run(host="127.0.0.1", port=int(__import__('os').environ.get("PORT", 5000)),
-            debug=False)
+    port = int(os.environ.get("PORT", 5000))
+    url = f"http://127.0.0.1:{port}"
+    print(f" 브라우저가 자동으로 열립니다: {url}")
+    print(" 이 창을 닫으면 프로그램이 종료됩니다. (또는 Ctrl+C)")
+    open_browser_soon(url)
+    app.run(host="127.0.0.1", port=port, debug=False)
     return 0
 
 

@@ -5,3 +5,4 @@ uploads/
 output/
 __pycache__/
 *.pyc
+.setup_done
