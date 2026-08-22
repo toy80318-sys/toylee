@@ -37,8 +37,7 @@ table.summary th{background:var(--brand-soft);color:var(--brand);border:1px soli
   padding:7px 8px;text-align:left}
 table.summary td{border:1px solid var(--line);padding:7px 8px;vertical-align:top}
 table.summary .name{font-weight:600}
-.based{display:block;font-weight:400;color:var(--muted);font-size:8.4pt;margin-top:2px}
-.based.alt{color:var(--warn)}
+.table-src{margin:6px 2px 0;text-align:right}
 table.summary .num{white-space:nowrap;text-align:right}
 table.summary .desc{color:var(--muted)}
 table.summary td.small{font-size:8.8pt}

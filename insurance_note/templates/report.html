@@ -57,14 +57,7 @@
       {% for n in doc.notes %}
         <tr>
           <td class="grp-cell">{{ n.group_label or '-' }}</td>
-          <td class="name">{{ n.input_name or n.matched_name }}
-            {% if n.matched_name and n.matched_name != n.input_name %}
-              <span class="based">약관: {{ n.matched_name }}</span>
-            {% endif %}
-            {% if doc.product_key and n.product and n.product != doc.product_key %}
-              <span class="based alt">{{ n.product }} 약관 기준</span>
-            {% endif %}
-          </td>
+          <td class="name">{{ n.input_name or n.matched_name }}</td>
           <td class="num">{{ n.amount or '-' }}</td>
           <td class="num small">{{ n.period or '-' }}</td>
           <td class="num">{{ n.premium or '-' }}{% if n.premium %}원{% endif %}</td>
@@ -96,6 +89,10 @@
     </table>
     {% if doc.summary.total_premium %}
     <p class="total">합계 보험료 {{ doc.summary.total_premium }}원</p>
+    {% endif %}
+    {% if doc.options.show_sources and doc.source_products %}
+    <p class="src table-src">※ 위 설명·코드는
+      {{ doc.source_products | join(' · ') }} 약관을 근거로 작성했습니다.</p>
     {% endif %}
     <p class="tip">위 표의 <b>대상 코드</b>는 약관 (별표) 질병분류표에서 가져온 것입니다.
       진단서의 <b>질병분류코드</b>가 이 범위에 들어가면 보장 대상입니다.

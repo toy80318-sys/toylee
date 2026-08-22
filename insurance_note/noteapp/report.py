@@ -37,6 +37,11 @@ def build_document(store: TermsStore, payload: dict) -> dict:
         notes.append(build_note(store, item, product_hint=product_key))
 
     matched = [n for n in notes if not n.unmatched]
+    # 표 아래에 한 줄로 밝힐 근거 약관(상품) 목록
+    source_products: list[str] = []
+    for n in matched:
+        if n.product and n.product not in source_products:
+            source_products.append(n.product)
     return {
         "customer": customer,
         "planner": planner,
@@ -49,6 +54,7 @@ def build_document(store: TermsStore, payload: dict) -> dict:
             "greeting": options.get("greeting", ""),
         },
         "created_at": date.today().isoformat(),
+        "source_products": source_products,
         "notes": [n.to_dict() for n in notes],
         "summary": {
             "total": len(notes),
