@@ -1,0 +1,9 @@
+# 생성물(용량이 크고 각자 환경에서 다시 만들 수 있는 파일)
+data/terms_index.sqlite
+data/terms_index.sqlite-*
+uploads/
+output/
+__pycache__/
+*.pyc
+.setup_done
+실행기록.txt
