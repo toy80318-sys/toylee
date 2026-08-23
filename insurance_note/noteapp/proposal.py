@@ -24,14 +24,22 @@ IMAGE_SUFFIXES = {".png", ".jpg", ".jpeg", ".bmp", ".tif", ".tiff", ".webp"}
 
 # ---------------------------------------------------------------- OCR
 
-_OCR_CANDIDATES = (                       # 설치는 했지만 PATH 에 안 잡히는 경우가 잦다
-    r"C:\Program Files\Tesseract-OCR\tesseract.exe",
-    r"C:\Program Files (x86)\Tesseract-OCR\tesseract.exe",
-    r"C:\Tesseract-OCR\tesseract.exe",
-    "/opt/homebrew/bin/tesseract",
-    "/usr/local/bin/tesseract",
-    "/usr/bin/tesseract",
-)
+def _ocr_candidates() -> list[str]:
+    """설치는 했지만 PATH 에 안 잡히는 경우가 잦아 흔한 설치 위치를 직접 본다."""
+    home = Path.home()
+    return [
+        r"C:\Program Files\Tesseract-OCR\tesseract.exe",
+        r"C:\Program Files (x86)\Tesseract-OCR\tesseract.exe",
+        r"C:\Tesseract-OCR\tesseract.exe",
+        # 관리자 권한 없이 설치하면 사용자 폴더로 들어간다
+        str(home / "AppData/Local/Programs/Tesseract-OCR/tesseract.exe"),
+        str(home / "AppData/Local/Tesseract-OCR/tesseract.exe"),
+        str(home / "scoop/shims/tesseract.exe"),
+        r"C:\ProgramData\chocolatey\bin\tesseract.exe",
+        "/opt/homebrew/bin/tesseract",
+        "/usr/local/bin/tesseract",
+        "/usr/bin/tesseract",
+    ]
 
 OCR_HELP = ("사진·스캔본에서 글자를 읽으려면 OCR 프로그램(tesseract)이 필요합니다. "
             "https://github.com/UB-Mannheim/tesseract/wiki 에서 설치하면서 "
@@ -47,10 +55,18 @@ def tesseract_path() -> str | None:
     found = shutil.which("tesseract")
     if found:
         return found
-    for path in _OCR_CANDIDATES:
+    for path in _ocr_candidates():
         if Path(path).exists():
             return path
     return None
+
+
+def ocr_status() -> str:
+    """실행 창에 보여 줄 한 줄 요약(설치 여부와 찾은 위치)."""
+    exe = tesseract_path()
+    if exe:
+        return f"사용 가능 ({exe})"
+    return "미설치 — 사진·스캔본은 읽지 못합니다(PDF·붙여넣기는 가능)"
 
 
 def ocr_available() -> bool:

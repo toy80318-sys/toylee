@@ -288,7 +288,7 @@ def main() -> int:
               f"질병코드 {s['codes']}개 ({s['built_at']})")
     else:
         print(" ! 약관 색인이 없습니다. 먼저 'python3 build_index.py' 를 실행하세요.")
-    print(f" OCR(스캔 읽기): {'사용 가능' if proposal.ocr_available() else '미설치'}")
+    print(f" OCR(스캔 읽기): {proposal.ocr_status()}")
     port = pick_port(int(os.environ.get("PORT", 5000)))
     url = f"http://127.0.0.1:{port}"
     try:                                   # 주소를 파일로도 남겨 둔다(창을 놓쳤을 때)
