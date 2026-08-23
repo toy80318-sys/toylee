@@ -126,6 +126,30 @@ def test_multi_file() -> None:
     names = [r.name for r in merged.riders]
     check("겹친 페이지의 중복 제거", len(names) == len(set(names)), str(names))
     check("고객 정보 유지", merged.customer_name == one.customer_name, merged.customer_name)
+    check("읽은 파일 이름 기록", set(merged.sources) == {"1장.txt", "2장.txt"}, str(merged.sources))
+
+
+def test_broken_file_is_skipped() -> None:
+    print("[한 장이 잘못돼도 나머지는 살리기]")
+    base = Path(__file__).resolve().parent.parent / "samples" / "제안서_간편마이플랜.txt"
+    import tempfile
+
+    with tempfile.TemporaryDirectory() as tmp:
+        broken = Path(tmp) / "손상된제안서.pdf"
+        broken.write_bytes(b"%PDF-1.4 this is not a real pdf")
+        unknown = Path(tmp) / "제안서.hwp"
+        unknown.write_bytes(b"\x00\x01")
+        merged = proposal.parse_files([base, broken, unknown])
+        only_bad = proposal.parse_files([broken])
+
+    check("정상 파일의 특약은 그대로 남음", len(merged.riders) > 0, str(len(merged.riders)))
+    check("못 읽은 파일 2건을 따로 알려 줌", len(merged.problems) == 2, str(merged.problems))
+    check("실패 안내에 파일 이름 포함",
+          any("손상된제안서.pdf" in p for p in merged.problems), str(merged.problems))
+    check("지원하지 않는 형식은 이유를 설명",
+          any(".hwp" in p and "PDF" in p for p in merged.problems), str(merged.problems))
+    check("전부 실패해도 오류 대신 안내로 돌려줌",
+          only_bad.riders == [] and len(only_bad.problems) == 1, str(only_bad.problems))
 
 
 def test_with_index() -> None:
@@ -170,6 +194,7 @@ def main() -> int:
     test_proposal()
     test_proposal_numbering()
     test_multi_file()
+    test_broken_file_is_skipped()
     test_with_index()
     print("-" * 46)
     print(f"통과 {passed}건 / 실패 {failed}건")

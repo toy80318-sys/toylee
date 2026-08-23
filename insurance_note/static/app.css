@@ -66,3 +66,18 @@ ul.mini{margin:6px 0;padding-left:18px;color:var(--muted);font-size:13px}
 .row input,.row select{margin:0}
 .foot{color:var(--muted);font-size:13px;padding:18px 20px 40px}
 @media (max-width:860px){.grid4{grid-template-columns:repeat(2,1fr)}.grid2{grid-template-columns:1fr}}
+
+/* 제안서 파일 고르기 */
+.file{border:1px dashed var(--line);border-radius:12px;padding:12px 14px;margin:10px 0;
+  background:#fbfdff;font-size:13px;color:var(--muted)}
+.file.over{border-color:var(--brand);background:var(--brand-soft)}
+.file b{color:var(--ink)}
+.file input[type=file]{position:absolute;width:1px;height:1px;opacity:0;pointer-events:none}
+.pickrow{display:flex;align-items:center;gap:10px;margin:10px 0 6px}
+.pickrow .hint{margin:0}
+button.small{padding:4px 10px;font-size:12px}
+.filelist{list-style:none;margin:6px 0 0;padding:0}
+.filelist li{display:flex;align-items:center;gap:10px;padding:6px 0;
+  border-top:1px solid var(--line)}
+.filelist .fname{flex:1;color:var(--ink);word-break:break-all}
+.filelist .fsize{color:var(--muted);font-size:12px;white-space:nowrap}

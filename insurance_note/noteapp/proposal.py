@@ -48,12 +48,20 @@ def read_document(path: Path, force_ocr: bool = False) -> tuple[list[str], bool]
     """제안서 파일 -> (페이지별 텍스트, OCR 사용 여부)"""
     path = Path(path)
     used_ocr = False
-    if path.suffix.lower() in IMAGE_SUFFIXES:
+    suffix = path.suffix.lower()
+    if suffix in IMAGE_SUFFIXES:
         return [ocr_image_bytes(path.read_bytes())], True
-    if path.suffix.lower() == ".txt":
+    if suffix == ".txt":
         return [path.read_text(encoding="utf-8", errors="ignore")], False
+    if suffix not in (".pdf", ""):
+        raise RuntimeError(f"'{suffix}' 형식은 읽을 수 없습니다. "
+                           "PDF 나 사진(PNG·JPG)으로 저장해서 올려 주세요.")
 
-    doc = pymupdf.open(path)
+    try:
+        doc = pymupdf.open(path)
+    except Exception as exc:                          # noqa: BLE001
+        raise RuntimeError("PDF 를 열 수 없습니다. 파일이 손상됐거나 암호가 "
+                           "걸려 있는지 확인해 주세요.") from exc
     pages: list[str] = []
     try:
         for i in range(len(doc)):
@@ -108,6 +116,8 @@ class Proposal:
     raw_text: str = ""
     used_ocr: bool = False
     pages: int = 0
+    sources: list[str] = field(default_factory=list)      # 실제로 읽어낸 파일 이름
+    problems: list[str] = field(default_factory=list)     # 못 읽은 파일과 그 이유
 
     def to_dict(self) -> dict:
         d = asdict(self)
@@ -255,6 +265,8 @@ def merge(parts: list[Proposal]) -> Proposal:
     out = Proposal()
     seen: set[tuple[str, str, str]] = set()
     for part in parts:
+        out.sources += part.sources
+        out.problems += part.problems
         out.customer_name = out.customer_name or part.customer_name
         out.birth = out.birth or part.birth
         out.gender = out.gender or part.gender
@@ -274,14 +286,35 @@ def merge(parts: list[Proposal]) -> Proposal:
 
 
 def parse_files(paths: list[Path], force_ocr: bool = False) -> Proposal:
-    """제안서 파일 여러 개를 한 번에 읽는다."""
-    return merge([parse_file(Path(p), force_ocr=force_ocr) for p in paths])
+    """제안서 파일 여러 개를 한 번에 읽는다.
+
+    한 파일이 잘못돼도 나머지는 계속 읽고, 실패한 파일과 이유만 따로 모아 둔다.
+    (스캔본 여러 장 중 한 장만 손상된 경우에도 나머지 장은 살린다.)
+    """
+    parts: list[Proposal] = []
+    problems: list[str] = []
+    for path in paths:
+        path = Path(path)
+        try:
+            parts.append(parse_file(path, force_ocr=force_ocr))
+        except Exception as exc:                      # noqa: BLE001 - 이유를 화면에 그대로 보여준다
+            problems.append(f"{path.name}: {_reason(exc)}")
+    out = merge(parts)
+    out.problems += problems
+    return out
+
+
+def _reason(exc: Exception) -> str:
+    text = normalize_space(str(exc)) or exc.__class__.__name__
+    return text if len(text) <= 200 else text[:200] + "…"
 
 
 def parse_file(path: Path, force_ocr: bool = False) -> Proposal:
-    pages, used_ocr = read_document(Path(path), force_ocr=force_ocr)
+    path = Path(path)
+    pages, used_ocr = read_document(path, force_ocr=force_ocr)
     text = "\n".join(pages)
     prop = parse_text(text)
     prop.used_ocr = used_ocr
     prop.pages = len(pages)
+    prop.sources = [path.name]
     return prop

@@ -1,0 +1,13 @@
+{% extends "layout.html" %}
+{% block content %}
+<section class="card alert">
+  <h1>{{ title }}</h1>
+  <p>{{ message }}</p>
+  {% if hints %}
+  <ul>
+    {% for h in hints %}<li>{{ h }}</li>{% endfor %}
+  </ul>
+  {% endif %}
+  <p class="actions"><a class="primary" href="{{ url_for('home') }}">처음 화면으로 돌아가기</a></p>
+</section>
+{% endblock %}

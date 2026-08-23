@@ -22,7 +22,31 @@ from noteapp.report import build_document  # noqa: E402
 from noteapp.store import default_store  # noqa: E402
 
 app = Flask(__name__, template_folder="templates", static_folder="static")
-app.config["MAX_CONTENT_LENGTH"] = 60 * 1024 * 1024   # 업로드 60MB 까지
+MAX_UPLOAD_MB = int(os.environ.get("NOTE_MAX_UPLOAD_MB", "500"))
+app.config["MAX_CONTENT_LENGTH"] = MAX_UPLOAD_MB * 1024 * 1024
+
+
+@app.errorhandler(413)
+def too_large(_exc):
+    """스캔본 여러 장을 한꺼번에 올리면 용량 제한에 걸릴 수 있다."""
+    return render_template(
+        "oops.html",
+        title="파일 용량이 너무 큽니다",
+        message=f"한 번에 올릴 수 있는 크기는 {MAX_UPLOAD_MB}MB 까지입니다.",
+        hints=["스캔 해상도를 낮춰 다시 저장하거나, 몇 장씩 나눠서 올려 보세요.",
+               "PDF 여러 개를 하나로 합쳐서 올려도 됩니다."]), 413
+
+
+@app.errorhandler(500)
+def server_error(exc):
+    """오류가 나도 흰 화면 대신 무엇을 하면 되는지 보여 준다."""
+    traceback.print_exc()
+    return render_template(
+        "oops.html",
+        title="처리 중 문제가 생겼습니다",
+        message=str(getattr(exc, "original_exception", exc) or exc)[:300],
+        hints=["처음 화면으로 돌아가 다시 시도해 주세요.",
+               "계속 같은 오류가 나면 실행 창(또는 실행기록.txt)의 마지막 줄을 알려 주세요."]), 500
 
 
 def store():
@@ -78,14 +102,26 @@ def analyze():
     try:
         if uploads:
             saved: list[Path] = []
+            shown: dict[str, str] = {}            # 저장된 파일명 -> 사용자가 올린 원래 이름
             for upload in uploads:
-                dest = config.UPLOAD_DIR / f"{jobs.new_job_id()}_{Path(upload.filename).name}"
-                upload.save(dest)
+                name = Path(upload.filename.replace("\\", "/")).name or "제안서"
+                dest = config.UPLOAD_DIR / f"{jobs.new_job_id()}_{name}"
+                try:
+                    upload.save(dest)
+                except Exception as exc:          # noqa: BLE001 - 한 장 실패해도 나머지는 계속
+                    warnings.append(f"'{name}' 파일을 저장하지 못했습니다: {exc}")
+                    continue
+                shown[dest.name] = name
                 saved.append(dest)
             parsed = proposal.parse_files(saved, force_ocr=form.get("force_ocr") == "on")
-            if len(saved) > 1:
-                warnings.append(f"파일 {len(saved)}개를 읽어 특약 {len(parsed.riders)}건을 "
-                                f"모았습니다. 같은 특약이 여러 장에 걸쳐 있으면 한 번만 담습니다.")
+            for problem in parsed.problems:
+                stored, _, reason = problem.partition(": ")
+                warnings.append(f"'{shown.get(stored, stored)}' 파일은 읽지 못해 "
+                                f"건너뛰었습니다 — {reason}")
+            if len(uploads) > 1:
+                warnings.append(f"파일 {len(uploads)}개 중 {len(parsed.sources)}개를 읽어 "
+                                f"특약 {len(parsed.riders)}건을 모았습니다. "
+                                "같은 특약이 여러 장에 걸쳐 있으면 한 번만 담습니다.")
             if parsed.used_ocr:
                 warnings.append("스캔본이라 OCR(글자 인식)로 읽었습니다. 특약 이름이 잘못 읽혔을 수 "
                                 "있으니 아래 목록을 꼭 확인해 주세요.")
@@ -95,6 +131,7 @@ def analyze():
         elif pasted:
             parsed = proposal.parse_text(pasted)
     except Exception as exc:  # 업로드 실패해도 수동 입력으로 계속 진행
+        traceback.print_exc()
         warnings.append(f"제안서를 읽는 중 문제가 발생했습니다: {exc}")
 
     if parsed:

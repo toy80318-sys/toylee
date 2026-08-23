@@ -32,12 +32,18 @@
 
   <h2>2. 상품제안서</h2>
   <div class="grid2">
-    <label class="file">제안서 파일 업로드 (PDF · 스캔 이미지, 여러 장 가능)
-      <input type="file" name="proposal" multiple
+    <div class="file" id="dropzone">
+      <b>제안서 파일 업로드 (PDF · 스캔 이미지, 여러 장 가능)</b>
+      <input type="file" id="proposal-input" name="proposal" multiple
              accept=".pdf,.png,.jpg,.jpeg,.tif,.tiff,.txt">
-      <span class="hint">여러 장이면 <b>한꺼번에 선택</b>하세요(Ctrl 또는 Shift 누르고 클릭).
-        스캔본이면 자동으로 글자 인식(OCR)을 시도합니다.</span>
-    </label>
+      <p class="pickrow">
+        <button type="button" class="ghost" id="pick-files">파일 고르기 / 더 추가하기</button>
+        <span class="hint" id="file-count">아직 고른 파일이 없습니다.</span>
+      </p>
+      <ul class="filelist" id="file-list"></ul>
+      <span class="hint">한 번에 여러 장을 골라도 되고, <b>한 장씩 여러 번 눌러 계속 추가</b>해도 됩니다.
+        이 칸에 <b>끌어다 놓아도</b> 됩니다. 스캔본이면 자동으로 글자 인식(OCR)을 시도합니다.</span>
+    </div>
     <label>상품명(비워두면 제안서에서 찾습니다)
       <input name="product" placeholder="예: 교보평생건강보험 PLUS">
     </label>
@@ -83,4 +89,8 @@
   </table>
 </section>
 {% endif %}
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='upload.js') }}"></script>
 {% endblock %}
