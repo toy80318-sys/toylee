@@ -6,6 +6,7 @@
 """
 from __future__ import annotations
 
+import os
 import subprocess
 import sys
 from datetime import datetime
@@ -101,9 +102,39 @@ def main() -> int:
         line(f"\n자세한 내용은 이 파일에 저장했습니다: {LOG}")
         return 1
 
-    sys.path.insert(0, str(BASE))
-    import app                                                # noqa: PLC0415
-    return app.main()
+    return serve()
+
+
+def serve(max_restarts: int = 5) -> int:
+    """웹 화면을 띄우고, 예기치 않게 멈추면 자동으로 다시 띄운다.
+
+    큰 스캔본을 읽다가 프로그램이 꺼지면 브라우저에 '연결을 거부했습니다' 만 뜨고
+    이유를 알 수 없었다. 이제는 마지막 오류를 기록에 남기고 곧바로 다시 시작한다.
+    """
+    env = dict(os.environ)
+    for attempt in range(max_restarts + 1):
+        if attempt:
+            env["NOTE_OPEN_BROWSER"] = "0"                    # 다시 시작할 땐 새 탭을 열지 않는다
+            line("")
+            line("  ! 프로그램이 예기치 않게 멈춰 다시 시작합니다."
+                 f" ({attempt}/{max_restarts})")
+            line("    브라우저에서 새로고침(F5) 하면 계속 쓰실 수 있습니다.")
+        proc = subprocess.Popen([sys.executable, str(BASE / "app.py")], cwd=BASE, env=env,
+                                stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
+                                text=True, encoding="utf-8", errors="replace", bufsize=1)
+        try:
+            for row in proc.stdout:                           # 화면과 기록에 동시에 남긴다
+                line(row.rstrip("\n"))
+        except KeyboardInterrupt:
+            proc.terminate()
+            return 0
+        code = proc.wait()
+        if code == 0:
+            return 0                                          # 사용자가 창을 닫은 경우
+    line("")
+    line("  ! 여러 번 다시 시작했지만 계속 멈춥니다. 위의 마지막 줄과 실행기록.txt 를 "
+         "알려 주시면 원인을 찾을 수 있습니다.")
+    return 1
 
 
 if __name__ == "__main__":

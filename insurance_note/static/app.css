@@ -81,3 +81,5 @@ button.small{padding:4px 10px;font-size:12px}
   border-top:1px solid var(--line)}
 .filelist .fname{flex:1;color:var(--ink);word-break:break-all}
 .filelist .fsize{color:var(--muted);font-size:12px;white-space:nowrap}
+.offline{margin:14px 0 0;padding:10px 12px;border-radius:10px;
+  border:1px solid #f0d3ae;background:var(--warn-soft);color:#7a4409;font-size:13px}

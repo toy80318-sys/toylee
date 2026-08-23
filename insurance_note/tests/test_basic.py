@@ -152,6 +152,38 @@ def test_broken_file_is_skipped() -> None:
           only_bad.riders == [] and len(only_bad.problems) == 1, str(only_bad.problems))
 
 
+def test_runtime_safety() -> None:
+    print("[프로그램이 꺼지지 않게 하는 장치]")
+    import socket
+    import pymupdf
+
+    def dpi_for(width: float, height: float) -> int:
+        doc = pymupdf.open()
+        try:
+            return proposal.safe_dpi(doc.new_page(width=width, height=height))
+        finally:
+            doc.close()
+
+    check("보통 크기 원고는 원래 해상도 유지", dpi_for(595, 842) == 300, str(dpi_for(595, 842)))
+    big_dpi = dpi_for(2400, 3400)
+    pixels = (2400 / 72 * big_dpi) * (3400 / 72 * big_dpi)
+    check("초대형 스캔은 해상도를 낮춰 메모리 폭주를 막음",
+          big_dpi < 300 and pixels <= 30_000_000, f"{big_dpi}dpi / {pixels/1e6:.1f}백만")
+
+    sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
+    import app as webapp
+
+    busy = socket.socket()
+    busy.bind(("127.0.0.1", 0))
+    taken = busy.getsockname()[1]
+    busy.listen(1)
+    check("쓰고 있는 포트를 피해 다른 자리를 찾음",
+          webapp.pick_port(taken) != taken, str(webapp.pick_port(taken)))
+    busy.close()
+    check("살아 있는지 확인하는 주소(/ping) 응답",
+          webapp.app.test_client().get("/ping").status_code == 200)
+
+
 def test_with_index() -> None:
     store = default_store()
     if not store.ready:
@@ -195,6 +227,7 @@ def main() -> int:
     test_proposal_numbering()
     test_multi_file()
     test_broken_file_is_skipped()
+    test_runtime_safety()
     test_with_index()
     print("-" * 46)
     print(f"통과 {passed}건 / 실패 {failed}건")

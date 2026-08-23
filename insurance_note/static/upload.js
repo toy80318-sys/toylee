@@ -1,4 +1,41 @@
 // 제안서 파일 고르기 - 여러 번 눌러도 앞서 고른 파일이 사라지지 않게 모아 둔다.
+// 보내기 전에 프로그램(검은 창)이 살아 있는지 확인한다.
+// 꺼져 있으면 브라우저의 '연결을 거부했습니다' 대신 안내를 띄우고, 입력한 내용을 지키다.
+(function () {
+  const form = document.querySelector("form.card");
+  if (!form) return;
+  const button = form.querySelector("button.primary");
+
+  function notice(text) {
+    let box = document.getElementById("offline-notice");
+    if (!box) {
+      box = document.createElement("p");
+      box.id = "offline-notice";
+      box.className = "offline";
+      form.querySelector(".actions").before(box);
+    }
+    box.textContent = text;
+  }
+
+  form.addEventListener("submit", (e) => {
+    if (form.dataset.checked === "1") return;    // 확인을 마친 뒤의 실제 전송
+    e.preventDefault();
+    button.disabled = true;
+    const restore = () => { button.disabled = false; };
+    fetch("ping", { cache: "no-store" })
+      .then((r) => {
+        if (!r.ok) throw new Error("bad");
+        form.dataset.checked = "1";
+        form.submit();
+      })
+      .catch(() => {
+        restore();
+        notice("프로그램이 꺼져 있습니다. 바탕화면 아이콘(또는 실행하기)을 다시 실행한 뒤, "
+               + "이 버튼을 한 번 더 눌러 주세요. 입력하신 내용은 그대로 남아 있습니다.");
+      });
+  });
+})();
+
 (function () {
   const input = document.getElementById("proposal-input");
   const list = document.getElementById("file-list");

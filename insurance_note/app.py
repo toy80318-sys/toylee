@@ -6,6 +6,7 @@
 from __future__ import annotations
 
 import os
+import socket
 import sys
 import threading
 import traceback
@@ -24,6 +25,12 @@ from noteapp.store import default_store  # noqa: E402
 app = Flask(__name__, template_folder="templates", static_folder="static")
 MAX_UPLOAD_MB = int(os.environ.get("NOTE_MAX_UPLOAD_MB", "500"))
 app.config["MAX_CONTENT_LENGTH"] = MAX_UPLOAD_MB * 1024 * 1024
+
+
+@app.get("/ping")
+def ping():
+    """화면에서 프로그램이 살아 있는지 확인할 때 쓴다."""
+    return jsonify(ok=True)
 
 
 @app.errorhandler(413)
@@ -237,6 +244,23 @@ def open_browser_soon(url: str, delay: float = 1.5) -> None:
     t.start()
 
 
+def pick_port(preferred: int) -> int:
+    """쓸 수 있는 포트를 고른다.
+
+    윈도우에서는 5000번이 다른 프로그램이나 시스템 예약에 걸려 있는 경우가 잦다.
+    그대로 두면 프로그램이 뜨자마자 꺼져 브라우저에 '연결을 거부했습니다' 가 뜬다.
+    """
+    for port in [preferred] + list(range(5001, 5051)):
+        with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as sock:
+            sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+            try:
+                sock.bind(("127.0.0.1", port))
+            except OSError:
+                continue
+        return port
+    return preferred
+
+
 def main() -> int:
     st = store()
     print("=" * 60)
@@ -249,12 +273,23 @@ def main() -> int:
     else:
         print(" ! 약관 색인이 없습니다. 먼저 'python3 build_index.py' 를 실행하세요.")
     print(f" OCR(스캔 읽기): {'사용 가능' if proposal.ocr_available() else '미설치'}")
-    port = int(os.environ.get("PORT", 5000))
+    port = pick_port(int(os.environ.get("PORT", 5000)))
     url = f"http://127.0.0.1:{port}"
+    try:                                   # 주소를 파일로도 남겨 둔다(창을 놓쳤을 때)
+        (config.BASE_DIR / "주소.txt").write_text(
+            f"{url}\n\n이 주소를 브라우저 주소창에 붙여넣으면 화면이 열립니다.\n",
+            encoding="utf-8")
+    except Exception:
+        pass
     print(f" 브라우저가 자동으로 열립니다: {url}")
     print(" 이 창을 닫으면 프로그램이 종료됩니다. (또는 Ctrl+C)")
     open_browser_soon(url)
-    app.run(host="127.0.0.1", port=port, debug=False)
+    try:
+        app.run(host="127.0.0.1", port=port, debug=False, threaded=True)
+    except OSError as exc:
+        print(f" ! {port}번 자리를 열 수 없습니다({exc}).")
+        print("   다른 프로그램이 쓰고 있을 수 있습니다. 컴퓨터를 다시 켠 뒤 실행해 보세요.")
+        return 1
     return 0
 
 

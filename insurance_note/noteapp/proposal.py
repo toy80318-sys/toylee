@@ -44,6 +44,22 @@ def ocr_image_bytes(data: bytes, lang: str | None = None) -> str:
     return proc.stdout.decode("utf-8", "ignore")
 
 
+def safe_dpi(page, max_pixels: int = 30_000_000) -> int:
+    """페이지를 그림으로 만들 때 쓸 해상도.
+
+    큰 원고(A3·고해상도 스캔)를 그대로 300dpi 로 펼치면 메모리를 수백 MB 쓰다가
+    프로그램이 통째로 꺼질 수 있다. 픽셀 수가 한도를 넘지 않도록 해상도를 낮춘다.
+    """
+    dpi = config.OCR_DPI
+    rect = page.rect
+    inches = (rect.width / 72.0) * (rect.height / 72.0)
+    if inches <= 0:
+        return dpi
+    if inches * dpi * dpi > max_pixels:
+        dpi = int((max_pixels / inches) ** 0.5)
+    return max(120, min(dpi, config.OCR_DPI))
+
+
 def read_document(path: Path, force_ocr: bool = False) -> tuple[list[str], bool]:
     """제안서 파일 -> (페이지별 텍스트, OCR 사용 여부)"""
     path = Path(path)
@@ -69,8 +85,11 @@ def read_document(path: Path, force_ocr: bool = False) -> tuple[list[str], bool]
             text = "" if force_ocr else extract_text(page)
             if len(compact(text)) < config.TEXT_LAYER_MIN_CHARS:
                 if ocr_available():
-                    pix = page.get_pixmap(dpi=config.OCR_DPI)
-                    text = ocr_image_bytes(pix.tobytes("png"))
+                    pix = page.get_pixmap(dpi=safe_dpi(page))
+                    try:
+                        text = ocr_image_bytes(pix.tobytes("png"))
+                    finally:
+                        del pix                   # 큰 스캔본에서 메모리를 바로 돌려준다
                     used_ocr = True
                 else:
                     text = text or ""
