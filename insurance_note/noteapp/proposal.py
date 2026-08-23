@@ -6,6 +6,7 @@
 """
 from __future__ import annotations
 
+import os
 import re
 import shutil
 import subprocess
@@ -23,22 +24,51 @@ IMAGE_SUFFIXES = {".png", ".jpg", ".jpeg", ".bmp", ".tif", ".tiff", ".webp"}
 
 # ---------------------------------------------------------------- OCR
 
+_OCR_CANDIDATES = (                       # 설치는 했지만 PATH 에 안 잡히는 경우가 잦다
+    r"C:\Program Files\Tesseract-OCR\tesseract.exe",
+    r"C:\Program Files (x86)\Tesseract-OCR\tesseract.exe",
+    r"C:\Tesseract-OCR\tesseract.exe",
+    "/opt/homebrew/bin/tesseract",
+    "/usr/local/bin/tesseract",
+    "/usr/bin/tesseract",
+)
+
+OCR_HELP = ("사진·스캔본에서 글자를 읽으려면 OCR 프로그램(tesseract)이 필요합니다. "
+            "https://github.com/UB-Mannheim/tesseract/wiki 에서 설치하면서 "
+            "'Additional language data' 에서 Korean 을 꼭 선택해 주세요. "
+            "설치 뒤 이 프로그램을 껐다 켜면 자동으로 인식합니다.")
+
+
+def tesseract_path() -> str | None:
+    """OCR 프로그램의 위치. PATH 에 없으면 흔한 설치 경로도 찾아본다."""
+    fixed = os.environ.get("NOTE_TESSERACT", "").strip()
+    if fixed:
+        return fixed if Path(fixed).exists() else None
+    found = shutil.which("tesseract")
+    if found:
+        return found
+    for path in _OCR_CANDIDATES:
+        if Path(path).exists():
+            return path
+    return None
+
+
 def ocr_available() -> bool:
-    return shutil.which("tesseract") is not None
+    return tesseract_path() is not None
 
 
 def ocr_image_bytes(data: bytes, lang: str | None = None) -> str:
     """tesseract 로 이미지 한 장을 읽는다."""
-    if not ocr_available():
-        raise RuntimeError(
-            "OCR 프로그램(tesseract)이 설치되어 있지 않습니다.\n"
-            "  · Windows: https://github.com/UB-Mannheim/tesseract/wiki 에서 설치(한국어 선택)\n"
-            "  · macOS  : brew install tesseract tesseract-lang\n"
-            "  · Ubuntu : sudo apt install tesseract-ocr tesseract-ocr-kor")
+    exe = tesseract_path()
+    if not exe:
+        raise RuntimeError(OCR_HELP)
     lang = lang or config.OCR_LANG
     proc = subprocess.run(
-        ["tesseract", "stdin", "stdout", "-l", lang, "--psm", "6"],
+        [exe, "stdin", "stdout", "-l", lang, "--psm", "6"],
         input=data, capture_output=True)
+    if proc.returncode != 0 and b"Failed loading language" in (proc.stderr or b""):
+        proc = subprocess.run(                # 한국어 자료가 없으면 영어로라도 읽어 본다
+            [exe, "stdin", "stdout", "--psm", "6"], input=data, capture_output=True)
     if proc.returncode != 0:
         raise RuntimeError(proc.stderr.decode("utf-8", "ignore")[:500])
     return proc.stdout.decode("utf-8", "ignore")

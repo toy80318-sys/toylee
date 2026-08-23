@@ -183,6 +183,13 @@ def test_runtime_safety() -> None:
     check("살아 있는지 확인하는 주소(/ping) 응답",
           webapp.app.test_client().get("/ping").status_code == 200)
 
+    same = ["a.jpg: OCR 없음", "b.jpg: OCR 없음", "c.jpg: OCR 없음", "d.jpg: OCR 없음"]
+    lines = webapp.summarize_problems(same, {})
+    check("같은 이유는 한 줄로 묶어서 안내", len(lines) == 1, str(lines))
+    check("파일이 많으면 '외 N개' 로 줄임", "외 1개" in lines[0], lines[0])
+    mixed = webapp.summarize_problems(["a.jpg: OCR 없음", "b.pdf: 손상"], {})
+    check("이유가 다르면 따로 안내", len(mixed) == 2, str(mixed))
+
 
 def test_with_index() -> None:
     store = default_store()

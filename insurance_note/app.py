@@ -74,6 +74,25 @@ def home():
     return render_template("index.html", recent=jobs.recent())
 
 
+def summarize_problems(problems: list[str], shown: dict[str, str]) -> list[str]:
+    """못 읽은 파일 안내를 이유별로 한 줄씩 묶는다.
+
+    사진 여러 장을 올리면 같은 이유(예: OCR 미설치)가 장 수만큼 반복돼
+    화면이 경고로 뒤덮였다. 이제 이유 하나에 파일 이름을 모아서 보여 준다.
+    """
+    grouped: dict[str, list[str]] = {}
+    for problem in problems:
+        stored, _, reason = problem.partition(": ")
+        grouped.setdefault(reason.strip(), []).append(shown.get(stored, stored))
+    lines = []
+    for reason, names in grouped.items():
+        listed = ", ".join(f"'{n}'" for n in names[:3])
+        if len(names) > 3:
+            listed += f" 외 {len(names) - 3}개"
+        lines.append(f"{listed} 파일은 읽지 못해 건너뛰었습니다 — {reason}")
+    return lines
+
+
 @app.post("/analyze")
 def analyze():
     """고객정보 입력 + 제안서 업로드 -> 검토 화면"""
@@ -121,10 +140,7 @@ def analyze():
                 shown[dest.name] = name
                 saved.append(dest)
             parsed = proposal.parse_files(saved, force_ocr=form.get("force_ocr") == "on")
-            for problem in parsed.problems:
-                stored, _, reason = problem.partition(": ")
-                warnings.append(f"'{shown.get(stored, stored)}' 파일은 읽지 못해 "
-                                f"건너뛰었습니다 — {reason}")
+            warnings += summarize_problems(parsed.problems, shown)
             if len(uploads) > 1:
                 warnings.append(f"파일 {len(uploads)}개 중 {len(parsed.sources)}개를 읽어 "
                                 f"특약 {len(parsed.riders)}건을 모았습니다. "
