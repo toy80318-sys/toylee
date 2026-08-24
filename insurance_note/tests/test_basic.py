@@ -191,6 +191,37 @@ def test_runtime_safety() -> None:
     check("이유가 다르면 따로 안내", len(mixed) == 2, str(mixed))
 
 
+def test_obsidian() -> None:
+    print("[옵시디언 노트 만들기]")
+    from noteapp import obsidian
+
+    check("파일명에 못 쓰는 글자 정리",
+          obsidian.safe_title('암/진단[특약]:H') == "암 진단 특약 H",
+          obsidian.safe_title('암/진단[특약]:H'))
+
+    rows = [{"id": 1, "name": "무배당 암진단특약L", "product": "가상품A"},
+            {"id": 2, "name": "무배당 암진단특약L", "product": "가상품B"},
+            {"id": 3, "name": "무배당 뇌진단특약", "product": "가상품A"},
+            {"id": 4, "name": "무배당 암진단특약L", "product": "가상품A"}]
+    titles = obsidian.unique_titles(rows)
+    check("이름이 겹치면 상품명을 붙여 구분",
+          titles[1] != titles[2] and "가상품B" in titles[2], str(titles))
+    check("한 상품 안에서 겹쳐도 파일이 덮어써지지 않음",
+          len(set(titles.values())) == 4, str(titles))
+    check("겹치지 않는 이름은 그대로", titles[3] == "무배당 뇌진단특약", titles[3])
+
+    import tempfile
+
+    with tempfile.TemporaryDirectory() as tmp:
+        path = Path(tmp) / "특약.md"
+        obsidian.write_note(path, "# 처음\n\n## 근거\n\n- 약관: A\n\n## 내 메모\n")
+        path.write_text(path.read_text(encoding="utf-8") + "고객 상담 기록\n", encoding="utf-8")
+        obsidian.write_note(path, "# 다시\n\n## 근거\n\n- 약관: B\n\n## 내 메모\n")
+        again = path.read_text(encoding="utf-8")
+    check("다시 내보내도 '내 메모' 는 지워지지 않음", "고객 상담 기록" in again, again[-60:])
+    check("본문은 새 내용으로 갱신", "약관: B" in again and "약관: A" not in again)
+
+
 def test_with_index() -> None:
     store = default_store()
     if not store.ready:
@@ -235,6 +266,7 @@ def main() -> int:
     test_multi_file()
     test_broken_file_is_skipped()
     test_runtime_safety()
+    test_obsidian()
     test_with_index()
     print("-" * 46)
     print(f"통과 {passed}건 / 실패 {failed}건")
