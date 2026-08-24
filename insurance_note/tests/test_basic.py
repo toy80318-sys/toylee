@@ -222,6 +222,27 @@ def test_obsidian() -> None:
     check("본문은 새 내용으로 갱신", "약관: B" in again and "약관: A" not in again)
 
 
+def test_terms_folder_setting() -> None:
+    print("[약관 폴더 따로 두기]")
+    from noteapp import config
+
+    check("설정 파일이 비어 있으면 예전 위치를 그대로 사용",
+          config._configured_dir("약관폴더.txt") == "",
+          config._configured_dir("약관폴더.txt"))
+
+    import tempfile
+
+    with tempfile.TemporaryDirectory() as tmp:
+        sample = Path(tmp) / "설정.txt"
+        sample.write_text("# 설명 줄\n\nC:\\진이폴더\\보험\\약관\n", encoding="utf-8")
+        # 설정 파일은 BASE_DIR 기준으로 찾으므로 잠시 옮겨서 확인한다.
+        target = config.BASE_DIR / sample.name
+        target.write_text(sample.read_text(encoding="utf-8"), encoding="utf-8")
+        got = config._configured_dir(sample.name)
+        target.unlink()
+    check("주석은 건너뛰고 폴더 경로만 읽음", got == "C:\\진이폴더\\보험\\약관", got)
+
+
 def test_with_index() -> None:
     store = default_store()
     if not store.ready:
@@ -267,6 +288,7 @@ def main() -> int:
     test_broken_file_is_skipped()
     test_runtime_safety()
     test_obsidian()
+    test_terms_folder_setting()
     test_with_index()
     print("-" * 46)
     print(f"통과 {passed}건 / 실패 {failed}건")

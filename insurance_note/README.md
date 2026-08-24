@@ -59,6 +59,18 @@ pip install -r requirements.txt
 - macOS: `brew install tesseract tesseract-lang`
 - Ubuntu: `sudo apt install tesseract-ocr tesseract-ocr-kor`
 
+### (3-1) 약관을 다른 폴더에 두고 싶다면 (권장)
+
+약관 PDF 를 프로그램 폴더 밖(내 PC 안)에 두면, 프로그램만 주고받아도
+약관이 함께 따라다니지 않습니다. `약관폴더.txt` 첫 줄에 폴더를 적어 주세요.
+
+```
+C:\진이폴더\보험\약관
+```
+
+이미 색인(`data/terms_index.sqlite`)이 만들어져 있으면 약관을 옮겨도 프로그램은 그대로 동작합니다.
+약관을 새로 넣거나 바꿨을 때만 색인을 다시 만들면 됩니다.
+
 ### (4) 약관 색인 만들기 (1~2분, 한 번만)
 
 ```bash
