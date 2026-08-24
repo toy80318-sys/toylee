@@ -19,7 +19,7 @@ BASE = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(BASE))
 
 from noteapp import config                      # noqa: E402
-from noteapp.explain import build_note          # noqa: E402
+from noteapp.explain import build_note, is_rider   # noqa: E402
 from noteapp.obsidian import FOLDER, safe_title, unique_titles   # noqa: E402
 from noteapp.store import default_store         # noqa: E402
 
@@ -34,6 +34,8 @@ def rider_data(store) -> list[dict]:
     # 실제 파일 제목과 글자 하나라도 다르면 옵시디언에서 링크가 깨진다.
     titles = unique_titles(rows)
     for i, row in enumerate(rows, 1):
+        if not is_rider(row["name"]):
+            continue
         note = build_note(store, {"name": row["name"], "section_id": row["id"]})
         if note.unmatched or not note.headline:
             continue

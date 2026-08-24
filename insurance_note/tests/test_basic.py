@@ -210,6 +210,13 @@ def test_obsidian() -> None:
           len(set(titles.values())) == 4, str(titles))
     check("겹치지 않는 이름은 그대로", titles[3] == "무배당 뇌진단특약", titles[3])
 
+    from noteapp.explain import is_rider
+
+    check("목차 구간은 특약 목록에서 뺌",
+          not is_rider("공통 안내·목차") and not is_rider("별표 1"))
+    check("진짜 특약은 그대로 둠",
+          is_rider("무배당 뇌혈관질환진단특약L") and is_rider("무배당 암진단특약H"))
+
     code = obsidian.code_markdown("I60~I69", "뇌혈관질환 전체",
                                   ["무배당 뇌혈관질환진단특약L", "무배당 뇌졸중진단특약"])
     check("코드 노트 안에 보장 특약이 바로 보임",

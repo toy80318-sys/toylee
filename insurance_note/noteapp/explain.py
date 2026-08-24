@@ -231,6 +231,18 @@ def guess_type(name: str, section: SectionData | None = None) -> str:
     return "보장"
 
 
+_NOT_RIDER = re.compile(r"목차|공통\s*안내|별표|부표|찾아보기")
+
+
+def is_rider(name: str) -> bool:
+    """특약 목록에 내놓을 이름인가.
+
+    약관에는 '공통 안내·목차' 처럼 특약이 아닌 구간도 들어 있다. 색인에는
+    그대로 두되(다른 조회에 쓰인다), 특약 목록·노트에는 내보내지 않는다.
+    """
+    return not _NOT_RIDER.search(compact(name or ""))
+
+
 def _looks_meaningful(text: str) -> bool:
     """목차 조각(예: ". 50") 같은 쓸모없는 문장을 걸러낸다."""
     t = compact(text or "")

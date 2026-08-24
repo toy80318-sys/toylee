@@ -12,7 +12,7 @@ from dataclasses import dataclass
 from pathlib import Path
 
 from . import config
-from .explain import RiderNote, build_note
+from .explain import RiderNote, build_note, is_rider
 from .store import TermsStore
 
 FOLDER = "보험약관"                 # 보관함(vault) 안에 만들 폴더
@@ -368,7 +368,8 @@ def export(store: TermsStore, vault: Path, folder: str = FOLDER,
     # 같은 특약의 노트가 두 벌 생겨 링크가 갈라진다.
     all_rows = store._all_sections()
     titles = unique_titles(all_rows)
-    rows = [r for r in all_rows if not product or r["product"] == product]
+    rows = [r for r in all_rows
+            if (not product or r["product"] == product) and is_rider(r["name"])]
     for i, row in enumerate(rows, 1):
         if progress:
             progress(i, len(rows), row["name"])
