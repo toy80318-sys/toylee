@@ -54,7 +54,24 @@
     }
   }
 
+  async function toObsidian() {
+    const btn = $("#btn-obsidian");
+    btn.disabled = true; btn.textContent = "저장 중…";
+    try {
+      const saved = await post(collect());           // 화면에서 고친 내용을 먼저 반영
+      if (!saved.ok) { alert("문제가 발생했습니다: " + saved.error); return; }
+      window.JOB_ID = saved.job_id;
+      const res = await fetch("/obsidian/" + saved.job_id, { method: "POST" });
+      const out = await res.json();
+      alert(out.ok ? "옵시디언에 저장했습니다.\n\n" + out.path
+                   : "저장하지 못했습니다.\n\n" + out.error);
+    } finally {
+      btn.disabled = false; btn.textContent = "옵시디언에 저장";
+    }
+  }
+
   document.addEventListener("click", (e) => {
+    if (e.target.id === "btn-obsidian") { e.preventDefault(); toObsidian(); return; }
     if (e.target.matches(".r-del")) {
       e.preventDefault();
       e.target.closest(".rider").remove();

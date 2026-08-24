@@ -23,13 +23,8 @@ CONFIG = BASE / "옵시디언_폴더.txt"
 
 def configured_vault() -> str:
     """옵시디언_폴더.txt 에서 보관함 위치를 읽는다(설명 줄은 건너뛴다)."""
-    if not CONFIG.exists():
-        return ""
-    for row in CONFIG.read_text(encoding="utf-8", errors="ignore").splitlines():
-        row = row.strip()
-        if row and not row.startswith("#"):
-            return row
-    return ""
+    from noteapp import config
+    return config.obsidian_vault()
 
 
 def main() -> int:

@@ -222,25 +222,56 @@ def test_obsidian() -> None:
     check("본문은 새 내용으로 갱신", "약관: B" in again and "약관: A" not in again)
 
 
+def test_customer_note() -> None:
+    print("[고객 보장분석 노트]")
+    from noteapp import obsidian
+
+    doc = {
+        "customer": {"name": "김보람", "birth": "1985-03-12", "memo": "부친 뇌졸중 병력"},
+        "planner": {"name": "이설계", "phone": "010-1234-5678", "org": ""},
+        "product": "교보간편마이플랜건강보험", "created_at": "2026-08-24",
+        "source_products": ["마이플랜"],
+        "notes": [{"input_name": "뇌혈관질환진단특약L", "matched_name": "무배당 뇌혈관질환진단특약L",
+                   "section_id": 7, "group_label": "진단", "amount": "1,000만원",
+                   "period": "20년납/100세만기", "premium": "20,600",
+                   "headline": "‘뇌혈관질환’으로 진단이 확정되면", "code_summary": ["I60~I69"],
+                   "pay_basis": "진단 확정 시 1,000만원", "key_rules": ["1년 내 50%만 지급"],
+                   "note": "부친 병력 있어 우선 설명"}],
+        "summary": {"total": 1, "matched": 1, "unmatched": 0, "total_premium": "76,237"},
+    }
+    md = obsidian.customer_markdown(doc, {7: "무배당 뇌혈관질환진단특약L (마이플랜)"})
+    check("특약 링크가 실제 노트 제목을 가리킴",
+          "[[무배당 뇌혈관질환진단특약L (마이플랜)]]" in md, md[:200])
+    check("근거 약관 상품도 링크", "[[마이플랜]]" in md)
+    check("고객 메모·설계사 메모 포함",
+          "부친 뇌졸중 병력" in md and "부친 병력 있어 우선 설명" in md)
+    check("보장 코드와 지급 기준 포함", "I60~I69" in md and "진단 확정 시 1,000만원" in md)
+    check("참고 자료 안내 포함", "참고 자료" in md)
+
+
 def test_terms_folder_setting() -> None:
     print("[약관 폴더 따로 두기]")
     from noteapp import config
 
-    check("설정 파일이 비어 있으면 예전 위치를 그대로 사용",
-          config._configured_dir("약관폴더.txt") == "",
-          config._configured_dir("약관폴더.txt"))
-
     import tempfile
 
-    with tempfile.TemporaryDirectory() as tmp:
-        sample = Path(tmp) / "설정.txt"
-        sample.write_text("# 설명 줄\n\nC:\\진이폴더\\보험\\약관\n", encoding="utf-8")
-        # 설정 파일은 BASE_DIR 기준으로 찾으므로 잠시 옮겨서 확인한다.
-        target = config.BASE_DIR / sample.name
-        target.write_text(sample.read_text(encoding="utf-8"), encoding="utf-8")
-        got = config._configured_dir(sample.name)
-        target.unlink()
-    check("주석은 건너뛰고 폴더 경로만 읽음", got == "C:\\진이폴더\\보험\\약관", got)
+    def read_setting(text: str) -> str:
+        """설정 파일을 잠시 만들어 두고 읽어 본다."""
+        name = "__검사용설정.txt"
+        target = config.BASE_DIR / name
+        target.write_text(text, encoding="utf-8")
+        try:
+            return config._configured_dir(name)
+        finally:
+            target.unlink()
+
+    check("설명(#)만 있으면 폴더를 지정하지 않은 것으로 봄",
+          read_setting("# 설명 줄\n\n# 예) C:\\어디\\약관\n") == "",
+          read_setting("# 설명 줄\n"))
+    check("첫 줄의 폴더 경로만 읽음",
+          read_setting("C:\\진이폴더\\보험\\약관\n# 설명\n") == "C:\\진이폴더\\보험\\약관")
+    check("설정 파일이 없으면 빈 값", config._configured_dir("__없는파일__.txt") == "")
+    check("지금 설정된 약관 폴더", str(config.TERMS_DIR) != "", str(config.TERMS_DIR))
 
 
 def test_with_index() -> None:
@@ -288,6 +319,7 @@ def main() -> int:
     test_broken_file_is_skipped()
     test_runtime_safety()
     test_obsidian()
+    test_customer_note()
     test_terms_folder_setting()
     test_with_index()
     print("-" * 46)

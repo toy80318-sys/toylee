@@ -18,7 +18,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 from flask import (Flask, jsonify, redirect, render_template, request,  # noqa: E402
                    send_from_directory, url_for)
 
-from noteapp import config, proposal, session as jobs  # noqa: E402
+from noteapp import config, obsidian, proposal, session as jobs  # noqa: E402
 from noteapp.report import build_document  # noqa: E402
 from noteapp.store import default_store  # noqa: E402
 
@@ -193,6 +193,24 @@ def rebuild():
     job_id = payload.get("job_id") or jobs.new_job_id()
     jobs.save(job_id, {**payload, "document": doc})
     return jsonify({"ok": True, "job_id": job_id, "doc": doc})
+
+
+@app.post("/obsidian/<job_id>")
+def to_obsidian(job_id: str):
+    """이 고객의 보장분석을 옵시디언 보관함에 노트로 저장한다."""
+    vault = config.obsidian_vault()
+    if not vault:
+        return jsonify({"ok": False, "error":
+                        "옵시디언 보관함 폴더를 알 수 없습니다.\n"
+                        f"'{config.BASE_DIR / '옵시디언_폴더.txt'}' 첫 줄에 "
+                        "폴더 경로를 적어 주세요."}), 400
+    try:
+        data = jobs.load(job_id)
+        path = obsidian.export_customer(data["document"], Path(vault), store=store())
+    except Exception as exc:                      # noqa: BLE001
+        traceback.print_exc()
+        return jsonify({"ok": False, "error": str(exc)}), 400
+    return jsonify({"ok": True, "path": str(path)})
 
 
 @app.get("/report/<job_id>")

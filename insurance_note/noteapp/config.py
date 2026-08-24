@@ -34,6 +34,12 @@ INDEX_DB = Path(os.environ.get("NOTE_INDEX_DB", DATA_DIR / "terms_index.sqlite")
 UPLOAD_DIR = Path(os.environ.get("NOTE_UPLOAD_DIR", BASE_DIR / "uploads"))
 OUTPUT_DIR = Path(os.environ.get("NOTE_OUTPUT_DIR", BASE_DIR / "output"))
 
+
+def obsidian_vault() -> str:
+    """옵시디언 보관함 폴더(옵시디언_폴더.txt 첫 줄)."""
+    return os.environ.get("NOTE_VAULT") or _configured_dir("옵시디언_폴더.txt")
+
+
 # OCR (스캔 제안서) 설정
 OCR_LANG = os.environ.get("NOTE_OCR_LANG", "kor+eng")
 OCR_DPI = int(os.environ.get("NOTE_OCR_DPI", "300"))

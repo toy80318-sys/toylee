@@ -176,6 +176,109 @@ def index_markdown(by_product: dict[str, list[str]]) -> str:
     return "\n".join(out)
 
 
+def code_index_markdown(codes: dict[str, str]) -> str:
+    """질병분류코드 한눈에 보기(테블릿에서 상담 중 빠르게 찾기 위한 목록)."""
+    out = ["---", "분류: 색인", "태그: [보험약관, 질병코드]", "---", "",
+           "# 질병코드 찾아보기", "",
+           "고객이 말한 병명·코드로 여기서 찾은 뒤, 그 코드 노트를 열면",
+           "**보장하는 특약이 아래 연결된 문서에 모두** 나옵니다.", "",
+           "| 코드 | 어떤 병인가 |", "|---|---|"]
+    for code in sorted(codes):
+        out.append(f"| {link(code)} | {codes[code]} |")
+    out += ["", MEMO_MARK, ""]
+    return "\n".join(out)
+
+
+def customer_markdown(doc: dict, titles: dict[int, str] | None = None) -> str:
+    """고객 한 명의 보장분석을 노트 한 장으로.
+
+    titles 는 {약관구간 id: 노트 제목}. 특약 노트가 '이름 (상품)' 으로 저장된
+    경우에도 링크가 깨지지 않게, 실제 파일 제목으로 연결한다.
+    """
+    titles = titles or {}
+    customer = doc.get("customer", {})
+    name = customer.get("name") or "고객"
+    created = doc.get("created_at", "")
+    notes = doc.get("notes", [])
+
+    out = ["---", "분류: 고객보장분석",
+           f"고객: {_yaml(name)}",
+           f"작성일: {created}",
+           f"상품: {_yaml(doc.get('product', ''))}",
+           "태그: [보장분석]", "---", "",
+           f"# {safe_title(name)} 님 보장분석 ({created})", ""]
+
+    info = [f"**생년월일** {customer.get('birth')}" if customer.get("birth") else "",
+            f"**성별** {customer.get('gender')}" if customer.get("gender") else "",
+            f"**연락처** {customer.get('phone')}" if customer.get("phone") else ""]
+    info = [i for i in info if i]
+    if info:
+        out += [" · ".join(info), ""]
+    if customer.get("memo"):
+        out += [f"> {customer['memo']}", ""]
+
+    total = doc.get("summary", {}).get("total_premium", "")
+    line_ = []
+    if doc.get("product"):
+        line_.append(f"**가입상품** {doc['product']}")
+    if total:
+        line_.append(f"**월 보험료 합계** {total}")
+    if line_:
+        out += [" · ".join(line_), ""]
+    sources = doc.get("source_products") or []
+    if sources:
+        out += ["**근거 약관** " + " · ".join(link(p) for p in sources), ""]
+
+    out += ["## 계약사항", "",
+            "| 구분 | 보장(특약) | 가입금액 | 납입/보험기간 | 보험료 | 쉬운 설명 |",
+            "|---|---|---|---|---|---|"]
+    for note in notes:
+        matched = note.get("matched_name") or note.get("input_name", "")
+        shown = titles.get(note.get("section_id"), safe_title(matched))
+        label = link(shown) if matched and not note.get("unmatched") else note.get("input_name", "")
+        memo = [note.get("headline", "")]
+        if note.get("code_summary"):
+            memo.append("대상 코드 " + " · ".join(f"`{c}`" for c in note["code_summary"]))
+        if note.get("pay_basis"):
+            memo.append(note["pay_basis"])
+        if note.get("key_rules"):
+            memo.append(" ".join(f"`{r}`" for r in note["key_rules"]))
+        if note.get("note"):
+            memo.append(f"**메모** {note['note']}")
+        out.append(f"| {note.get('group_label', '')} | {label} | {note.get('amount', '')} | "
+                   f"{note.get('period', '')} | {note.get('premium', '')} | "
+                   + "<br>".join(m for m in memo if m) + " |")
+
+    summary = doc.get("summary", {})
+    out += ["", f"특약 {summary.get('total', 0)}건 (약관 확인 {summary.get('matched', 0)}건"
+            + (f" · 미확인 {summary['unmatched']}건" if summary.get("unmatched") else "") + ")", ""]
+
+    planner = doc.get("planner", {})
+    if any(planner.values()):
+        out += ["## 담당 설계사", "",
+                " · ".join(v for v in [planner.get("name"), planner.get("phone"),
+                                       planner.get("org")] if v), ""]
+
+    out += ["> 이 노트는 약관을 쉽게 풀어 쓴 **참고 자료**입니다. "
+            "실제 보장 여부는 약관 원문과 회사 심사 기준에 따릅니다.", "",
+            MEMO_MARK, ""]
+    return "\n".join(out)
+
+
+def export_customer(doc: dict, vault: Path, folder: str = FOLDER,
+                    store: TermsStore | None = None) -> Path:
+    """고객 보장분석 노트를 보관함에 저장하고 그 경로를 돌려준다."""
+    vault = Path(vault)
+    if not vault.exists():
+        raise RuntimeError(f"옵시디언 보관함 폴더를 찾을 수 없습니다: {vault}")
+    titles = unique_titles(store._all_sections()) if store is not None else {}
+    name = doc.get("customer", {}).get("name") or "고객"
+    created = doc.get("created_at", "")
+    path = vault / folder / "고객" / f"{safe_title(name)} {created}.md"
+    write_note(path, customer_markdown(doc, titles))
+    return path
+
+
 @dataclass
 class ExportResult:
     riders: int = 0
@@ -230,6 +333,7 @@ def export(store: TermsStore, vault: Path, folder: str = FOLDER,
     result.codes = len(codes)
 
     write_note(base / "00 약관 색인.md", index_markdown(by_product))
+    write_note(base / "01 질병코드 찾아보기.md", code_index_markdown(codes))
     return result
 
 
