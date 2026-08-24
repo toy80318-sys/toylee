@@ -97,6 +97,8 @@ def main() -> int:
     ap = argparse.ArgumentParser(description="약관 색인 -> 태블릿용 화면 파일")
     ap.add_argument("--out", help="저장할 파일 경로")
     ap.add_argument("--artifact", help="웹에 올릴 본문만 따로 저장할 경로")
+    ap.add_argument("--vault", help="화면에 미리 채울 옵시디언 보관함 이름"
+                                    " (빈 값으로 두면 마지막에 쓰던 보관함을 씁니다)")
     args = ap.parse_args()
 
     store = default_store()
@@ -114,7 +116,8 @@ def main() -> int:
     html = (TEMPLATE.read_text(encoding="utf-8")
             .replace("__DATA__", json.dumps(data, ensure_ascii=False, separators=(",", ":")))
             .replace("__FOLDER__", json.dumps(FOLDER, ensure_ascii=False))
-            .replace("__VAULT__", json.dumps(default_vault(), ensure_ascii=False)))
+            .replace("__VAULT__", json.dumps(
+                default_vault() if args.vault is None else args.vault, ensure_ascii=False)))
 
     out = Path(args.out) if args.out else desktop_dir() / "보장분석_도우미.html"
     out.write_text(html, encoding="utf-8")

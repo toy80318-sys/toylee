@@ -222,6 +222,18 @@ def home_markdown(app_url: str = "", riders: int = 0, products: int = 0, codes: 
     return "\n".join(out)
 
 
+def customer_folder_markdown() -> str:
+    """'고객' 폴더가 비어 보이지 않게, 그리고 폴더가 사라지지 않게 두는 안내 한 장."""
+    return "\n".join([
+        "---", "분류: 안내", "태그: [보장분석]", "---", "",
+        "# 고객 노트가 쌓이는 곳", "",
+        "보장분석 화면에서 **옵시디언에 저장** 을 누르면 이 폴더에",
+        "`고객이름 날짜` 노트가 만들어집니다.", "",
+        "노트 안 특약 이름을 누르면 그 특약의 약관 설명이 열립니다.",
+        "상담하며 알게 된 것은 노트 맨 아래 **내 메모** 칸에 적어 두세요.", "",
+        "이 안내 노트는 지우셔도 됩니다.", "", MEMO_MARK, ""])
+
+
 def customer_markdown(doc: dict, titles: dict[int, str] | None = None) -> str:
     """고객 한 명의 보장분석을 노트 한 장으로.
 
@@ -370,7 +382,8 @@ def export(store: TermsStore, vault: Path, folder: str = FOLDER,
     # 홈 노트는 보관함 맨 위에 둔다(약관 폴더 밖). 여기서 상담을 시작한다.
     write_note(vault / "보험 업무 홈.md",
                home_markdown(config.app_url(), result.riders, result.products, result.codes))
-    (base / "고객").mkdir(parents=True, exist_ok=True)
+    # '고객' 폴더는 미리 만들어 둔다. 폴더가 없으면 화면에서 노트를 보낼 때 실패한다.
+    write_note(base / "고객" / "0 고객 노트 안내.md", customer_folder_markdown())
     return result
 
 
