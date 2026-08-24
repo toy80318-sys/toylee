@@ -249,6 +249,50 @@ def test_customer_note() -> None:
     check("참고 자료 안내 포함", "참고 자료" in md)
 
 
+def test_obsidian_bridge() -> None:
+    """화면(태블릿) 과 옵시디언을 오갈 때 링크가 끊기지 않아야 한다."""
+    print("[화면 ↔ 옵시디언 오가기]")
+    import sys as _sys
+    from noteapp import obsidian
+
+    _sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "tools"))
+    import make_tablet_app as tablet
+
+    home = obsidian.home_markdown("https://예시/앱", riders=643, products=7, codes=287)
+    check("홈 노트에 화면 주소가 링크로 들어감", "(https://예시/앱)" in home, home[:120])
+    check("홈 노트가 색인으로 이어짐", "[[00 약관 색인]]" in home and "[[01 질병코드 찾아보기]]" in home)
+    check("홈 노트에도 '내 메모' 칸", obsidian.MEMO_MARK in home)
+    blank = obsidian.home_markdown("")
+    check("주소를 안 적었으면 링크 대신 안내", "앱주소.txt" in blank and "](" not in blank)
+
+    check("윈도우 경로에서 보관함 이름만 뽑음",
+          tablet.default_vault.__doc__ is not None and
+          _vault_name(tablet, "C:\\진이폴더\\보험\\옵시디언") == "옵시디언",
+          _vault_name(tablet, "C:\\진이폴더\\보험\\옵시디언"))
+    check("맥·리눅스 경로도 마찬가지",
+          _vault_name(tablet, "/Users/jin/보험/옵시디언/") == "옵시디언")
+    check("설정이 없으면 빈 값", _vault_name(tablet, "") == "")
+
+    html = (Path(__file__).resolve().parent.parent / "templates" / "tablet.html").read_text(
+        encoding="utf-8")
+    for mark in ("__DATA__", "__FOLDER__", "__VAULT__"):
+        check(f"화면 서식에 {mark} 자리 있음", mark in html)
+    check("화면이 노트 제목(r.t)으로 링크를 만듦", "[[${r.t}" in html)
+    check("화면에서 옵시디언 앱을 여는 길이 있음", 'obsUri("open"' in html and 'obsUri("new"' in html)
+
+
+def _vault_name(tablet, path: str) -> str:
+    """보관함 경로 설정을 잠시 바꿔 놓고 이름만 읽어 본다."""
+    from noteapp import config
+
+    original = config.obsidian_vault
+    config.obsidian_vault = lambda: path
+    try:
+        return tablet.default_vault()
+    finally:
+        config.obsidian_vault = original
+
+
 def test_terms_folder_setting() -> None:
     print("[약관 폴더 따로 두기]")
     from noteapp import config
@@ -320,6 +364,7 @@ def main() -> int:
     test_runtime_safety()
     test_obsidian()
     test_customer_note()
+    test_obsidian_bridge()
     test_terms_folder_setting()
     test_with_index()
     print("-" * 46)

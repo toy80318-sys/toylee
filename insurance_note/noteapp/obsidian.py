@@ -11,6 +11,7 @@ import re
 from dataclasses import dataclass
 from pathlib import Path
 
+from . import config
 from .explain import RiderNote, build_note
 from .store import TermsStore
 
@@ -189,6 +190,38 @@ def code_index_markdown(codes: dict[str, str]) -> str:
     return "\n".join(out)
 
 
+def home_markdown(app_url: str = "", riders: int = 0, products: int = 0, codes: int = 0) -> str:
+    """상담을 여기서 시작한다. 노트와 보장분석 화면을 이어 주는 한 장."""
+    out = ["---", "분류: 홈", "태그: [보험약관]", "---", "",
+           "# 보험 업무 홈", ""]
+    if app_url:
+        out += [f"## ▶ [보장분석 화면 열기]({app_url})", "",
+                "고객 정보와 특약을 넣어 표를 만들고, 인쇄하거나 이 보관함으로 저장합니다.",
+                "화면에 넣은 고객 정보는 그 기기에만 남습니다.", ""]
+    else:
+        out += ["> 보장분석 화면 주소를 `앱주소.txt` 첫 줄에 적어 두면 여기에 링크가 생깁니다.", ""]
+
+    out += ["## 상담 흐름", "",
+            "| | 어디서 | 무엇을 |", "|---|---|---|",
+            "| 1 | 이 보관함 | 만나기 전에 고객 노트와 지난 상담 메모를 봅니다 |",
+            "| 2 | 보장분석 화면 | 제안서를 붙여넣어 표를 만들고 특약을 확인합니다 |",
+            "| 3 | 보장분석 화면 | **옵시디언에 저장** 을 눌러 노트로 넘깁니다 |",
+            "| 4 | 이 보관함 | `고객` 폴더에 저장된 노트에 상담 내용을 덧붙입니다 |", "",
+            "## 찾아보기", "",
+            f"- [[00 약관 색인]] — 상품 {products}개 · 특약 {riders}건" if products
+            else "- [[00 약관 색인]]",
+            f"- [[01 질병코드 찾아보기]] — 질병분류코드 {codes}개" if codes
+            else "- [[01 질병코드 찾아보기]]",
+            "- `고객` 폴더 — 고객별 보장분석", "",
+            "## 이렇게 쓰면 좋습니다", "",
+            "- 특약 노트 아래 **내 메모** 칸에 적은 것은 다시 내보내도 지워지지 않습니다.",
+            "  상담하며 알게 된 것을 그 자리에 쌓아 두세요.",
+            "- 질병분류코드 노트를 열면, 그 병을 보장하는 특약이 **연결된 문서**에 모두 나옵니다.",
+            "- 고객 노트의 특약 이름을 누르면 그 특약의 약관 설명이 열립니다.", "",
+            MEMO_MARK, ""]
+    return "\n".join(out)
+
+
 def customer_markdown(doc: dict, titles: dict[int, str] | None = None) -> str:
     """고객 한 명의 보장분석을 노트 한 장으로.
 
@@ -334,6 +367,10 @@ def export(store: TermsStore, vault: Path, folder: str = FOLDER,
 
     write_note(base / "00 약관 색인.md", index_markdown(by_product))
     write_note(base / "01 질병코드 찾아보기.md", code_index_markdown(codes))
+    # 홈 노트는 보관함 맨 위에 둔다(약관 폴더 밖). 여기서 상담을 시작한다.
+    write_note(vault / "보험 업무 홈.md",
+               home_markdown(config.app_url(), result.riders, result.products, result.codes))
+    (base / "고객").mkdir(parents=True, exist_ok=True)
     return result
 
 

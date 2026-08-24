@@ -6,8 +6,10 @@
 <title>보장분석 도우미</title>
 <style>
 :root{
+  color-scheme:light;                 /* 어두운 모드에서도 입력칸이 인쇄물과 같게 보이도록 */
   --brand:#1f4e8c; --brand-soft:#e8f0fb; --ink:#1a2331; --muted:#667085;
   --line:#dfe4ec; --bg:#f4f6fa; --warn:#7a4409; --warn-soft:#fdf3e4; --card:#fff;
+  --ob:#6a49b8; --ob-soft:#f1ecfb; --ob-line:#d9cdf3;   /* 옵시디언으로 가는 길 */
 }
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
 body{margin:0;font:16px/1.6 -apple-system,"Noto Sans KR","Malgun Gothic",sans-serif;
@@ -31,10 +33,10 @@ input:focus,select:focus,textarea:focus{outline:2px solid var(--brand-soft);bord
 label{display:block;font-size:13px;color:var(--muted);margin:10px 0}
 .row{display:flex;gap:10px;flex-wrap:wrap}
 .row>*{flex:1;min-width:140px}
-button.act{font:inherit;font-size:15px;padding:12px 18px;border-radius:10px;
+button.act,a.act{font:inherit;font-size:15px;padding:12px 18px;border-radius:10px;
   border:1px solid var(--line);background:#fff;color:var(--ink);cursor:pointer}
 button.primary{background:var(--brand);border-color:var(--brand);color:#fff;font-weight:600}
-button.act:active{opacity:.7}
+button.act:active,a.act:active{opacity:.7}
 .actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}
 .hit{border:1px solid var(--line);border-radius:12px;padding:12px;margin:8px 0;background:#fff}
 .hit .nm{font-weight:600}
@@ -68,6 +70,21 @@ summary{cursor:pointer;color:var(--brand);font-size:15px;padding:6px 0}
 .bar .n{font-weight:600}
 .hide{display:none!important}
 .printonly-block{display:none}
+/* 옵시디언으로 넘어가는 부분만 보라색으로 묶어 둔다 — 이 색이 보이면 '노트 쪽 일' */
+.ob-card{border-color:var(--ob-line);background:linear-gradient(var(--ob-soft),var(--card) 120px)}
+.ob-card h2{color:var(--ob)}
+button.ob,a.ob{background:var(--ob);border-color:var(--ob);color:#fff;font-weight:600}
+a.act{display:inline-block;text-decoration:none;text-align:center}
+a.ob-open{font-size:13px;padding:8px 12px;background:#fff;border:1px solid var(--ob-line);
+  color:var(--ob);border-radius:10px;text-decoration:none;white-space:nowrap}
+.step{display:flex;gap:10px;align-items:flex-start;margin-top:14px}
+.step .no{flex:none;width:24px;height:24px;border-radius:50%;background:var(--ob);color:#fff;
+  font-size:13px;font-weight:700;display:flex;align-items:center;justify-content:center;margin-top:3px}
+.step .body{flex:1;min-width:0}
+.step .body p{margin:0 0 6px;font-size:14px}
+#md-out{font:13px/1.5 ui-monospace,SFMono-Regular,Menlo,monospace;height:150px;resize:vertical;
+  background:#fbfaff;border-color:var(--ob-line)}
+.done{color:#1d7a4c;font-size:14px;font-weight:600;margin-left:6px}
 @media print{
   header,nav,.bar,.noprint{display:none!important}
   body{background:#fff;font-size:10.5pt;word-break:keep-all}
@@ -152,6 +169,39 @@ summary{cursor:pointer;color:var(--brand);font-size:15px;padding:6px 0}
       <h2>계약사항</h2>
       <div id="report-body"></div>
     </div>
+
+    <div class="card ob-card noprint" id="ob-card">
+      <h2>옵시디언에 저장하기</h2>
+      <p class="muted" style="margin:0">이 표를 노트로 옮깁니다. 특약 이름은 <b>[[링크]]</b> 로 들어가서,
+        옵시디언에서 눌러 보면 그 특약의 약관 설명이 바로 열립니다.</p>
+
+      <label style="margin-top:14px">보관함 이름 <span class="muted">(옵시디언 왼쪽 아래에 보이는 이름)</span>
+        <input id="ob-vault" placeholder="예: 옵시디언" autocomplete="off"></label>
+
+      <div class="step">
+        <div class="no">1</div>
+        <div class="body">
+          <p><b>노트 내용 복사</b> <span id="ob-copied" class="done hide">복사했습니다 ✓</span></p>
+          <div class="actions" style="margin-top:0">
+            <button class="act ob" id="btn-copy">복사하기</button>
+            <button class="act" id="btn-peek">내용 보기</button>
+          </div>
+          <textarea id="md-out" class="hide" readonly></textarea>
+        </div>
+      </div>
+
+      <div class="step">
+        <div class="no">2</div>
+        <div class="body">
+          <p><b>옵시디언 열기</b> — 아래를 누르면 옵시디언 앱이 열리면서 노트가 만들어집니다.</p>
+          <div class="actions" style="margin-top:0">
+            <a class="act ob" id="btn-open" href="#" target="_blank" rel="noopener">옵시디언에 노트 만들기</a>
+          </div>
+          <p class="muted" style="margin:8px 0 0">앱이 열리지 않으면, 옵시디언을 직접 열고
+            <b>보험약관 › 고객</b> 폴더에 새 노트를 만들어 붙여넣으세요.</p>
+        </div>
+      </div>
+    </div>
   </section>
 </main>
 
@@ -159,12 +209,14 @@ summary{cursor:pointer;color:var(--brand);font-size:15px;padding:6px 0}
   <span class="n" id="bag-n">담은 특약 0건</span>
   <button class="act" id="btn-go">보장분석 보기</button>
   <button class="act primary" id="btn-print">인쇄 / PDF 저장</button>
-  <button class="act" id="btn-md">옵시디언용 복사</button>
+  <button class="act ob" id="btn-md">옵시디언에 저장</button>
   <button class="act" id="btn-clear">비우기</button>
 </div>
 
 <script>
 const RIDERS = __DATA__;
+const FOLDER = __FOLDER__;      // 보관함 안의 약관 노트 폴더
+const VAULT0 = __VAULT__;       // 미리 알아 둔 보관함 이름(없으면 빈 값)
 </script>
 <script>
 (function () {
@@ -264,6 +316,10 @@ const RIDERS = __DATA__;
       const b = el("button", "act primary", inBag(r.id) ? "담김 ✓" : "담기");
       b.addEventListener("click", () => { toggle(r); b.textContent = inBag(r.id) ? "담김 ✓" : "담기"; });
       pick.appendChild(b);
+      const open = el("a", "ob-open", "옵시디언에서 열기");
+      open.href = obsUri("open", { file: FOLDER + "/특약/" + r.t });
+      open.target = "_blank"; open.rel = "noopener";
+      pick.appendChild(open);
       box.appendChild(pick);
     }
     return box;
@@ -271,6 +327,17 @@ const RIDERS = __DATA__;
 
   function esc(s) { return String(s == null ? "" : s).replace(/[&<>]/g,
     (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;" }[c])); }
+
+  // ---------- 옵시디언으로 넘어가는 길 ----------
+  let vault = VAULT0;
+  try { const v = localStorage.getItem("vault"); if (v !== null) vault = v; } catch (e) {}
+
+  function obsUri(action, params) {
+    const parts = [];
+    if (vault.trim()) parts.push("vault=" + encodeURIComponent(vault.trim()));
+    for (const k in params) if (params[k]) parts.push(k + "=" + encodeURIComponent(params[k]));
+    return "obsidian://" + action + "?" + parts.join("&");
+  }
 
   let seq = Date.now();
   function inBag(id) { return bag.some((b) => b.id === id); }
@@ -303,6 +370,7 @@ const RIDERS = __DATA__;
 
   function renderReport() {
     printHead();
+    refreshObsidian();
     const box = $("#report-body"); box.innerHTML = "";
     if (!bag.length) { box.appendChild(el("p", "empty", "‘특약 찾기’에서 특약을 담으면 여기에 표가 만들어집니다.")); return; }
     const wrap = el("div", "scroll"); const tb = el("table");
@@ -409,28 +477,60 @@ const RIDERS = __DATA__;
   }
 
   // ---------- 마크다운(옵시디언용) ----------
+  function today() { return new Date().toISOString().slice(0, 10); }
+  function noteTitle() { const i = readInfo(); return `${i.name || "고객"} ${today()}`; }
+
   function markdown() {
     const i = readInfo();
-    const today = new Date().toISOString().slice(0, 10);
-    const out = [`# ${i.name || "고객"} 님 보장분석 (${today})`, ""];
+    const out = ["---", "분류: 고객보장분석", `고객: "${(i.name || "고객").replace(/"/g, "'")}"`,
+                 `작성일: ${today()}`, "태그: [보장분석]", "---", "",
+                 `# ${i.name || "고객"} 님 보장분석 (${today()})`, ""];
     const line = [i.birth && `**생년월일** ${i.birth}`, i.phone && `**연락처** ${i.phone}`]
       .filter(Boolean).join(" · ");
     if (line) out.push(line, "");
     if (i.memo) out.push("> " + i.memo, "");
-    out.push("| 구분 | 보장(특약) | 가입금액 | 납입·보험기간 | 보험료 | 쉬운 설명 |",
+    const used = [...new Set(bag.map((b) => (RIDERS.find((x) => x.id === b.id) || {}).pt)
+                                .filter(Boolean))];
+    if (used.length) out.push("**근거 약관** " + used.map((p) => `[[${p}]]`).join(" · "), "");
+    out.push("## 계약사항", "",
+             "| 구분 | 보장(특약) | 가입금액 | 납입·보험기간 | 보험료 | 쉬운 설명 |",
              "|---|---|---|---|---|---|");
     bag.forEach((b) => {
       const r = RIDERS.find((x) => x.id === b.id) || null;
-      const name = r ? `[[${r.n}]]` : (b.label || "(이름 확인 필요)");
-      const memo = r ? [r.h, r.codes.length ? "대상 코드 " + r.codes.map((c) => c.c).join(" · ") : "",
-                        r.cau[0] || ""].filter(Boolean).join("<br>") : "약관 미확인";
+      // 링크는 반드시 노트 파일 제목(r.t)으로. 표시 이름과 다르면 |별칭 을 붙인다.
+      const name = r ? (b.label && b.label !== r.n ? `[[${r.t}|${b.label}]]` : `[[${r.t}]]`)
+                     : (b.label || "(이름 확인 필요)");
+      const memo = r ? [r.h, r.codes.length ? "대상 코드 " + r.codes.map((c) => `[[${c.c}]]`).join(" · ") : "",
+                        r.cau[0] || ""].filter(Boolean).join("<br>") : "약관에서 이름을 찾지 못했습니다";
       out.push(`| ${r ? (r.g || "") : ""} | ${name} | ${b.amount || ""} | ${b.period || ""} | ${b.premium || ""} | ${memo} |`);
     });
-    out.push("", `특약 ${bag.length}건`, "");
+    const miss = bag.filter((b) => !b.id).length;
+    out.push("", `특약 ${bag.length}건` + (miss ? ` (약관 미확인 ${miss}건)` : ""), "");
     if (i.pname) out.push(`## 담당 설계사`, "", [i.pname, i.pphone].filter(Boolean).join(" · "), "");
     out.push("> 약관을 쉽게 풀어 쓴 참고 자료입니다. 실제 보장 여부는 약관 원문과 회사 심사 기준에 따릅니다.",
              "", "## 내 메모", "");
     return out.join("\n");
+  }
+
+  async function copyText(text) {
+    try { await navigator.clipboard.writeText(text); return true; } catch (e) {}
+    try {
+      const ta = document.createElement("textarea");
+      ta.value = text; ta.style.position = "fixed"; ta.style.opacity = "0";
+      document.body.appendChild(ta); ta.select();
+      const ok = document.execCommand("copy"); ta.remove(); return ok;
+    } catch (e) { return false; }
+  }
+
+  function refreshObsidian() {
+    const md = markdown();
+    $("#md-out").value = md;
+    const file = FOLDER + "/고객/" + noteTitle();
+    // 주소가 너무 길면 앱이 열리다 잘린다. 그럴 때는 빈 노트만 만들고 붙여넣게 한다.
+    const full = obsUri("new", { file: file, content: md });
+    $("#btn-open").href = full.length <= 6000 ? full : obsUri("new", { file: file });
+    $("#btn-open").textContent = full.length <= 6000
+      ? "옵시디언에 노트 만들기" : "옵시디언에 빈 노트 만들기 (붙여넣기)";
   }
 
   // ---------- 시작 ----------
@@ -463,20 +563,39 @@ const RIDERS = __DATA__;
     });
     setTimeout(() => window.print(), 120);
   });
-  $("#btn-md").addEventListener("click", async () => {
-    const text = markdown();
-    try { await navigator.clipboard.writeText(text); alert("복사했습니다.\n옵시디언에서 새 노트를 만들고 붙여넣으세요."); }
-    catch (e) {
-      const ta = document.createElement("textarea"); ta.value = text; document.body.appendChild(ta);
-      ta.select(); document.execCommand("copy"); ta.remove();
-      alert("복사했습니다.\n옵시디언에서 새 노트를 만들고 붙여넣으세요.");
+  $("#btn-md").addEventListener("click", () => {
+    document.querySelector('nav button[data-tab="report"]').click();
+    $("#ob-card").scrollIntoView({ behavior: "smooth", block: "start" });
+  });
+  $("#btn-copy").addEventListener("click", async () => {
+    refreshObsidian();
+    const ok = await copyText($("#md-out").value);
+    if (ok) {
+      $("#ob-copied").classList.remove("hide");
+      setTimeout(() => $("#ob-copied").classList.add("hide"), 3000);
+    } else {
+      $("#md-out").classList.remove("hide");
+      $("#md-out").select();
+      alert("자동 복사가 막혀 있습니다.\n아래 칸의 내용을 길게 눌러 직접 복사해 주세요.");
     }
+  });
+  $("#btn-peek").addEventListener("click", () => {
+    refreshObsidian();
+    $("#md-out").classList.toggle("hide");
+    $("#btn-peek").textContent = $("#md-out").classList.contains("hide") ? "내용 보기" : "접기";
+  });
+  $("#btn-open").addEventListener("click", refreshObsidian);
+  $("#ob-vault").addEventListener("input", () => {
+    vault = $("#ob-vault").value;
+    try { localStorage.setItem("vault", vault); } catch (e) {}
+    refreshObsidian(); renderSearch();
   });
   $("#btn-clear").addEventListener("click", () => {
     if (!confirm("담은 특약을 모두 비울까요? 고객 정보는 남습니다.")) return;
     bag = []; save(); renderBag(); renderReport();
   });
 
+  $("#ob-vault").value = vault;
   fillInfo(); renderBag(); renderSearch(); renderReport();
 })();
 </script>

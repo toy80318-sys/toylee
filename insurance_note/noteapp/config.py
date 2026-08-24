@@ -40,6 +40,14 @@ def obsidian_vault() -> str:
     return os.environ.get("NOTE_VAULT") or _configured_dir("옵시디언_폴더.txt")
 
 
+def app_url() -> str:
+    """태블릿에서 여는 보장분석 화면 주소(앱주소.txt 첫 줄).
+
+    적어 두면 옵시디언 홈 노트에 링크로 들어가, 노트에서 바로 화면을 열 수 있다.
+    """
+    return os.environ.get("NOTE_APP_URL") or _configured_dir("앱주소.txt")
+
+
 # OCR (스캔 제안서) 설정
 OCR_LANG = os.environ.get("NOTE_OCR_LANG", "kor+eng")
 OCR_DPI = int(os.environ.get("NOTE_OCR_DPI", "300"))
