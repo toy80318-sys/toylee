@@ -79,9 +79,12 @@ def ensure_index() -> bool:
     pdfs = list(Path(config.TERMS_DIR).glob("*.pdf"))
     if not pdfs:
         line("  ! 약관 PDF 를 찾지 못했습니다.")
-        line(f"  이 폴더 안에 약관 PDF 가 있어야 합니다: {config.TERMS_DIR}")
-        line("  압축(ZIP)을 풀지 않고 실행했거나, insurance_note 폴더만 따로 옮긴 경우입니다.")
-        line("  받은 폴더 구조를 그대로 두고 다시 실행해 주세요.")
+        line(f"  지금 찾아본 폴더: {config.TERMS_DIR}")
+        line("")
+        line("  약관 PDF 가 있는 폴더를 알려 주세요.")
+        line(f"  '{BASE / '약관폴더.txt'}' 를 메모장으로 열어")
+        line("  첫 줄에 폴더 경로를 적고 다시 실행하시면 됩니다.")
+        line(r"    예)  C:\진이폴더\보험\약관")
         return False
 
     line(f"[2/2] 약관 {len(pdfs)}개를 읽어 색인을 만듭니다. 처음 한 번만 하며 1~2분 걸립니다.")
