@@ -155,13 +155,24 @@ def product_markdown(product: str, riders: list[str]) -> str:
     return "\n".join(out)
 
 
-def code_markdown(code: str, plain: str = "") -> str:
+def code_markdown(code: str, plain: str = "", riders: list[str] | None = None) -> str:
+    """질병분류코드 노트.
+
+    이 코드를 보장하는 특약을 노트 안에 바로 적어 둔다. 백링크 칸을 켜지 않아도,
+    상담 중에 코드 하나만 열면 보장하는 특약이 그 자리에 보여야 한다.
+    """
+    riders = riders or []
     out = ["---", "분류: 질병분류코드", "태그: [보험약관, 질병코드]", "---", "",
            f"# {safe_title(code)}", ""]
     if plain:
         out += [plain, ""]
-    out += ["이 코드를 보장하는 특약은 아래 **연결된 문서(백링크)** 에서 볼 수 있습니다.",
-            "", MEMO_MARK, ""]
+    if riders:
+        out += [f"## 이 코드를 보장하는 특약 {len(riders)}건", ""]
+        out += [f"- {link(name)}" for name in sorted(riders)]
+        out += [""]
+    else:
+        out += ["이 코드를 보장하는 특약을 찾지 못했습니다.", ""]
+    out += [MEMO_MARK, ""]
     return "\n".join(out)
 
 
@@ -177,15 +188,19 @@ def index_markdown(by_product: dict[str, list[str]]) -> str:
     return "\n".join(out)
 
 
-def code_index_markdown(codes: dict[str, str]) -> str:
-    """질병분류코드 한눈에 보기(테블릿에서 상담 중 빠르게 찾기 위한 목록)."""
+def code_index_markdown(codes: dict[str, str],
+                        by_code: dict[str, list[str]] | None = None) -> str:
+    """질병분류코드 한눈에 보기(태블릿에서 상담 중 빠르게 찾기 위한 목록)."""
+    by_code = by_code or {}
     out = ["---", "분류: 색인", "태그: [보험약관, 질병코드]", "---", "",
            "# 질병코드 찾아보기", "",
-           "고객이 말한 병명·코드로 여기서 찾은 뒤, 그 코드 노트를 열면",
-           "**보장하는 특약이 아래 연결된 문서에 모두** 나옵니다.", "",
-           "| 코드 | 어떤 병인가 |", "|---|---|"]
+           "고객이 말한 병명·코드를 여기서 찾아 누르면, **그 병을 보장하는 특약**이",
+           "그 코드 노트 안에 목록으로 나옵니다.", "",
+           "| 코드 | 어떤 병인가 | 특약 |", "|---|---|---|"]
     for code in sorted(codes):
-        out.append(f"| {link(code)} | {codes[code]} |")
+        count = len(by_code.get(code, []))
+        out.append(f"| {link(code)} | {codes[code]} | {count}건 |" if count
+                   else f"| {link(code)} | {codes[code]} | |")
     out += ["", MEMO_MARK, ""]
     return "\n".join(out)
 
@@ -347,6 +362,7 @@ def export(store: TermsStore, vault: Path, folder: str = FOLDER,
     result = ExportResult(folder=base)
     by_product: dict[str, list[str]] = {}
     codes: dict[str, str] = {}
+    by_code: dict[str, list[str]] = {}      # 코드 -> 그 코드를 보장하는 특약 노트 제목
 
     # 제목은 늘 전체 목록을 기준으로 정한다. 한 상품만 내보낼 때 이름이 달라지면
     # 같은 특약의 노트가 두 벌 생겨 링크가 갈라진다.
@@ -367,6 +383,7 @@ def export(store: TermsStore, vault: Path, folder: str = FOLDER,
         for table in note.code_tables:
             for rng in table.get("ranges", []):
                 codes.setdefault(rng["code"], rng.get("meaning", ""))
+                by_code.setdefault(rng["code"], []).append(title)
 
     for name, riders in by_product.items():
         write_note(base / "상품" / f"{safe_title(name)}.md",
@@ -374,11 +391,12 @@ def export(store: TermsStore, vault: Path, folder: str = FOLDER,
     result.products = len(by_product)
 
     for code, plain in codes.items():
-        write_note(base / "질병분류" / f"{safe_title(code)}.md", code_markdown(code, plain))
+        write_note(base / "질병분류" / f"{safe_title(code)}.md",
+                   code_markdown(code, plain, by_code.get(code, [])))
     result.codes = len(codes)
 
     write_note(base / "00 약관 색인.md", index_markdown(by_product))
-    write_note(base / "01 질병코드 찾아보기.md", code_index_markdown(codes))
+    write_note(base / "01 질병코드 찾아보기.md", code_index_markdown(codes, by_code))
     # 홈 노트는 보관함 맨 위에 둔다(약관 폴더 밖). 여기서 상담을 시작한다.
     write_note(vault / "보험 업무 홈.md",
                home_markdown(config.app_url(), result.riders, result.products, result.codes))

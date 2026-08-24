@@ -210,6 +210,13 @@ def test_obsidian() -> None:
           len(set(titles.values())) == 4, str(titles))
     check("겹치지 않는 이름은 그대로", titles[3] == "무배당 뇌진단특약", titles[3])
 
+    code = obsidian.code_markdown("I60~I69", "뇌혈관질환 전체",
+                                  ["무배당 뇌혈관질환진단특약L", "무배당 뇌졸중진단특약"])
+    check("코드 노트 안에 보장 특약이 바로 보임",
+          "이 코드를 보장하는 특약 2건" in code and "[[무배당 뇌졸중진단특약]]" in code, code)
+    check("보장 특약이 없으면 그렇다고 적음",
+          "찾지 못했습니다" in obsidian.code_markdown("Z99", "", []))
+
     import tempfile
 
     with tempfile.TemporaryDirectory() as tmp:
