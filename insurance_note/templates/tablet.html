@@ -1,0 +1,488 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>보장분석 도우미</title>
+<style>
+:root{
+  --brand:#1f4e8c; --brand-soft:#e8f0fb; --ink:#1a2331; --muted:#667085;
+  --line:#dfe4ec; --bg:#f4f6fa; --warn:#7a4409; --warn-soft:#fdf3e4; --card:#fff;
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+body{margin:0;font:16px/1.6 -apple-system,"Noto Sans KR","Malgun Gothic",sans-serif;
+  color:var(--ink);background:var(--bg)}
+header{position:sticky;top:0;z-index:20;background:var(--brand);color:#fff;
+  padding:10px 14px;display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+header b{font-size:17px}
+header .count{font-size:13px;opacity:.85}
+nav{display:flex;gap:6px;margin-left:auto;flex-wrap:wrap}
+nav button{font:inherit;font-size:15px;padding:8px 14px;border-radius:999px;border:0;
+  background:rgba(255,255,255,.18);color:#fff;cursor:pointer}
+nav button.on{background:#fff;color:var(--brand);font-weight:700}
+main{max-width:1000px;margin:0 auto;padding:14px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:14px;
+  padding:16px;margin-bottom:14px}
+h2{font-size:18px;margin:0 0 10px}
+h3{font-size:16px;margin:18px 0 6px}
+input,select,textarea{width:100%;font:inherit;padding:12px;border:1px solid var(--line);
+  border-radius:10px;background:#fff;color:var(--ink)}
+input:focus,select:focus,textarea:focus{outline:2px solid var(--brand-soft);border-color:var(--brand)}
+label{display:block;font-size:13px;color:var(--muted);margin:10px 0}
+.row{display:flex;gap:10px;flex-wrap:wrap}
+.row>*{flex:1;min-width:140px}
+button.act{font:inherit;font-size:15px;padding:12px 18px;border-radius:10px;
+  border:1px solid var(--line);background:#fff;color:var(--ink);cursor:pointer}
+button.primary{background:var(--brand);border-color:var(--brand);color:#fff;font-weight:600}
+button.act:active{opacity:.7}
+.actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}
+.hit{border:1px solid var(--line);border-radius:12px;padding:12px;margin:8px 0;background:#fff}
+.hit .nm{font-weight:600}
+.hit .meta{font-size:13px;color:var(--muted);margin-top:2px}
+.hit .hd{font-size:14px;margin-top:6px}
+.chip{display:inline-block;font-size:12px;padding:3px 9px;border-radius:999px;
+  background:var(--brand-soft);color:var(--brand);margin:2px 4px 2px 0}
+.chip.warn{background:var(--warn-soft);color:var(--warn)}
+.muted{color:var(--muted);font-size:14px}
+table{width:100%;border-collapse:collapse;font-size:14px}
+th,td{border:1px solid var(--line);padding:8px;text-align:left;vertical-align:top}
+th{background:#f7f9fc;font-weight:600;font-size:13px}
+.scroll{overflow-x:auto;-webkit-overflow-scrolling:touch}
+#report-body table{table-layout:fixed;min-width:940px}
+#report-body th,#report-body td{word-break:keep-all;overflow-wrap:anywhere}
+#report-body input{padding:8px;font-size:14px}
+#report-body col.c-g{width:64px} #report-body col.c-n{width:210px}
+#report-body col.c-a{width:110px} #report-body col.c-p{width:150px}
+#report-body col.c-f{width:100px} #report-body col.c-m{width:auto}
+#report-body col.c-x{width:74px}
+#report-body td button.act{padding:8px 10px;font-size:13px;white-space:nowrap}
+.memo{font-size:13px;line-height:1.5}
+.memo b{color:var(--ink)}
+details{margin:8px 0}
+summary{cursor:pointer;color:var(--brand);font-size:15px;padding:6px 0}
+.pick{display:flex;gap:8px;align-items:center;margin-top:8px}
+.pick input{max-width:130px}
+.empty{color:var(--muted);text-align:center;padding:28px 10px}
+.bar{position:sticky;bottom:0;background:#fff;border-top:1px solid var(--line);
+  padding:10px 14px;display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.bar .n{font-weight:600}
+.hide{display:none!important}
+.printonly-block{display:none}
+@media print{
+  header,nav,.bar,.noprint{display:none!important}
+  body{background:#fff;font-size:10.5pt;word-break:keep-all}
+  main{max-width:none;padding:0}
+  .card{border:0;padding:0;margin:0 0 6mm}
+  .printonly-block{display:block}
+  h2{font-size:12pt;margin:0 0 4mm}
+  table{font-size:8.6pt;table-layout:fixed;width:100%}
+  th,td{padding:4px 5px;word-break:keep-all;overflow-wrap:anywhere}
+  th{font-size:8.4pt}
+  #report-body col.c-g{width:8%} #report-body col.c-n{width:24%}
+  #report-body col.c-a{width:10%} #report-body col.c-p{width:13%}
+  #report-body col.c-f{width:8%} #report-body col.c-m{width:37%}
+  #report-body col.c-x{width:0}
+  #report-body table{min-width:0}
+  tr{break-inside:avoid}
+  .print-title{font-size:15pt;font-weight:700;margin:0 0 2mm}
+  .print-info{font-size:9.5pt;color:#333;margin:0 0 1.5mm}
+  .print-memo{font-size:9.5pt;border-left:3px solid #ccc;padding-left:3mm;margin:0 0 3mm}
+  @page{size:A4;margin:13mm}
+}
+</style>
+</head>
+<body>
+<header>
+  <b>보장분석 도우미</b>
+  <span class="count" id="count"></span>
+  <nav>
+    <button data-tab="search" class="on">특약 찾기</button>
+    <button data-tab="code">질병코드</button>
+    <button data-tab="report">보장분석</button>
+  </nav>
+</header>
+
+<main>
+  <!-- 특약 찾기 -->
+  <section id="tab-search">
+    <div class="card noprint">
+      <h2>특약 찾기</h2>
+      <input id="q" placeholder="특약 이름 일부를 입력하세요 (예: 뇌혈관, 암진단, 수술)" autocomplete="off">
+      <div class="row" style="margin-top:10px">
+        <select id="f-product"><option value="">전체 상품</option></select>
+        <select id="f-group"><option value="">전체 구분</option></select>
+      </div>
+    </div>
+    <div id="hits"></div>
+  </section>
+
+  <!-- 질병코드 -->
+  <section id="tab-code" class="hide">
+    <div class="card noprint">
+      <h2>질병코드로 찾기</h2>
+      <input id="qc" placeholder="코드나 병명 (예: I63, 뇌경색, 위암)" autocomplete="off">
+      <p class="muted" style="margin:10px 0 0">고객이 말한 병명·코드를 넣으면 그 병을 보장하는 특약이 나옵니다.</p>
+    </div>
+    <div id="code-hits"></div>
+  </section>
+
+  <!-- 보장분석 -->
+  <section id="tab-report" class="hide">
+    <div class="card noprint">
+      <h2>고객 정보</h2>
+      <div class="row">
+        <label>성함<input id="c-name" placeholder="홍길동"></label>
+        <label>생년월일<input id="c-birth" placeholder="1980-01-01"></label>
+        <label>연락처<input id="c-phone" placeholder="010-0000-0000"></label>
+      </div>
+      <label>상담 메모<input id="c-memo" placeholder="예: 부친 뇌졸중 병력"></label>
+      <div class="row">
+        <label>설계사<input id="p-name" placeholder="이설계"></label>
+        <label>연락처<input id="p-phone" placeholder="010-0000-0000"></label>
+      </div>
+      <details>
+        <summary>제안서 내용을 붙여넣어 특약 자동으로 담기</summary>
+        <textarea id="paste" rows="6" placeholder="제안서의 특약 표를 복사해서 붙여넣으세요.&#10;예) 뇌혈관질환진단특약L   1,000만원   20년납/100세만기   20,600"></textarea>
+        <div class="actions"><button class="act" id="btn-paste">읽어서 담기</button></div>
+      </details>
+    </div>
+
+    <div class="card" id="report-card">
+      <div id="print-head" class="printonly-block"></div>
+      <h2>계약사항</h2>
+      <div id="report-body"></div>
+    </div>
+  </section>
+</main>
+
+<div class="bar noprint">
+  <span class="n" id="bag-n">담은 특약 0건</span>
+  <button class="act" id="btn-go">보장분석 보기</button>
+  <button class="act primary" id="btn-print">인쇄 / PDF 저장</button>
+  <button class="act" id="btn-md">옵시디언용 복사</button>
+  <button class="act" id="btn-clear">비우기</button>
+</div>
+
+<script>
+const RIDERS = __DATA__;
+</script>
+<script>
+(function () {
+  const $ = (s) => document.querySelector(s);
+  const el = (t, c, x) => { const e = document.createElement(t); if (c) e.className = c;
+    if (x !== undefined) e.textContent = x; return e; };
+
+  // ---------- 이름 정규화 (PC 프로그램과 같은 규칙) ----------
+  const NOISE = ["무배당","무해약환급금형","저해약환급금형","해약환급금미지급형","갱신형",
+                 "간편심사","간편가입","간편n355","간편n","n355","간편","무","new"];
+  function key(s) {
+    let t = (s || "").toLowerCase();
+    t = t.replace(/[ⅰ]/g,"i").replace(/[ⅱ]/g,"ii").replace(/[ⅲ]/g,"iii");
+    t = t.replace(/[^0-9a-z가-힣]/g, "");
+    for (const w of NOISE) t = t.split(w).join("");
+    t = t.replace(/허혈성/g, "허혈");
+    return t;
+  }
+  RIDERS.forEach((r) => { r._k = key(r.n); r._codes = r.codes.map((c) => c.c).join(" ");
+    r._items = r.items.map((i) => i.l + " " + i.c + " " + (i.p || "")).join(" "); });
+
+  // ---------- 담은 특약 (새로고침해도 남음) ----------
+  let bag = [];
+  let info = {};
+  try { bag = JSON.parse(localStorage.getItem("bag") || "[]");
+        info = JSON.parse(localStorage.getItem("info") || "{}"); } catch (e) {}
+  function save() {
+    try { localStorage.setItem("bag", JSON.stringify(bag));
+          localStorage.setItem("info", JSON.stringify(readInfo())); } catch (e) {}
+  }
+  function readInfo() {
+    return { name: $("#c-name").value, birth: $("#c-birth").value, phone: $("#c-phone").value,
+             memo: $("#c-memo").value, pname: $("#p-name").value, pphone: $("#p-phone").value };
+  }
+  function fillInfo() {
+    $("#c-name").value = info.name || ""; $("#c-birth").value = info.birth || "";
+    $("#c-phone").value = info.phone || ""; $("#c-memo").value = info.memo || "";
+    $("#p-name").value = info.pname || ""; $("#p-phone").value = info.pphone || "";
+  }
+
+  // ---------- 검색 ----------
+  function search(q, product, group) {
+    const qk = key(q);
+    let list = RIDERS;
+    if (product) list = list.filter((r) => r.pr === product);
+    if (group) list = list.filter((r) => r.g === group);
+    if (!qk) return list.slice(0, 60);
+    const out = [];
+    for (const r of list) {
+      let score = 0;
+      if (r._k === qk) score = 100;
+      else if (r._k.includes(qk)) score = 80 - Math.min(20, r._k.length - qk.length) / 2;
+      else if (qk.length >= 2 && r._k.includes(qk.slice(0, Math.max(2, qk.length - 1)))) score = 40;
+      if (score) out.push([score, r]);
+    }
+    out.sort((a, b) => b[0] - a[0] || a[1].n.localeCompare(b[1].n));
+    return out.slice(0, 60).map((x) => x[1]);
+  }
+
+  function riderCard(r, opts) {
+    const box = el("div", "hit");
+    box.appendChild(el("div", "nm", r.n));
+    box.appendChild(el("div", "meta", [r.g, r.pr].filter(Boolean).join(" · ")));
+    if (r.h) box.appendChild(el("div", "hd", r.h));
+    if (r.codes.length) {
+      const c = el("div");
+      r.codes.forEach((x) => { const s = el("span", "chip", x.c + (x.m ? " " + x.m : "")); c.appendChild(s); });
+      box.appendChild(c);
+    }
+    const det = el("details");
+    det.appendChild(el("summary", null, "자세히 보기"));
+    const body = el("div");
+    const sec = (title, items) => {
+      if (!items || !items.length) return;
+      body.appendChild(el("h3", null, title));
+      const ul = el("ul"); ul.style.paddingLeft = "20px";
+      items.forEach((t) => ul.appendChild(el("li", null, t)));
+      body.appendChild(ul);
+    };
+    if (r.items.length) {
+      body.appendChild(el("h3", null, "어떤 병이 대상인가"));
+      const wrap = el("div", "scroll"); const tb = el("table");
+      tb.innerHTML = "<tr><th>질병</th><th>코드</th><th>쉬운 설명</th></tr>" +
+        r.items.map((i) => `<tr><td>${esc(i.l)}</td><td>${esc(i.c)}</td><td>${esc(i.p || "")}</td></tr>`).join("");
+      wrap.appendChild(tb); body.appendChild(wrap);
+    }
+    sec("언제 보험금이 나오나", r.pay);
+    sec("꼭 확인할 점", r.cau);
+    sec("안 나오는 경우", r.exc);
+    sec("청구 서류", r.doc);
+    if (r.src) body.appendChild(el("p", "muted", "근거 약관: " + r.src));
+    det.appendChild(body);
+    box.appendChild(det);
+
+    if (!opts || !opts.noAdd) {
+      const pick = el("div", "pick");
+      const b = el("button", "act primary", inBag(r.id) ? "담김 ✓" : "담기");
+      b.addEventListener("click", () => { toggle(r); b.textContent = inBag(r.id) ? "담김 ✓" : "담기"; });
+      pick.appendChild(b);
+      box.appendChild(pick);
+    }
+    return box;
+  }
+
+  function esc(s) { return String(s == null ? "" : s).replace(/[&<>]/g,
+    (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;" }[c])); }
+
+  let seq = Date.now();
+  function inBag(id) { return bag.some((b) => b.id === id); }
+  function toggle(r) {
+    const i = bag.findIndex((b) => b.id === r.id);
+    if (i >= 0) bag = bag.filter((b) => b.id !== r.id);
+    else bag.push({ uid: ++seq, id: r.id, label: "", amount: "", premium: "", period: "" });
+    save(); renderBag(); renderReport();
+  }
+
+  function renderBag() { $("#bag-n").textContent = `담은 특약 ${bag.length}건`; }
+
+  // ---------- 화면 그리기 ----------
+  function renderSearch() {
+    const box = $("#hits"); box.innerHTML = "";
+    const list = search($("#q").value, $("#f-product").value, $("#f-group").value);
+    if (!list.length) { box.appendChild(el("p", "empty", "찾는 특약이 없습니다. 다른 낱말로 찾아보세요.")); return; }
+    list.forEach((r) => box.appendChild(riderCard(r)));
+  }
+
+  function renderCode() {
+    const box = $("#code-hits"); box.innerHTML = "";
+    const q = ($("#qc").value || "").trim().toLowerCase();
+    if (!q) { box.appendChild(el("p", "empty", "코드나 병명을 입력해 주세요.")); return; }
+    const hits = RIDERS.filter((r) => (r._codes + " " + r._items).toLowerCase().includes(q));
+    if (!hits.length) { box.appendChild(el("p", "empty", "해당하는 특약을 찾지 못했습니다.")); return; }
+    box.appendChild(el("p", "muted", `${hits.length}건의 특약이 이 병을 보장합니다.`));
+    hits.slice(0, 40).forEach((r) => box.appendChild(riderCard(r)));
+  }
+
+  function renderReport() {
+    printHead();
+    const box = $("#report-body"); box.innerHTML = "";
+    if (!bag.length) { box.appendChild(el("p", "empty", "‘특약 찾기’에서 특약을 담으면 여기에 표가 만들어집니다.")); return; }
+    const wrap = el("div", "scroll"); const tb = el("table");
+    tb.innerHTML = "<colgroup><col class='c-g'><col class='c-n'><col class='c-a'>" +
+                   "<col class='c-p'><col class='c-f'><col class='c-m'><col class='c-x'></colgroup>" +
+                   "<tr><th>구분</th><th>보장(특약)</th><th>가입금액</th><th>납입·보험기간</th>" +
+                   "<th>보험료</th><th>쉬운 설명 · 보장 대상 · 지급 기준</th><th class='noprint'></th></tr>";
+    bag.forEach((b, idx) => {
+      const r = RIDERS.find((x) => x.id === b.id) || null;
+      const tr = el("tr");
+      tr.appendChild(el("td", null, r ? (r.g || "") : ""));
+      tr.appendChild(el("td", null, b.label || (r ? r.n : "(이름 확인 필요)")));
+      ["amount", "period", "premium"].forEach((f) => {
+        const td = el("td");
+        const inp = el("input"); inp.value = b[f] || "";
+        inp.placeholder = { amount: "1,000만원", period: "20년납/100세", premium: "10,000" }[f];
+        inp.addEventListener("input", () => { b[f] = inp.value; save(); });
+        inp.className = "noprint";
+        const span = el("span", "printonly", b[f] || "");
+        td.appendChild(inp); td.appendChild(span);
+        tr.appendChild(td);
+      });
+      const memo = el("td", "memo");
+      memo.innerHTML = r ? [
+        esc(r.h),
+        r.codes.length ? "<b>대상 코드</b> " + r.codes.map((c) => esc(c.c)).join(" · ") : "",
+        r.cau.length ? "<b>확인</b> " + esc(r.cau[0]) : "",
+        b.label && b.label !== r.n ? "<span class='muted'>약관: " + esc(r.n) + "</span>" : "",
+      ].filter(Boolean).join("<br>")
+      : "<span class='muted'>약관에서 같은 이름을 찾지 못했습니다. ‘특약 찾기’에서 담아 주세요.</span>";
+      tr.appendChild(memo);
+      const del = el("td", "noprint");
+      const db = el("button", "act", "빼기");
+      db.addEventListener("click", () => { bag.splice(idx, 1); save(); renderBag(); renderReport(); });
+      del.appendChild(db); tr.appendChild(del);
+      tb.appendChild(tr);
+    });
+    wrap.appendChild(tb); box.appendChild(wrap);
+
+    const head = el("div", "noprint");
+    box.insertBefore(head, wrap);
+    box.appendChild(el("p", "muted",
+      "이 표는 약관을 쉽게 풀어 쓴 참고 자료입니다. 실제 보장 여부는 약관 원문과 회사 심사 기준에 따릅니다."));
+  }
+
+  function printHead() {
+    const i = readInfo();
+    const today = new Date().toISOString().slice(0, 10);
+    const parts = [`<p class="print-title">${esc(i.name || "고객")} 님 보장분석</p>`];
+    const line = [i.birth && "생년월일 " + esc(i.birth), i.phone && "연락처 " + esc(i.phone),
+                  "작성일 " + today].filter(Boolean).join("  ·  ");
+    parts.push(`<p class="print-info">${line}</p>`);
+    if (i.memo) parts.push(`<p class="print-memo">${esc(i.memo)}</p>`);
+    if (i.pname) parts.push(`<p class="print-info">담당 설계사 ${esc(i.pname)}` +
+      (i.pphone ? "  ·  " + esc(i.pphone) : "") + "</p>");
+    $("#print-head").innerHTML = parts.join("");
+  }
+
+  // ---------- 제안서 붙여넣기 ----------
+  const SKIP = /(합\s*계|총\s*계|계약자|피보험자|납입주기|가입설계|설계서|페이지|www|서명|안내|주의|면책)/;
+  const MONEY = /([0-9,]+\s*(?:만원|억원|원))|주석\s*참조/;
+
+  function parsePaste(text) {
+    let added = 0;
+    for (const raw of text.split("\n")) {
+      if (!raw.trim() || SKIP.test(raw)) continue;
+      if (!MONEY.test(raw)) continue;                 // 금액이 없는 줄(상품명·머리말)은 건너뛴다
+      // 표의 칸 구분(공백 2칸 이상·탭)을 살려서 나눈다. 먼저 공백을 줄이면 칸이 사라진다.
+      const cells = raw.split(/\s{2,}|\t|\|/).map((c) => c.trim()).filter(Boolean);
+      let label = cells[0] || "";
+      let rest = cells.slice(1).join(" ");
+      if (cells.length < 2) {                          // 칸 구분이 없으면 금액 앞까지를 이름으로
+        const m = raw.match(MONEY);
+        label = raw.slice(0, m.index).trim();
+        rest = raw.slice(m.index).trim();
+      }
+      label = label.replace(/^\s*\d{1,2}\s*[.)]\s*/, "").trim();
+      if (label.length < 2) continue;
+
+      const nk = key(label);
+      let best = null, bestScore = 0;
+      for (const r of RIDERS) {
+        let s2 = 0;
+        if (r._k === nk) s2 = 100;
+        else if (nk.length >= 4 && (r._k.includes(nk) || nk.includes(r._k))) s2 = 70;
+        if (s2 > bestScore) { bestScore = s2; best = r; }
+      }
+      const money = rest.match(/([0-9,]+\s*(?:만원|억원))/) || (/주석\s*참조/.test(rest) ? ["주석 참조"] : null);
+      const period = rest.match(/([0-9]+년납\s*\/\s*[0-9]+세만기|[0-9]+년납\s*\/\s*[0-9]+년만기|[0-9]+년\s*\/\s*[0-9]+년갱신|[0-9]+년납|[0-9]+세만기|[0-9]+년갱신)/);
+      const prem = rest.match(/([0-9]{1,3}(?:,[0-9]{3})+|[0-9]{2,4})\s*$/);
+      const row = { uid: ++seq, id: best && bestScore >= 70 ? best.id : null, label: label,
+                    amount: money ? String(money[0]).trim() : "",
+                    period: period ? period[0].replace(/\s+/g, "") : "",
+                    premium: prem ? prem[1] : "" };
+      if (bag.some((x) => x.label === row.label && x.amount === row.amount)) continue;
+      bag.push(row); added++;
+    }
+    save(); renderBag(); renderReport();
+    const miss = bag.filter((b) => !b.id).length;
+    alert(added ? `특약 ${added}건을 담았습니다.` +
+                  (miss ? `\n그 중 ${miss}건은 약관에서 이름을 찾지 못했습니다. 표에서 확인해 주세요.` : "") +
+                  "\n금액이 맞는지 표에서 확인해 주세요."
+                : "특약을 찾지 못했습니다.\n‘특약 찾기’에서 직접 담아 주세요.");
+  }
+
+  // ---------- 마크다운(옵시디언용) ----------
+  function markdown() {
+    const i = readInfo();
+    const today = new Date().toISOString().slice(0, 10);
+    const out = [`# ${i.name || "고객"} 님 보장분석 (${today})`, ""];
+    const line = [i.birth && `**생년월일** ${i.birth}`, i.phone && `**연락처** ${i.phone}`]
+      .filter(Boolean).join(" · ");
+    if (line) out.push(line, "");
+    if (i.memo) out.push("> " + i.memo, "");
+    out.push("| 구분 | 보장(특약) | 가입금액 | 납입·보험기간 | 보험료 | 쉬운 설명 |",
+             "|---|---|---|---|---|---|");
+    bag.forEach((b) => {
+      const r = RIDERS.find((x) => x.id === b.id) || null;
+      const name = r ? `[[${r.n}]]` : (b.label || "(이름 확인 필요)");
+      const memo = r ? [r.h, r.codes.length ? "대상 코드 " + r.codes.map((c) => c.c).join(" · ") : "",
+                        r.cau[0] || ""].filter(Boolean).join("<br>") : "약관 미확인";
+      out.push(`| ${r ? (r.g || "") : ""} | ${name} | ${b.amount || ""} | ${b.period || ""} | ${b.premium || ""} | ${memo} |`);
+    });
+    out.push("", `특약 ${bag.length}건`, "");
+    if (i.pname) out.push(`## 담당 설계사`, "", [i.pname, i.pphone].filter(Boolean).join(" · "), "");
+    out.push("> 약관을 쉽게 풀어 쓴 참고 자료입니다. 실제 보장 여부는 약관 원문과 회사 심사 기준에 따릅니다.",
+             "", "## 내 메모", "");
+    return out.join("\n");
+  }
+
+  // ---------- 시작 ----------
+  const products = [...new Set(RIDERS.map((r) => r.pr).filter(Boolean))].sort();
+  const groups = [...new Set(RIDERS.map((r) => r.g).filter(Boolean))].sort();
+  products.forEach((p) => $("#f-product").appendChild(new Option(p, p)));
+  groups.forEach((g) => $("#f-group").appendChild(new Option(g, g)));
+  $("#count").textContent = `특약 ${RIDERS.length}건`;
+
+  document.querySelectorAll("nav button").forEach((b) => b.addEventListener("click", () => {
+    document.querySelectorAll("nav button").forEach((x) => x.classList.remove("on"));
+    b.classList.add("on");
+    ["search", "code", "report"].forEach((t) =>
+      $("#tab-" + t).classList.toggle("hide", t !== b.dataset.tab));
+    if (b.dataset.tab === "report") renderReport();
+  }));
+
+  $("#q").addEventListener("input", renderSearch);
+  $("#f-product").addEventListener("change", renderSearch);
+  $("#f-group").addEventListener("change", renderSearch);
+  $("#qc").addEventListener("input", renderCode);
+  ["#c-name","#c-birth","#c-phone","#c-memo","#p-name","#p-phone"].forEach((s) =>
+    $(s).addEventListener("input", save));
+  $("#btn-paste").addEventListener("click", () => parsePaste($("#paste").value));
+  $("#btn-go").addEventListener("click", () => document.querySelector('nav button[data-tab="report"]').click());
+  $("#btn-print").addEventListener("click", () => {
+    document.querySelector('nav button[data-tab="report"]').click();
+    document.querySelectorAll("#report-body input").forEach((inp) => {
+      const span = inp.nextSibling; if (span) span.textContent = inp.value;
+    });
+    setTimeout(() => window.print(), 120);
+  });
+  $("#btn-md").addEventListener("click", async () => {
+    const text = markdown();
+    try { await navigator.clipboard.writeText(text); alert("복사했습니다.\n옵시디언에서 새 노트를 만들고 붙여넣으세요."); }
+    catch (e) {
+      const ta = document.createElement("textarea"); ta.value = text; document.body.appendChild(ta);
+      ta.select(); document.execCommand("copy"); ta.remove();
+      alert("복사했습니다.\n옵시디언에서 새 노트를 만들고 붙여넣으세요.");
+    }
+  });
+  $("#btn-clear").addEventListener("click", () => {
+    if (!confirm("담은 특약을 모두 비울까요? 고객 정보는 남습니다.")) return;
+    bag = []; save(); renderBag(); renderReport();
+  });
+
+  fillInfo(); renderBag(); renderSearch(); renderReport();
+})();
+</script>
+<style>
+.printonly{display:none}
+@media print{ .printonly{display:inline} }
+</style>
+</body>
+</html>
