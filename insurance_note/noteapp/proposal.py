@@ -6,6 +6,7 @@
 """
 from __future__ import annotations
 
+import os
 import re
 import shutil
 import subprocess
@@ -23,25 +24,86 @@ IMAGE_SUFFIXES = {".png", ".jpg", ".jpeg", ".bmp", ".tif", ".tiff", ".webp"}
 
 # ---------------------------------------------------------------- OCR
 
+def _ocr_candidates() -> list[str]:
+    """설치는 했지만 PATH 에 안 잡히는 경우가 잦아 흔한 설치 위치를 직접 본다."""
+    home = Path.home()
+    return [
+        r"C:\Program Files\Tesseract-OCR\tesseract.exe",
+        r"C:\Program Files (x86)\Tesseract-OCR\tesseract.exe",
+        r"C:\Tesseract-OCR\tesseract.exe",
+        # 관리자 권한 없이 설치하면 사용자 폴더로 들어간다
+        str(home / "AppData/Local/Programs/Tesseract-OCR/tesseract.exe"),
+        str(home / "AppData/Local/Tesseract-OCR/tesseract.exe"),
+        str(home / "scoop/shims/tesseract.exe"),
+        r"C:\ProgramData\chocolatey\bin\tesseract.exe",
+        "/opt/homebrew/bin/tesseract",
+        "/usr/local/bin/tesseract",
+        "/usr/bin/tesseract",
+    ]
+
+OCR_HELP = ("사진·스캔본에서 글자를 읽으려면 OCR 프로그램(tesseract)이 필요합니다. "
+            "https://github.com/UB-Mannheim/tesseract/wiki 에서 설치하면서 "
+            "'Additional language data' 에서 Korean 을 꼭 선택해 주세요. "
+            "설치 뒤 이 프로그램을 껐다 켜면 자동으로 인식합니다.")
+
+
+def tesseract_path() -> str | None:
+    """OCR 프로그램의 위치. PATH 에 없으면 흔한 설치 경로도 찾아본다."""
+    fixed = os.environ.get("NOTE_TESSERACT", "").strip()
+    if fixed:
+        return fixed if Path(fixed).exists() else None
+    found = shutil.which("tesseract")
+    if found:
+        return found
+    for path in _ocr_candidates():
+        if Path(path).exists():
+            return path
+    return None
+
+
+def ocr_status() -> str:
+    """실행 창에 보여 줄 한 줄 요약(설치 여부와 찾은 위치)."""
+    exe = tesseract_path()
+    if exe:
+        return f"사용 가능 ({exe})"
+    return "미설치 — 사진·스캔본은 읽지 못합니다(PDF·붙여넣기는 가능)"
+
+
 def ocr_available() -> bool:
-    return shutil.which("tesseract") is not None
+    return tesseract_path() is not None
 
 
 def ocr_image_bytes(data: bytes, lang: str | None = None) -> str:
     """tesseract 로 이미지 한 장을 읽는다."""
-    if not ocr_available():
-        raise RuntimeError(
-            "OCR 프로그램(tesseract)이 설치되어 있지 않습니다.\n"
-            "  · Windows: https://github.com/UB-Mannheim/tesseract/wiki 에서 설치(한국어 선택)\n"
-            "  · macOS  : brew install tesseract tesseract-lang\n"
-            "  · Ubuntu : sudo apt install tesseract-ocr tesseract-ocr-kor")
+    exe = tesseract_path()
+    if not exe:
+        raise RuntimeError(OCR_HELP)
     lang = lang or config.OCR_LANG
     proc = subprocess.run(
-        ["tesseract", "stdin", "stdout", "-l", lang, "--psm", "6"],
+        [exe, "stdin", "stdout", "-l", lang, "--psm", "6"],
         input=data, capture_output=True)
+    if proc.returncode != 0 and b"Failed loading language" in (proc.stderr or b""):
+        proc = subprocess.run(                # 한국어 자료가 없으면 영어로라도 읽어 본다
+            [exe, "stdin", "stdout", "--psm", "6"], input=data, capture_output=True)
     if proc.returncode != 0:
         raise RuntimeError(proc.stderr.decode("utf-8", "ignore")[:500])
     return proc.stdout.decode("utf-8", "ignore")
+
+
+def safe_dpi(page, max_pixels: int = 30_000_000) -> int:
+    """페이지를 그림으로 만들 때 쓸 해상도.
+
+    큰 원고(A3·고해상도 스캔)를 그대로 300dpi 로 펼치면 메모리를 수백 MB 쓰다가
+    프로그램이 통째로 꺼질 수 있다. 픽셀 수가 한도를 넘지 않도록 해상도를 낮춘다.
+    """
+    dpi = config.OCR_DPI
+    rect = page.rect
+    inches = (rect.width / 72.0) * (rect.height / 72.0)
+    if inches <= 0:
+        return dpi
+    if inches * dpi * dpi > max_pixels:
+        dpi = int((max_pixels / inches) ** 0.5)
+    return max(120, min(dpi, config.OCR_DPI))
 
 
 def read_document(path: Path, force_ocr: bool = False) -> tuple[list[str], bool]:
@@ -69,8 +131,11 @@ def read_document(path: Path, force_ocr: bool = False) -> tuple[list[str], bool]
             text = "" if force_ocr else extract_text(page)
             if len(compact(text)) < config.TEXT_LAYER_MIN_CHARS:
                 if ocr_available():
-                    pix = page.get_pixmap(dpi=config.OCR_DPI)
-                    text = ocr_image_bytes(pix.tobytes("png"))
+                    pix = page.get_pixmap(dpi=safe_dpi(page))
+                    try:
+                        text = ocr_image_bytes(pix.tobytes("png"))
+                    finally:
+                        del pix                   # 큰 스캔본에서 메모리를 바로 돌려준다
                     used_ocr = True
                 else:
                     text = text or ""

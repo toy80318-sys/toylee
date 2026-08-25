@@ -6,6 +6,7 @@
 from __future__ import annotations
 
 import os
+import socket
 import sys
 import threading
 import traceback
@@ -17,13 +18,19 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 from flask import (Flask, jsonify, redirect, render_template, request,  # noqa: E402
                    send_from_directory, url_for)
 
-from noteapp import config, proposal, session as jobs  # noqa: E402
+from noteapp import config, obsidian, proposal, session as jobs  # noqa: E402
 from noteapp.report import build_document  # noqa: E402
 from noteapp.store import default_store  # noqa: E402
 
 app = Flask(__name__, template_folder="templates", static_folder="static")
 MAX_UPLOAD_MB = int(os.environ.get("NOTE_MAX_UPLOAD_MB", "500"))
 app.config["MAX_CONTENT_LENGTH"] = MAX_UPLOAD_MB * 1024 * 1024
+
+
+@app.get("/ping")
+def ping():
+    """화면에서 프로그램이 살아 있는지 확인할 때 쓴다."""
+    return jsonify(ok=True)
 
 
 @app.errorhandler(413)
@@ -65,6 +72,25 @@ def inject_common():
 @app.get("/")
 def home():
     return render_template("index.html", recent=jobs.recent())
+
+
+def summarize_problems(problems: list[str], shown: dict[str, str]) -> list[str]:
+    """못 읽은 파일 안내를 이유별로 한 줄씩 묶는다.
+
+    사진 여러 장을 올리면 같은 이유(예: OCR 미설치)가 장 수만큼 반복돼
+    화면이 경고로 뒤덮였다. 이제 이유 하나에 파일 이름을 모아서 보여 준다.
+    """
+    grouped: dict[str, list[str]] = {}
+    for problem in problems:
+        stored, _, reason = problem.partition(": ")
+        grouped.setdefault(reason.strip(), []).append(shown.get(stored, stored))
+    lines = []
+    for reason, names in grouped.items():
+        listed = ", ".join(f"'{n}'" for n in names[:3])
+        if len(names) > 3:
+            listed += f" 외 {len(names) - 3}개"
+        lines.append(f"{listed} 파일은 읽지 못해 건너뛰었습니다 — {reason}")
+    return lines
 
 
 @app.post("/analyze")
@@ -114,10 +140,7 @@ def analyze():
                 shown[dest.name] = name
                 saved.append(dest)
             parsed = proposal.parse_files(saved, force_ocr=form.get("force_ocr") == "on")
-            for problem in parsed.problems:
-                stored, _, reason = problem.partition(": ")
-                warnings.append(f"'{shown.get(stored, stored)}' 파일은 읽지 못해 "
-                                f"건너뛰었습니다 — {reason}")
+            warnings += summarize_problems(parsed.problems, shown)
             if len(uploads) > 1:
                 warnings.append(f"파일 {len(uploads)}개 중 {len(parsed.sources)}개를 읽어 "
                                 f"특약 {len(parsed.riders)}건을 모았습니다. "
@@ -170,6 +193,24 @@ def rebuild():
     job_id = payload.get("job_id") or jobs.new_job_id()
     jobs.save(job_id, {**payload, "document": doc})
     return jsonify({"ok": True, "job_id": job_id, "doc": doc})
+
+
+@app.post("/obsidian/<job_id>")
+def to_obsidian(job_id: str):
+    """이 고객의 보장분석을 옵시디언 보관함에 노트로 저장한다."""
+    vault = config.obsidian_vault()
+    if not vault:
+        return jsonify({"ok": False, "error":
+                        "옵시디언 보관함 폴더를 알 수 없습니다.\n"
+                        f"'{config.BASE_DIR / '옵시디언_폴더.txt'}' 첫 줄에 "
+                        "폴더 경로를 적어 주세요."}), 400
+    try:
+        data = jobs.load(job_id)
+        path = obsidian.export_customer(data["document"], Path(vault), store=store())
+    except Exception as exc:                      # noqa: BLE001
+        traceback.print_exc()
+        return jsonify({"ok": False, "error": str(exc)}), 400
+    return jsonify({"ok": True, "path": str(path)})
 
 
 @app.get("/report/<job_id>")
@@ -237,6 +278,23 @@ def open_browser_soon(url: str, delay: float = 1.5) -> None:
     t.start()
 
 
+def pick_port(preferred: int) -> int:
+    """쓸 수 있는 포트를 고른다.
+
+    윈도우에서는 5000번이 다른 프로그램이나 시스템 예약에 걸려 있는 경우가 잦다.
+    그대로 두면 프로그램이 뜨자마자 꺼져 브라우저에 '연결을 거부했습니다' 가 뜬다.
+    """
+    for port in [preferred] + list(range(5001, 5051)):
+        with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as sock:
+            sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+            try:
+                sock.bind(("127.0.0.1", port))
+            except OSError:
+                continue
+        return port
+    return preferred
+
+
 def main() -> int:
     st = store()
     print("=" * 60)
@@ -248,13 +306,24 @@ def main() -> int:
               f"질병코드 {s['codes']}개 ({s['built_at']})")
     else:
         print(" ! 약관 색인이 없습니다. 먼저 'python3 build_index.py' 를 실행하세요.")
-    print(f" OCR(스캔 읽기): {'사용 가능' if proposal.ocr_available() else '미설치'}")
-    port = int(os.environ.get("PORT", 5000))
+    print(f" OCR(스캔 읽기): {proposal.ocr_status()}")
+    port = pick_port(int(os.environ.get("PORT", 5000)))
     url = f"http://127.0.0.1:{port}"
+    try:                                   # 주소를 파일로도 남겨 둔다(창을 놓쳤을 때)
+        (config.BASE_DIR / "주소.txt").write_text(
+            f"{url}\n\n이 주소를 브라우저 주소창에 붙여넣으면 화면이 열립니다.\n",
+            encoding="utf-8")
+    except Exception:
+        pass
     print(f" 브라우저가 자동으로 열립니다: {url}")
     print(" 이 창을 닫으면 프로그램이 종료됩니다. (또는 Ctrl+C)")
     open_browser_soon(url)
-    app.run(host="127.0.0.1", port=port, debug=False)
+    try:
+        app.run(host="127.0.0.1", port=port, debug=False, threaded=True)
+    except OSError as exc:
+        print(f" ! {port}번 자리를 열 수 없습니다({exc}).")
+        print("   다른 프로그램이 쓰고 있을 수 있습니다. 컴퓨터를 다시 켠 뒤 실행해 보세요.")
+        return 1
     return 0
 
 

@@ -152,6 +152,203 @@ def test_broken_file_is_skipped() -> None:
           only_bad.riders == [] and len(only_bad.problems) == 1, str(only_bad.problems))
 
 
+def test_runtime_safety() -> None:
+    print("[프로그램이 꺼지지 않게 하는 장치]")
+    import socket
+    import pymupdf
+
+    def dpi_for(width: float, height: float) -> int:
+        doc = pymupdf.open()
+        try:
+            return proposal.safe_dpi(doc.new_page(width=width, height=height))
+        finally:
+            doc.close()
+
+    check("보통 크기 원고는 원래 해상도 유지", dpi_for(595, 842) == 300, str(dpi_for(595, 842)))
+    big_dpi = dpi_for(2400, 3400)
+    pixels = (2400 / 72 * big_dpi) * (3400 / 72 * big_dpi)
+    check("초대형 스캔은 해상도를 낮춰 메모리 폭주를 막음",
+          big_dpi < 300 and pixels <= 30_000_000, f"{big_dpi}dpi / {pixels/1e6:.1f}백만")
+
+    sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
+    import app as webapp
+
+    busy = socket.socket()
+    busy.bind(("127.0.0.1", 0))
+    taken = busy.getsockname()[1]
+    busy.listen(1)
+    check("쓰고 있는 포트를 피해 다른 자리를 찾음",
+          webapp.pick_port(taken) != taken, str(webapp.pick_port(taken)))
+    busy.close()
+    check("살아 있는지 확인하는 주소(/ping) 응답",
+          webapp.app.test_client().get("/ping").status_code == 200)
+
+    same = ["a.jpg: OCR 없음", "b.jpg: OCR 없음", "c.jpg: OCR 없음", "d.jpg: OCR 없음"]
+    lines = webapp.summarize_problems(same, {})
+    check("같은 이유는 한 줄로 묶어서 안내", len(lines) == 1, str(lines))
+    check("파일이 많으면 '외 N개' 로 줄임", "외 1개" in lines[0], lines[0])
+    mixed = webapp.summarize_problems(["a.jpg: OCR 없음", "b.pdf: 손상"], {})
+    check("이유가 다르면 따로 안내", len(mixed) == 2, str(mixed))
+
+
+def test_obsidian() -> None:
+    print("[옵시디언 노트 만들기]")
+    from noteapp import obsidian
+
+    check("파일명에 못 쓰는 글자 정리",
+          obsidian.safe_title('암/진단[특약]:H') == "암 진단 특약 H",
+          obsidian.safe_title('암/진단[특약]:H'))
+
+    rows = [{"id": 1, "name": "무배당 암진단특약L", "product": "가상품A"},
+            {"id": 2, "name": "무배당 암진단특약L", "product": "가상품B"},
+            {"id": 3, "name": "무배당 뇌진단특약", "product": "가상품A"},
+            {"id": 4, "name": "무배당 암진단특약L", "product": "가상품A"}]
+    titles = obsidian.unique_titles(rows)
+    check("이름이 겹치면 상품명을 붙여 구분",
+          titles[1] != titles[2] and "가상품B" in titles[2], str(titles))
+    check("한 상품 안에서 겹쳐도 파일이 덮어써지지 않음",
+          len(set(titles.values())) == 4, str(titles))
+    check("겹치지 않는 이름은 그대로", titles[3] == "무배당 뇌진단특약", titles[3])
+
+    from noteapp.explain import is_rider
+
+    check("목차 구간은 특약 목록에서 뺌",
+          not is_rider("공통 안내·목차") and not is_rider("별표 1"))
+    check("진짜 특약은 그대로 둠",
+          is_rider("무배당 뇌혈관질환진단특약L") and is_rider("무배당 암진단특약H"))
+
+    code = obsidian.code_markdown("I60~I69", "뇌혈관질환 전체",
+                                  ["무배당 뇌혈관질환진단특약L", "무배당 뇌졸중진단특약"])
+    check("코드 노트 안에 보장 특약이 바로 보임",
+          "이 코드를 보장하는 특약 2건" in code and "[[무배당 뇌졸중진단특약]]" in code, code)
+    check("보장 특약이 없으면 그렇다고 적음",
+          "찾지 못했습니다" in obsidian.code_markdown("Z99", "", []))
+
+    import tempfile
+
+    with tempfile.TemporaryDirectory() as tmp:
+        path = Path(tmp) / "특약.md"
+        obsidian.write_note(path, "# 처음\n\n## 근거\n\n- 약관: A\n\n## 내 메모\n")
+        path.write_text(path.read_text(encoding="utf-8") + "고객 상담 기록\n", encoding="utf-8")
+        obsidian.write_note(path, "# 다시\n\n## 근거\n\n- 약관: B\n\n## 내 메모\n")
+        again = path.read_text(encoding="utf-8")
+    check("다시 내보내도 '내 메모' 는 지워지지 않음", "고객 상담 기록" in again, again[-60:])
+    check("본문은 새 내용으로 갱신", "약관: B" in again and "약관: A" not in again)
+
+
+def test_customer_note() -> None:
+    print("[고객 보장분석 노트]")
+    from noteapp import obsidian
+
+    doc = {
+        "customer": {"name": "김보람", "birth": "1985-03-12", "memo": "부친 뇌졸중 병력"},
+        "planner": {"name": "이설계", "phone": "010-1234-5678", "org": ""},
+        "product": "교보간편마이플랜건강보험", "created_at": "2026-08-24",
+        "source_products": ["마이플랜"],
+        "notes": [{"input_name": "뇌혈관질환진단특약L", "matched_name": "무배당 뇌혈관질환진단특약L",
+                   "section_id": 7, "group_label": "진단", "amount": "1,000만원",
+                   "period": "20년납/100세만기", "premium": "20,600",
+                   "headline": "‘뇌혈관질환’으로 진단이 확정되면", "code_summary": ["I60~I69"],
+                   "pay_basis": "진단 확정 시 1,000만원", "key_rules": ["1년 내 50%만 지급"],
+                   "note": "부친 병력 있어 우선 설명"}],
+        "summary": {"total": 1, "matched": 1, "unmatched": 0, "total_premium": "76,237"},
+    }
+    md = obsidian.customer_markdown(doc, {7: "무배당 뇌혈관질환진단특약L (마이플랜)"})
+    check("특약 링크가 실제 노트 제목을 가리킴",
+          "[[무배당 뇌혈관질환진단특약L (마이플랜)]]" in md, md[:200])
+    check("근거 약관 상품도 링크", "[[마이플랜]]" in md)
+    check("고객 메모·설계사 메모 포함",
+          "부친 뇌졸중 병력" in md and "부친 병력 있어 우선 설명" in md)
+    check("보장 코드와 지급 기준 포함", "I60~I69" in md and "진단 확정 시 1,000만원" in md)
+    check("참고 자료 안내 포함", "참고 자료" in md)
+
+
+def test_obsidian_bridge() -> None:
+    """화면(태블릿) 과 옵시디언을 오갈 때 링크가 끊기지 않아야 한다."""
+    print("[화면 ↔ 옵시디언 오가기]")
+    import sys as _sys
+    from noteapp import obsidian
+
+    _sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "tools"))
+    import make_tablet_app as tablet
+
+    home = obsidian.home_markdown("https://예시/앱", riders=643, products=7, codes=287)
+    check("홈 노트에 화면 주소가 링크로 들어감", "(https://예시/앱)" in home, home[:120])
+    check("홈 노트가 색인으로 이어짐", "[[00 약관 색인]]" in home and "[[01 질병코드 찾아보기]]" in home)
+    check("홈 노트에도 '내 메모' 칸", obsidian.MEMO_MARK in home)
+    blank = obsidian.home_markdown("")
+    check("주소를 안 적었으면 링크 대신 안내", "앱주소.txt" in blank and "](" not in blank)
+
+    check("윈도우 경로에서 보관함 이름만 뽑음",
+          tablet.default_vault.__doc__ is not None and
+          _vault_name(tablet, "C:\\진이폴더\\보험\\옵시디언") == "옵시디언",
+          _vault_name(tablet, "C:\\진이폴더\\보험\\옵시디언"))
+    check("맥·리눅스 경로도 마찬가지",
+          _vault_name(tablet, "/Users/jin/보험/옵시디언/") == "옵시디언")
+    check("설정이 없으면 빈 값", _vault_name(tablet, "") == "")
+
+    html = (Path(__file__).resolve().parent.parent / "templates" / "tablet.html").read_text(
+        encoding="utf-8")
+    for mark in ("__DATA__", "__FOLDER__", "__VAULT__"):
+        check(f"화면 서식에 {mark} 자리 있음", mark in html)
+    check("화면이 노트 제목(r.t)으로 링크를 만듦", "[[${r.t}" in html)
+    check("화면에서 옵시디언 앱을 여는 길이 있음", 'obsUri("open"' in html and 'obsUri("new"' in html)
+
+    # 웹에 올릴 본문을 뽑을 때 자바스크립트가 통째로 잘려 나간 적이 있다.
+    sample = ('<!doctype html><html><head><title>가</title><style>b{}</style></head>'
+              '<body><div>내용</div><script>var s = "</body></html>";</script>'
+              '<style>i{}</style></body></html>')
+    inner = tablet.artifact_html(sample)
+    check("본문 뽑을 때 자바스크립트가 남아 있음",
+          inner.count("<script>") == 1 and inner.count("</script>") == 1, inner)
+    check("본문 뽑을 때 겉껍데기는 사라짐",
+          "<html>" not in inner and "<body>" not in inner and "<head>" not in inner, inner)
+    check("제목과 모양은 그대로 옮겨짐", "<title>가</title>" in inner and "b{}" in inner)
+    try:
+        tablet.artifact_html("<html><head></head><p>본문만</p></html>")
+        ok = False
+    except RuntimeError:
+        ok = True
+    check("서식이 예상과 다르면 조용히 넘어가지 않고 멈춤", ok)
+
+
+def _vault_name(tablet, path: str) -> str:
+    """보관함 경로 설정을 잠시 바꿔 놓고 이름만 읽어 본다."""
+    from noteapp import config
+
+    original = config.obsidian_vault
+    config.obsidian_vault = lambda: path
+    try:
+        return tablet.default_vault()
+    finally:
+        config.obsidian_vault = original
+
+
+def test_terms_folder_setting() -> None:
+    print("[약관 폴더 따로 두기]")
+    from noteapp import config
+
+    import tempfile
+
+    def read_setting(text: str) -> str:
+        """설정 파일을 잠시 만들어 두고 읽어 본다."""
+        name = "__검사용설정.txt"
+        target = config.BASE_DIR / name
+        target.write_text(text, encoding="utf-8")
+        try:
+            return config._configured_dir(name)
+        finally:
+            target.unlink()
+
+    check("설명(#)만 있으면 폴더를 지정하지 않은 것으로 봄",
+          read_setting("# 설명 줄\n\n# 예) C:\\어디\\약관\n") == "",
+          read_setting("# 설명 줄\n"))
+    check("첫 줄의 폴더 경로만 읽음",
+          read_setting("C:\\진이폴더\\보험\\약관\n# 설명\n") == "C:\\진이폴더\\보험\\약관")
+    check("설정 파일이 없으면 빈 값", config._configured_dir("__없는파일__.txt") == "")
+    check("지금 설정된 약관 폴더", str(config.TERMS_DIR) != "", str(config.TERMS_DIR))
+
+
 def test_with_index() -> None:
     store = default_store()
     if not store.ready:
@@ -195,6 +392,11 @@ def main() -> int:
     test_proposal_numbering()
     test_multi_file()
     test_broken_file_is_skipped()
+    test_runtime_safety()
+    test_obsidian()
+    test_customer_note()
+    test_obsidian_bridge()
+    test_terms_folder_setting()
     test_with_index()
     print("-" * 46)
     print(f"통과 {passed}건 / 실패 {failed}건")

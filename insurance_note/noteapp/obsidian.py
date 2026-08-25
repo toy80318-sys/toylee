@@ -1,0 +1,415 @@
+"""약관 색인 -> 옵시디언(Obsidian) 노트.
+
+특약마다 노트 한 장을 만들고, 상품·질병분류코드와 `[[링크]]` 로 이어 준다.
+옵시디언에서 'I60~I69' 노트를 열면 그 코드를 보장하는 특약이 백링크로 모두 보인다.
+
+노트 아래쪽 '내 메모' 칸에 적은 내용은 다시 내보내도 지우지 않는다.
+"""
+from __future__ import annotations
+
+import re
+from dataclasses import dataclass
+from pathlib import Path
+
+from . import config
+from .explain import RiderNote, build_note, is_rider
+from .store import TermsStore
+
+FOLDER = "보험약관"                 # 보관함(vault) 안에 만들 폴더
+MEMO_MARK = "## 내 메모"           # 이 줄 아래는 사용자 것 - 덮어쓰지 않는다
+_BAD = re.compile(r'[\\/:*?"<>|#^\[\]]')      # 파일명·링크에 쓸 수 없는 글자
+
+
+def safe_title(name: str) -> str:
+    """파일 이름과 [[링크]] 에 쓸 수 있게 다듬는다."""
+    title = _BAD.sub(" ", name or "").strip()
+    title = re.sub(r"\s{2,}", " ", title).strip(" .")
+    return title[:80] or "이름없음"
+
+
+def link(name: str) -> str:
+    return f"[[{safe_title(name)}]]"
+
+
+def _yaml(value: str) -> str:
+    return '"' + str(value).replace('"', "'") + '"'
+
+
+def keep_memo(path: Path) -> str:
+    """이미 있는 노트에서 '내 메모' 부분만 가져온다."""
+    if not path.exists():
+        return ""
+    try:
+        old = path.read_text(encoding="utf-8")
+    except OSError:
+        return ""
+    idx = old.find(MEMO_MARK)
+    if idx < 0:
+        return ""
+    return old[idx + len(MEMO_MARK):].strip("\n")
+
+
+def unique_titles(rows: list[dict]) -> dict[int, str]:
+    """노트 제목을 정한다.
+
+    같은 이름의 특약이 여러 상품에 있으면(예: 무배당 암진단특약L) 파일이 서로
+    덮어써지므로, 겹치는 이름에만 상품명을 덧붙여 구분한다.
+    """
+    counts: dict[str, int] = {}
+    for row in rows:
+        counts[safe_title(row["name"])] = counts.get(safe_title(row["name"]), 0) + 1
+    titles: dict[int, str] = {}
+    used: set[str] = set()
+    for row in rows:
+        base = safe_title(row["name"])
+        title = base if counts[base] == 1 else safe_title(f"{base} ({row['product']})")
+        if title in used:                    # 같은 상품 안에서도 이름이 겹칠 때
+            n = 2
+            while f"{title} {n}" in used:
+                n += 1
+            title = f"{title} {n}"
+        used.add(title)
+        titles[row["id"]] = title
+    return titles
+
+
+def rider_markdown(note: RiderNote, title: str = "") -> str:
+    """특약 노트 한 장."""
+    title = title or safe_title(note.matched_name or note.input_name)
+    tags = ["보험약관"] + ([note.group_label] if note.group_label else [])
+    out = [
+        "---",
+        "분류: 특약",
+        f"상품: {_yaml(note.product)}",
+        f"구분: {_yaml(note.group_label or note.type_label)}",
+        f"출처: {_yaml(note.source_label)}",
+        "태그: [" + ", ".join(tags) + "]",
+        "---",
+        "",
+        f"# {title}",
+        "",
+    ]
+    if note.headline:
+        out += [f"> {note.headline}", ""]
+    head = [f"**상품** {link(note.product)}" if note.product else ""]
+    if note.group_label:
+        head.append(f"**구분** {note.group_label}")
+    if note.pay_basis:
+        head.append(f"**지급 기준** {note.pay_basis}")
+    out += [" · ".join(h for h in head if h), ""]
+
+    if note.code_tables:
+        out += ["## 어떤 병이 대상인가", ""]
+        for table in note.code_tables:
+            if table.get("name"):
+                out += [f"**{table['name']}** (총 {table.get('count', 0)}개 항목)", ""]
+            ranges = [r["code"] for r in table.get("ranges", [])]
+            if ranges:
+                out += ["보장 코드 " + " · ".join(link(code) for code in ranges), ""]
+            rows = [(g.get("group", ""), item)
+                    for g in table.get("groups", []) for item in g.get("items", [])]
+            if rows:
+                out += ["| 질병 | 코드 | 쉬운 설명 |", "|---|---|---|"]
+                for group, item in rows[:40]:
+                    label = item.get("label", "")
+                    if group and group not in label:
+                        label = f"{group} · {label}"
+                    out.append(f"| {label} | `{item.get('code', '')}` | {item.get('plain', '')} |")
+                if len(rows) > 40:
+                    out += ["", f"… 외 {len(rows) - 40}개 항목(약관 원문 참고)"]
+            out.append("")
+
+    if note.definition:
+        out += ["## 약관이 말하는 뜻", "", note.definition,
+                f"\n<sub>{note.definition_source}</sub>" if note.definition_source else "", ""]
+
+    def facts(header: str, items) -> None:
+        if not items:
+            return
+        out.append(header)
+        out.append("")
+        for fact in items:
+            source = f" <sub>({fact.source})</sub>" if getattr(fact, "source", "") else ""
+            out.append(f"- {fact.text}{source}")
+        out.append("")
+
+    facts("## 언제 보험금이 나오나", note.payouts)
+    facts("## 꼭 확인할 점", note.cautions)
+    facts("## 안 나오는 경우", note.exclusions)
+
+    if note.documents:
+        out += ["## 청구 서류", ""] + [f"- {d}" for d in note.documents] + [""]
+
+    out += ["## 근거", "", f"- 약관: {note.source_label}", ""]
+    out += [MEMO_MARK, ""]
+    return "\n".join(out).replace("\n\n\n", "\n\n").rstrip() + "\n"
+
+
+def product_markdown(product: str, riders: list[str]) -> str:
+    out = ["---", "분류: 상품", "태그: [보험약관, 상품]", "---", "",
+           f"# {safe_title(product)}", "",
+           f"특약 {len(riders)}건입니다. 이름을 누르면 보장 내용이 열립니다.", ""]
+    for name in sorted(riders):
+        out.append(f"- {link(name)}")
+    out += ["", MEMO_MARK, ""]
+    return "\n".join(out)
+
+
+def code_markdown(code: str, plain: str = "", riders: list[str] | None = None) -> str:
+    """질병분류코드 노트.
+
+    이 코드를 보장하는 특약을 노트 안에 바로 적어 둔다. 백링크 칸을 켜지 않아도,
+    상담 중에 코드 하나만 열면 보장하는 특약이 그 자리에 보여야 한다.
+    """
+    riders = riders or []
+    out = ["---", "분류: 질병분류코드", "태그: [보험약관, 질병코드]", "---", "",
+           f"# {safe_title(code)}", ""]
+    if plain:
+        out += [plain, ""]
+    if riders:
+        out += [f"## 이 코드를 보장하는 특약 {len(riders)}건", ""]
+        out += [f"- {link(name)}" for name in sorted(riders)]
+        out += [""]
+    else:
+        out += ["이 코드를 보장하는 특약을 찾지 못했습니다.", ""]
+    out += [MEMO_MARK, ""]
+    return "\n".join(out)
+
+
+def index_markdown(by_product: dict[str, list[str]]) -> str:
+    total = sum(len(v) for v in by_product.values())
+    out = ["---", "분류: 색인", "태그: [보험약관]", "---", "",
+           "# 약관 색인", "",
+           f"상품 {len(by_product)}개 · 특약 {total}건", "",
+           "| 상품 | 특약 수 |", "|---|---|"]
+    for product, riders in sorted(by_product.items()):
+        out.append(f"| {link(product)} | {len(riders)} |")
+    out += ["", MEMO_MARK, ""]
+    return "\n".join(out)
+
+
+def code_index_markdown(codes: dict[str, str],
+                        by_code: dict[str, list[str]] | None = None) -> str:
+    """질병분류코드 한눈에 보기(태블릿에서 상담 중 빠르게 찾기 위한 목록)."""
+    by_code = by_code or {}
+    out = ["---", "분류: 색인", "태그: [보험약관, 질병코드]", "---", "",
+           "# 질병코드 찾아보기", "",
+           "고객이 말한 병명·코드를 여기서 찾아 누르면, **그 병을 보장하는 특약**이",
+           "그 코드 노트 안에 목록으로 나옵니다.", "",
+           "| 코드 | 어떤 병인가 | 특약 |", "|---|---|---|"]
+    for code in sorted(codes):
+        count = len(by_code.get(code, []))
+        out.append(f"| {link(code)} | {codes[code]} | {count}건 |" if count
+                   else f"| {link(code)} | {codes[code]} | |")
+    out += ["", MEMO_MARK, ""]
+    return "\n".join(out)
+
+
+def home_markdown(app_url: str = "", riders: int = 0, products: int = 0, codes: int = 0) -> str:
+    """상담을 여기서 시작한다. 노트와 보장분석 화면을 이어 주는 한 장."""
+    out = ["---", "분류: 홈", "태그: [보험약관]", "---", "",
+           "# 보험 업무 홈", ""]
+    if app_url:
+        out += [f"## ▶ [보장분석 화면 열기]({app_url})", "",
+                "고객 정보와 특약을 넣어 표를 만들고, 인쇄하거나 이 보관함으로 저장합니다.",
+                "화면에 넣은 고객 정보는 그 기기에만 남습니다.", ""]
+    else:
+        out += ["> 보장분석 화면 주소를 `앱주소.txt` 첫 줄에 적어 두면 여기에 링크가 생깁니다.", ""]
+
+    out += ["## 상담 흐름", "",
+            "| | 어디서 | 무엇을 |", "|---|---|---|",
+            "| 1 | 이 보관함 | 만나기 전에 고객 노트와 지난 상담 메모를 봅니다 |",
+            "| 2 | 보장분석 화면 | 제안서를 붙여넣어 표를 만들고 특약을 확인합니다 |",
+            "| 3 | 보장분석 화면 | **옵시디언에 저장** 을 눌러 노트로 넘깁니다 |",
+            "| 4 | 이 보관함 | `고객` 폴더에 저장된 노트에 상담 내용을 덧붙입니다 |", "",
+            "## 찾아보기", "",
+            f"- [[00 약관 색인]] — 상품 {products}개 · 특약 {riders}건" if products
+            else "- [[00 약관 색인]]",
+            f"- [[01 질병코드 찾아보기]] — 질병분류코드 {codes}개" if codes
+            else "- [[01 질병코드 찾아보기]]",
+            "- `고객` 폴더 — 고객별 보장분석", "",
+            "## 이렇게 쓰면 좋습니다", "",
+            "- 특약 노트 아래 **내 메모** 칸에 적은 것은 다시 내보내도 지워지지 않습니다.",
+            "  상담하며 알게 된 것을 그 자리에 쌓아 두세요.",
+            "- 질병분류코드 노트를 열면, 그 병을 보장하는 특약이 **연결된 문서**에 모두 나옵니다.",
+            "- 고객 노트의 특약 이름을 누르면 그 특약의 약관 설명이 열립니다.", "",
+            MEMO_MARK, ""]
+    return "\n".join(out)
+
+
+def customer_folder_markdown() -> str:
+    """'고객' 폴더가 비어 보이지 않게, 그리고 폴더가 사라지지 않게 두는 안내 한 장."""
+    return "\n".join([
+        "---", "분류: 안내", "태그: [보장분석]", "---", "",
+        "# 고객 노트가 쌓이는 곳", "",
+        "보장분석 화면에서 **옵시디언에 저장** 을 누르면 이 폴더에",
+        "`고객이름 날짜` 노트가 만들어집니다.", "",
+        "노트 안 특약 이름을 누르면 그 특약의 약관 설명이 열립니다.",
+        "상담하며 알게 된 것은 노트 맨 아래 **내 메모** 칸에 적어 두세요.", "",
+        "이 안내 노트는 지우셔도 됩니다.", "", MEMO_MARK, ""])
+
+
+def customer_markdown(doc: dict, titles: dict[int, str] | None = None) -> str:
+    """고객 한 명의 보장분석을 노트 한 장으로.
+
+    titles 는 {약관구간 id: 노트 제목}. 특약 노트가 '이름 (상품)' 으로 저장된
+    경우에도 링크가 깨지지 않게, 실제 파일 제목으로 연결한다.
+    """
+    titles = titles or {}
+    customer = doc.get("customer", {})
+    name = customer.get("name") or "고객"
+    created = doc.get("created_at", "")
+    notes = doc.get("notes", [])
+
+    out = ["---", "분류: 고객보장분석",
+           f"고객: {_yaml(name)}",
+           f"작성일: {created}",
+           f"상품: {_yaml(doc.get('product', ''))}",
+           "태그: [보장분석]", "---", "",
+           f"# {safe_title(name)} 님 보장분석 ({created})", ""]
+
+    info = [f"**생년월일** {customer.get('birth')}" if customer.get("birth") else "",
+            f"**성별** {customer.get('gender')}" if customer.get("gender") else "",
+            f"**연락처** {customer.get('phone')}" if customer.get("phone") else ""]
+    info = [i for i in info if i]
+    if info:
+        out += [" · ".join(info), ""]
+    if customer.get("memo"):
+        out += [f"> {customer['memo']}", ""]
+
+    total = doc.get("summary", {}).get("total_premium", "")
+    line_ = []
+    if doc.get("product"):
+        line_.append(f"**가입상품** {doc['product']}")
+    if total:
+        line_.append(f"**월 보험료 합계** {total}")
+    if line_:
+        out += [" · ".join(line_), ""]
+    sources = doc.get("source_products") or []
+    if sources:
+        out += ["**근거 약관** " + " · ".join(link(p) for p in sources), ""]
+
+    out += ["## 계약사항", "",
+            "| 구분 | 보장(특약) | 가입금액 | 납입/보험기간 | 보험료 | 쉬운 설명 |",
+            "|---|---|---|---|---|---|"]
+    for note in notes:
+        matched = note.get("matched_name") or note.get("input_name", "")
+        shown = titles.get(note.get("section_id"), safe_title(matched))
+        label = link(shown) if matched and not note.get("unmatched") else note.get("input_name", "")
+        memo = [note.get("headline", "")]
+        if note.get("code_summary"):
+            memo.append("대상 코드 " + " · ".join(f"`{c}`" for c in note["code_summary"]))
+        if note.get("pay_basis"):
+            memo.append(note["pay_basis"])
+        if note.get("key_rules"):
+            memo.append(" ".join(f"`{r}`" for r in note["key_rules"]))
+        if note.get("note"):
+            memo.append(f"**메모** {note['note']}")
+        out.append(f"| {note.get('group_label', '')} | {label} | {note.get('amount', '')} | "
+                   f"{note.get('period', '')} | {note.get('premium', '')} | "
+                   + "<br>".join(m for m in memo if m) + " |")
+
+    summary = doc.get("summary", {})
+    out += ["", f"특약 {summary.get('total', 0)}건 (약관 확인 {summary.get('matched', 0)}건"
+            + (f" · 미확인 {summary['unmatched']}건" if summary.get("unmatched") else "") + ")", ""]
+
+    planner = doc.get("planner", {})
+    if any(planner.values()):
+        out += ["## 담당 설계사", "",
+                " · ".join(v for v in [planner.get("name"), planner.get("phone"),
+                                       planner.get("org")] if v), ""]
+
+    out += ["> 이 노트는 약관을 쉽게 풀어 쓴 **참고 자료**입니다. "
+            "실제 보장 여부는 약관 원문과 회사 심사 기준에 따릅니다.", "",
+            MEMO_MARK, ""]
+    return "\n".join(out)
+
+
+def export_customer(doc: dict, vault: Path, folder: str = FOLDER,
+                    store: TermsStore | None = None) -> Path:
+    """고객 보장분석 노트를 보관함에 저장하고 그 경로를 돌려준다."""
+    vault = Path(vault)
+    if not vault.exists():
+        raise RuntimeError(f"옵시디언 보관함 폴더를 찾을 수 없습니다: {vault}")
+    titles = unique_titles(store._all_sections()) if store is not None else {}
+    name = doc.get("customer", {}).get("name") or "고객"
+    created = doc.get("created_at", "")
+    path = vault / folder / "고객" / f"{safe_title(name)} {created}.md"
+    write_note(path, customer_markdown(doc, titles))
+    return path
+
+
+@dataclass
+class ExportResult:
+    riders: int = 0
+    products: int = 0
+    codes: int = 0
+    skipped: int = 0
+    folder: Path | None = None
+
+
+def export(store: TermsStore, vault: Path, folder: str = FOLDER,
+           product: str | None = None, progress=None) -> ExportResult:
+    """약관 색인 전체를 옵시디언 노트로 내보낸다."""
+    vault = Path(vault)
+    if not vault.exists():
+        raise RuntimeError(f"옵시디언 보관함 폴더를 찾을 수 없습니다: {vault}")
+
+    base = vault / folder
+    for sub in ("특약", "상품", "질병분류"):
+        (base / sub).mkdir(parents=True, exist_ok=True)
+
+    result = ExportResult(folder=base)
+    by_product: dict[str, list[str]] = {}
+    codes: dict[str, str] = {}
+    by_code: dict[str, list[str]] = {}      # 코드 -> 그 코드를 보장하는 특약 노트 제목
+
+    # 제목은 늘 전체 목록을 기준으로 정한다. 한 상품만 내보낼 때 이름이 달라지면
+    # 같은 특약의 노트가 두 벌 생겨 링크가 갈라진다.
+    all_rows = store._all_sections()
+    titles = unique_titles(all_rows)
+    rows = [r for r in all_rows
+            if (not product or r["product"] == product) and is_rider(r["name"])]
+    for i, row in enumerate(rows, 1):
+        if progress:
+            progress(i, len(rows), row["name"])
+        note = build_note(store, {"name": row["name"], "section_id": row["id"]})
+        if note.unmatched or not note.headline:
+            result.skipped += 1
+            continue
+        title = titles[row["id"]]
+        write_note(base / "특약" / f"{title}.md", rider_markdown(note, title))
+        result.riders += 1
+        by_product.setdefault(note.product, []).append(title)
+        for table in note.code_tables:
+            for rng in table.get("ranges", []):
+                codes.setdefault(rng["code"], rng.get("meaning", ""))
+                by_code.setdefault(rng["code"], []).append(title)
+
+    for name, riders in by_product.items():
+        write_note(base / "상품" / f"{safe_title(name)}.md",
+                   product_markdown(name, riders))
+    result.products = len(by_product)
+
+    for code, plain in codes.items():
+        write_note(base / "질병분류" / f"{safe_title(code)}.md",
+                   code_markdown(code, plain, by_code.get(code, [])))
+    result.codes = len(codes)
+
+    write_note(base / "00 약관 색인.md", index_markdown(by_product))
+    write_note(base / "01 질병코드 찾아보기.md", code_index_markdown(codes, by_code))
+    # 홈 노트는 보관함 맨 위에 둔다(약관 폴더 밖). 여기서 상담을 시작한다.
+    write_note(vault / "보험 업무 홈.md",
+               home_markdown(config.app_url(), result.riders, result.products, result.codes))
+    # '고객' 폴더는 미리 만들어 둔다. 폴더가 없으면 화면에서 노트를 보낼 때 실패한다.
+    write_note(base / "고객" / "0 고객 노트 안내.md", customer_folder_markdown())
+    return result
+
+
+def write_note(path: Path, body: str) -> None:
+    """노트를 저장하되, 사용자가 '내 메모' 에 적은 내용은 그대로 살린다."""
+    memo = keep_memo(path)
+    if memo:
+        body = body.rstrip() + "\n" + memo + "\n"
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(body, encoding="utf-8")

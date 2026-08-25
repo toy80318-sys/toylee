@@ -6,6 +6,7 @@
 """
 from __future__ import annotations
 
+import os
 import subprocess
 import sys
 from datetime import datetime
@@ -78,9 +79,12 @@ def ensure_index() -> bool:
     pdfs = list(Path(config.TERMS_DIR).glob("*.pdf"))
     if not pdfs:
         line("  ! 약관 PDF 를 찾지 못했습니다.")
-        line(f"  이 폴더 안에 약관 PDF 가 있어야 합니다: {config.TERMS_DIR}")
-        line("  압축(ZIP)을 풀지 않고 실행했거나, insurance_note 폴더만 따로 옮긴 경우입니다.")
-        line("  받은 폴더 구조를 그대로 두고 다시 실행해 주세요.")
+        line(f"  지금 찾아본 폴더: {config.TERMS_DIR}")
+        line("")
+        line("  약관 PDF 가 있는 폴더를 알려 주세요.")
+        line(f"  '{BASE / '약관폴더.txt'}' 를 메모장으로 열어")
+        line("  첫 줄에 폴더 경로를 적고 다시 실행하시면 됩니다.")
+        line(r"    예)  C:\진이폴더\보험\약관")
         return False
 
     line(f"[2/2] 약관 {len(pdfs)}개를 읽어 색인을 만듭니다. 처음 한 번만 하며 1~2분 걸립니다.")
@@ -101,9 +105,39 @@ def main() -> int:
         line(f"\n자세한 내용은 이 파일에 저장했습니다: {LOG}")
         return 1
 
-    sys.path.insert(0, str(BASE))
-    import app                                                # noqa: PLC0415
-    return app.main()
+    return serve()
+
+
+def serve(max_restarts: int = 5) -> int:
+    """웹 화면을 띄우고, 예기치 않게 멈추면 자동으로 다시 띄운다.
+
+    큰 스캔본을 읽다가 프로그램이 꺼지면 브라우저에 '연결을 거부했습니다' 만 뜨고
+    이유를 알 수 없었다. 이제는 마지막 오류를 기록에 남기고 곧바로 다시 시작한다.
+    """
+    env = dict(os.environ)
+    for attempt in range(max_restarts + 1):
+        if attempt:
+            env["NOTE_OPEN_BROWSER"] = "0"                    # 다시 시작할 땐 새 탭을 열지 않는다
+            line("")
+            line("  ! 프로그램이 예기치 않게 멈춰 다시 시작합니다."
+                 f" ({attempt}/{max_restarts})")
+            line("    브라우저에서 새로고침(F5) 하면 계속 쓰실 수 있습니다.")
+        proc = subprocess.Popen([sys.executable, str(BASE / "app.py")], cwd=BASE, env=env,
+                                stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
+                                text=True, encoding="utf-8", errors="replace", bufsize=1)
+        try:
+            for row in proc.stdout:                           # 화면과 기록에 동시에 남긴다
+                line(row.rstrip("\n"))
+        except KeyboardInterrupt:
+            proc.terminate()
+            return 0
+        code = proc.wait()
+        if code == 0:
+            return 0                                          # 사용자가 창을 닫은 경우
+    line("")
+    line("  ! 여러 번 다시 시작했지만 계속 멈춥니다. 위의 마지막 줄과 실행기록.txt 를 "
+         "알려 주시면 원인을 찾을 수 있습니다.")
+    return 1
 
 
 if __name__ == "__main__":

@@ -1,0 +1,945 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>보장분석 도우미</title>
+<style>
+:root{
+  color-scheme:light;                 /* 어두운 모드에서도 입력칸이 인쇄물과 같게 보이도록 */
+  --brand:#1f4e8c; --brand-soft:#e8f0fb; --ink:#1a2331; --muted:#667085;
+  --line:#dfe4ec; --bg:#f4f6fa; --warn:#7a4409; --warn-soft:#fdf3e4; --card:#fff;
+  --ob:#6a49b8; --ob-soft:#f1ecfb; --ob-line:#d9cdf3;   /* 옵시디언으로 가는 길 */
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+body{margin:0;font:16px/1.6 -apple-system,"Noto Sans KR","Malgun Gothic",sans-serif;
+  color:var(--ink);background:var(--bg)}
+header{position:sticky;top:0;z-index:20;background:var(--brand);color:#fff;
+  padding:10px 14px;display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+header b{font-size:17px}
+header .count{font-size:13px;opacity:.85}
+nav{display:flex;gap:6px;margin-left:auto;flex-wrap:wrap}
+nav button{font:inherit;font-size:15px;padding:8px 14px;border-radius:999px;border:0;
+  background:rgba(255,255,255,.18);color:#fff;cursor:pointer}
+nav button.on{background:#fff;color:var(--brand);font-weight:700}
+main{max-width:1000px;margin:0 auto;padding:14px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:14px;
+  padding:16px;margin-bottom:14px}
+h2{font-size:18px;margin:0 0 10px}
+h3{font-size:16px;margin:18px 0 6px}
+input,select,textarea{width:100%;font:inherit;padding:12px;border:1px solid var(--line);
+  border-radius:10px;background:#fff;color:var(--ink)}
+input:focus,select:focus,textarea:focus{outline:2px solid var(--brand-soft);border-color:var(--brand)}
+label{display:block;font-size:13px;color:var(--muted);margin:10px 0}
+.row{display:flex;gap:10px;flex-wrap:wrap}
+.row>*{flex:1;min-width:140px}
+button.act,a.act{font:inherit;font-size:15px;padding:12px 18px;border-radius:10px;
+  border:1px solid var(--line);background:#fff;color:var(--ink);cursor:pointer}
+button.primary{background:var(--brand);border-color:var(--brand);color:#fff;font-weight:600}
+button.act:active,a.act:active{opacity:.7}
+.actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}
+.hit{border:1px solid var(--line);border-radius:12px;padding:12px;margin:8px 0;background:#fff}
+.hit .nm{font-weight:600}
+.hit .meta{font-size:13px;color:var(--muted);margin-top:2px}
+.hit .hd{font-size:14px;margin-top:6px}
+.chip{display:inline-block;font-size:12px;padding:3px 9px;border-radius:999px;
+  background:var(--brand-soft);color:var(--brand);margin:2px 4px 2px 0}
+.chip.warn{background:var(--warn-soft);color:var(--warn)}
+.muted{color:var(--muted);font-size:14px}
+table{width:100%;border-collapse:collapse;font-size:14px}
+th,td{border:1px solid var(--line);padding:8px;text-align:left;vertical-align:top}
+th{background:#f7f9fc;font-weight:600;font-size:13px}
+.scroll{overflow-x:auto;-webkit-overflow-scrolling:touch}
+#report-body table{table-layout:fixed;min-width:940px}
+#report-body th,#report-body td{word-break:keep-all;overflow-wrap:anywhere}
+#report-body input{padding:8px;font-size:14px}
+#report-body input::placeholder{color:#a6adbb;font-style:italic}
+#report-body .terms{display:flex;flex-direction:column;gap:4px}
+#report-body select.term,#report-body input.term{padding:7px 6px;font-size:13px;
+  border:1px solid var(--line);border-radius:8px;background:#fff;color:var(--ink);width:100%}
+#report-body select.term:invalid,#report-body select.term option[value=""]{color:#a6adbb}
+/* 지난 설계값에서 환산한 참고값 — 직접 적은 값과 눈으로 구분되어야 한다 */
+#report-body input.est{background:#fffaf0;border-color:#e6cfa5}
+#sum-row td{background:#f7f9fc;font-size:14px}
+#sum-row .sum-v{font-weight:700}
+#report-body col.c-g{width:64px} #report-body col.c-n{width:210px}
+#report-body col.c-a{width:110px} #report-body col.c-p{width:150px}
+#report-body col.c-f{width:100px} #report-body col.c-m{width:auto}
+#report-body col.c-x{width:74px}
+#report-body td button.act{padding:8px 10px;font-size:13px;white-space:nowrap}
+.memo{font-size:13px;line-height:1.5}
+.memo b{color:var(--ink)}
+details{margin:8px 0}
+summary{cursor:pointer;color:var(--brand);font-size:15px;padding:6px 0}
+.pick{display:flex;gap:8px;align-items:center;margin-top:8px}
+.pick input{max-width:130px}
+.empty{color:var(--muted);text-align:center;padding:28px 10px}
+.bar{position:sticky;bottom:0;background:#fff;border-top:1px solid var(--line);
+  padding:10px 14px;display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.bar .n{font-weight:600}
+.hide{display:none!important}
+.printonly-block{display:none}
+/* 옵시디언으로 넘어가는 부분만 보라색으로 묶어 둔다 — 이 색이 보이면 '노트 쪽 일' */
+.ob-card{border-color:var(--ob-line);background:linear-gradient(var(--ob-soft),var(--card) 120px)}
+.ob-card h2{color:var(--ob)}
+button.ob,a.ob{background:var(--ob);border-color:var(--ob);color:#fff;font-weight:600}
+a.act{display:inline-block;text-decoration:none;text-align:center}
+a.ob-open{font-size:13px;padding:8px 12px;background:#fff;border:1px solid var(--ob-line);
+  color:var(--ob);border-radius:10px;text-decoration:none;white-space:nowrap}
+.step{display:flex;gap:10px;align-items:flex-start;margin-top:14px}
+.step .no{flex:none;width:24px;height:24px;border-radius:50%;background:var(--ob);color:#fff;
+  font-size:13px;font-weight:700;display:flex;align-items:center;justify-content:center;margin-top:3px}
+.step .body{flex:1;min-width:0}
+.step .body p{margin:0 0 6px;font-size:14px}
+#md-out{font:13px/1.5 ui-monospace,SFMono-Regular,Menlo,monospace;height:150px;resize:vertical;
+  background:#fbfaff;border-color:var(--ob-line)}
+.done{color:#1d7a4c;font-size:14px;font-weight:600;margin-left:6px}
+/* 알림창(alert)이 막히는 곳이 있어, 안내는 화면 안에 직접 띄운다 */
+.msg{margin-top:12px;padding:12px 14px;border-radius:10px;font-size:14px;line-height:1.55;
+  background:var(--brand-soft);color:var(--brand);border:1px solid #cfe0f5}
+.msg.warn{background:var(--warn-soft);color:var(--warn);border-color:#f0dcc0}
+.msg b{font-weight:700}
+.msg .actions{margin-top:10px}
+@media print{
+  header,nav,.bar,.noprint{display:none!important}
+  body{background:#fff;font-size:10.5pt;word-break:keep-all}
+  main{max-width:none;padding:0}
+  .card{border:0;padding:0;margin:0 0 6mm}
+  .printonly-block{display:block}
+  h2{font-size:12pt;margin:0 0 4mm}
+  table{font-size:8.6pt;table-layout:fixed;width:100%}
+  th,td{padding:4px 5px;word-break:keep-all;overflow-wrap:anywhere}
+  th{font-size:8.4pt}
+  #report-body col.c-g{width:8%} #report-body col.c-n{width:24%}
+  #report-body col.c-a{width:10%} #report-body col.c-p{width:13%}
+  #report-body col.c-f{width:8%} #report-body col.c-m{width:37%}
+  #report-body col.c-x{width:0}
+  #report-body table{min-width:0}
+  tr{break-inside:avoid}
+  .print-title{font-size:15pt;font-weight:700;margin:0 0 2mm}
+  .print-info{font-size:9.5pt;color:#333;margin:0 0 1.5mm}
+  .print-memo{font-size:9.5pt;border-left:3px solid #ccc;padding-left:3mm;margin:0 0 3mm}
+  @page{size:A4;margin:13mm}
+}
+</style>
+</head>
+<body>
+<header>
+  <b>보장분석 도우미</b>
+  <span class="count" id="count"></span>
+  <nav>
+    <button data-tab="search" class="on">특약 찾기</button>
+    <button data-tab="code">질병코드</button>
+    <button data-tab="report">보장분석</button>
+  </nav>
+</header>
+
+<main>
+  <!-- 특약 찾기 -->
+  <section id="tab-search">
+    <div class="card noprint">
+      <h2>특약 찾기</h2>
+      <input id="q" placeholder="특약 이름 일부를 입력하세요 (예: 뇌혈관, 암진단, 수술)" autocomplete="off">
+      <div class="row" style="margin-top:10px">
+        <select id="f-product"><option value="">전체 상품</option></select>
+        <select id="f-group"><option value="">전체 구분</option></select>
+      </div>
+    </div>
+    <div id="hits"></div>
+  </section>
+
+  <!-- 질병코드 -->
+  <section id="tab-code" class="hide">
+    <div class="card noprint">
+      <h2>질병코드로 찾기</h2>
+      <input id="qc" placeholder="코드나 병명 (예: I63, 뇌경색, 위암)" autocomplete="off">
+      <p class="muted" style="margin:10px 0 0">고객이 말한 병명·코드를 넣으면 그 병을 보장하는 특약이 나옵니다.</p>
+    </div>
+    <div id="code-hits"></div>
+  </section>
+
+  <!-- 보장분석 -->
+  <section id="tab-report" class="hide">
+    <div class="card noprint">
+      <h2>고객 정보</h2>
+      <div class="row">
+        <label>성함<input id="c-name" placeholder="홍길동"></label>
+        <label>생년월일<input id="c-birth" placeholder="1980-01-01"></label>
+        <label>성별
+          <select id="c-gender">
+            <option value="">-</option><option>남</option><option>여</option>
+          </select></label>
+        <label>연락처<input id="c-phone" placeholder="010-0000-0000"></label>
+      </div>
+      <label>상담 메모<input id="c-memo" placeholder="예: 부친 뇌졸중 병력"></label>
+      <div class="row">
+        <label>설계사<input id="p-name" placeholder="이설계"></label>
+        <label>연락처<input id="p-phone" placeholder="010-0000-0000"></label>
+      </div>
+      <details>
+        <summary>제안서 내용을 붙여넣어 특약 자동으로 담기</summary>
+        <textarea id="paste" rows="6" placeholder="제안서의 특약 표를 복사해서 붙여넣으세요.&#10;예) 뇌혈관질환진단특약L   1,000만원   20년납/100세만기   20,600"></textarea>
+        <div class="actions"><button class="act" id="btn-paste">읽어서 담기</button></div>
+      </details>
+    </div>
+
+    <div class="card" id="report-card">
+      <div id="print-head" class="printonly-block"></div>
+      <h2>계약사항</h2>
+      <div id="report-body"></div>
+      <!-- 아래 막대가 화면에 안 붙는 곳(웹 화면 안)에서도 누를 수 있게 여기에도 둔다 -->
+      <div class="actions noprint">
+        <button class="act primary" id="btn-print2">인쇄 / PDF 저장</button>
+        <button class="act ob" id="btn-md2">옵시디언에 저장</button>
+        <button class="act" id="btn-clear2">비우기</button>
+      </div>
+      <div id="msg" class="msg hide noprint"></div>
+    </div>
+
+    <div class="card ob-card noprint" id="ob-card">
+      <h2>옵시디언에 저장하기</h2>
+      <p class="muted" style="margin:0">이 표를 노트로 옮깁니다. 특약 이름은 <b>[[링크]]</b> 로 들어가서,
+        옵시디언에서 눌러 보면 그 특약의 약관 설명이 바로 열립니다.</p>
+
+      <label style="margin-top:14px">보관함 이름
+        <span class="muted">— 비워 두면 마지막에 열었던 보관함에 저장됩니다.
+          보관함이 여럿이면 옵시디언 왼쪽 아래에 보이는 이름을 적으세요.</span>
+        <input id="ob-vault" placeholder="예: 보험업무" autocomplete="off"></label>
+
+      <div class="step">
+        <div class="no">1</div>
+        <div class="body">
+          <p><b>노트 내용 복사</b> <span id="ob-copied" class="done hide">복사했습니다 ✓</span></p>
+          <div class="actions" style="margin-top:0">
+            <button class="act ob" id="btn-copy">복사하기</button>
+            <button class="act" id="btn-peek">내용 보기</button>
+          </div>
+          <textarea id="md-out" class="hide" readonly></textarea>
+        </div>
+      </div>
+
+      <div class="step">
+        <div class="no">2</div>
+        <div class="body">
+          <p><b>옵시디언 열기</b> — 아래를 누르면 옵시디언 앱이 열리면서 노트가 만들어집니다.</p>
+          <div class="actions" style="margin-top:0">
+            <a class="act ob" id="btn-open" href="#" target="_blank" rel="noopener">옵시디언에 노트 만들기</a>
+          </div>
+          <p class="muted" style="margin:8px 0 0">앱이 열리지 않으면, 옵시디언을 직접 열고
+            <b>보험약관 › 고객</b> 폴더에 새 노트를 만들어 붙여넣으세요.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+</main>
+
+<div class="bar noprint">
+  <span class="n" id="bag-n">담은 특약 0건</span>
+  <button class="act" id="btn-go">보장분석 보기</button>
+  <button class="act primary" id="btn-print">인쇄 / PDF 저장</button>
+  <button class="act ob" id="btn-md">옵시디언에 저장</button>
+  <button class="act" id="btn-clear">비우기</button>
+</div>
+
+<script>
+const RIDERS = __DATA__;
+const FOLDER = __FOLDER__;      // 보관함 안의 약관 노트 폴더
+const VAULT0 = __VAULT__;       // 미리 알아 둔 보관함 이름(없으면 빈 값)
+</script>
+<script>
+(function () {
+  const $ = (s) => document.querySelector(s);
+  const el = (t, c, x) => { const e = document.createElement(t); if (c) e.className = c;
+    if (x !== undefined) e.textContent = x; return e; };
+
+  // ---------- 이름 정규화 (PC 프로그램과 같은 규칙) ----------
+  const NOISE = ["무배당","무해약환급금형","저해약환급금형","해약환급금미지급형","갱신형",
+                 "간편심사","간편가입","간편n355","간편n","n355","간편","무","new"];
+  function key(s) {
+    let t = (s || "").toLowerCase();
+    t = t.replace(/[ⅰ]/g,"i").replace(/[ⅱ]/g,"ii").replace(/[ⅲ]/g,"iii");
+    t = t.replace(/[^0-9a-z가-힣]/g, "");
+    for (const w of NOISE) t = t.split(w).join("");
+    t = t.replace(/허혈성/g, "허혈");
+    return t;
+  }
+  RIDERS.forEach((r) => { r._k = key(r.n); r._codes = r.codes.map((c) => c.c).join(" ");
+    r._items = r.items.map((i) => i.l + " " + i.c + " " + (i.p || "")).join(" "); });
+
+  // ---------- 담은 특약 (새로고침해도 남음) ----------
+  let bag = [];
+  let info = {};
+  try { bag = JSON.parse(localStorage.getItem("bag") || "[]");
+        info = JSON.parse(localStorage.getItem("info") || "{}"); } catch (e) {}
+  function save() {
+    try { localStorage.setItem("bag", JSON.stringify(bag));
+          localStorage.setItem("info", JSON.stringify(readInfo())); } catch (e) {}
+  }
+  function readInfo() {
+    return { name: $("#c-name").value, birth: $("#c-birth").value, phone: $("#c-phone").value,
+             gender: $("#c-gender").value, memo: $("#c-memo").value,
+             pname: $("#p-name").value, pphone: $("#p-phone").value };
+  }
+  function fillInfo() {
+    $("#c-name").value = info.name || ""; $("#c-birth").value = info.birth || "";
+    $("#c-phone").value = info.phone || ""; $("#c-memo").value = info.memo || "";
+    $("#c-gender").value = info.gender || "";
+    $("#p-name").value = info.pname || ""; $("#p-phone").value = info.pphone || "";
+  }
+
+  // ---------- 납입기간 · 만기 고르기 ----------
+  const PAY_TERMS = ["5년납", "7년납", "10년납", "12년납", "15년납", "20년납", "25년납", "30년납",
+                     "전기납", "일시납", "5년", "10년", "15년", "20년"];
+  const END_TERMS = ["80세만기", "90세만기", "100세만기", "110세만기", "종신",
+                     "10년만기", "20년만기", "30년만기",
+                     "1년갱신", "3년갱신", "5년갱신", "10년갱신", "15년갱신", "20년갱신"];
+
+  function splitPeriod(text) {
+    const t = String(text || "").trim();
+    if (!t) return ["", ""];
+    if (t.includes("/")) {
+      const parts = t.split("/");
+      return [parts[0].trim(), parts.slice(1).join("/").trim()];
+    }
+    return /갱신|만기|종신/.test(t) ? ["", t] : [t, ""];
+  }
+  function joinPeriod(pay, end) {
+    return [pay, end].filter(Boolean).join("/");
+  }
+
+  function termSelect(list, current, blank, onPick) {
+    const sel = document.createElement("select");
+    sel.className = "noprint term";
+    sel.appendChild(new Option(blank, ""));
+    const items = list.slice();
+    if (current && items.indexOf(current) < 0) items.unshift(current);   // 제안서에서 온 값
+    items.forEach((v) => sel.appendChild(new Option(v, v)));
+    sel.appendChild(new Option("직접 입력…", "__type__"));
+    sel.value = current || "";
+    sel.addEventListener("change", () => {
+      if (sel.value !== "__type__") { onPick(sel.value); return; }
+      const box = document.createElement("input");        // 목록에 없는 기간을 적을 때
+      box.className = "noprint term";
+      box.placeholder = blank;
+      box.value = current || "";
+      box.addEventListener("input", () => onPick(box.value.trim()));
+      sel.replaceWith(box);
+      box.focus();
+    });
+    return sel;
+  }
+
+  // ---------- 지난 설계에서 적은 보험료 기억하기 ----------
+  // 약관에는 요율표가 없다. 보험료는 회사 설계시스템에서 나온 값을 옮겨 적는 것이고,
+  // 여기서는 그렇게 한 번 적은 값을 나이·성별·기간별로 기억해 두었다가 다시 채워 준다.
+  let rates = {};
+  try { rates = JSON.parse(localStorage.getItem("rates") || "{}"); } catch (e) {}
+  function saveRates() {
+    try { localStorage.setItem("rates", JSON.stringify(rates)); } catch (e) {}
+  }
+
+  function ageOf(birth) {
+    const m = String(birth || "").match(/(\d{4})\D*(\d{1,2})?\D*(\d{1,2})?/);
+    if (!m) return "";
+    const year = +m[1];
+    if (year < 1900 || year > 2200) return "";
+    const now = new Date();
+    let age = now.getFullYear() - year;
+    const mon = +(m[2] || 1), day = +(m[3] || 1);
+    if (now.getMonth() + 1 < mon || (now.getMonth() + 1 === mon && now.getDate() < day)) age--;
+    return age >= 0 && age < 120 ? String(age) : "";
+  }
+
+  function amountNum(text) {           // '1,000만원' -> 1000 (만원 단위)
+    const t = String(text || "").replace(/[,\s]/g, "");
+    let sum = 0, m = t.match(/([0-9.]+)억/);
+    if (m) sum += parseFloat(m[1]) * 10000;
+    m = t.match(/([0-9.]+)만/);
+    if (m) sum += parseFloat(m[1]);
+    if (!sum) { m = t.match(/^([0-9.]+)$/); if (m) sum = parseFloat(m[1]); }
+    return sum > 0 ? sum : 0;
+  }
+  function premiumNum(text) {
+    const t = String(text || "").replace(/[,\s원]/g, "");
+    return /^[0-9]+$/.test(t) ? +t : 0;
+  }
+  function comma(n) {
+    return Math.round(n).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+  }
+
+  function rateKey(b) {
+    const i = readInfo();
+    return [b.id || b.label || "", b.period || "", ageOf(i.birth), i.gender || ""].join("|");
+  }
+  function remember(b) {
+    const amount = amountNum(b.amount), premium = premiumNum(b.premium);
+    if (!amount || !premium || b.est) return;
+    rates[rateKey(b)] = { a: amount, p: premium };
+    saveRates();
+  }
+  function put(b, known, amount) {
+    const want = comma(known.p * amount / known.a);
+    const est = amount !== known.a;             // 금액이 다르면 비례로 환산한 참고값
+    if (b.premium === want && !!b.est === est) return false;
+    b.premium = want; b.est = est;
+    return true;
+  }
+
+  function recall(b) {                 // 값을 채웠거나 고쳤으면 true
+    const amount = amountNum(b.amount);
+    // 이 줄에서 직접 적은 값이 있으면, 가입금액이 바뀐 만큼만 비례로 고친다.
+    if (b.base && b.base.a && b.base.p) {
+      return amount ? put(b, b.base, amount) : false;
+    }
+    if (b.typed) return false;                  // 직접 적은 값은 건드리지 않는다
+    const known = rates[rateKey(b)];
+    if (!known || !known.a || !amount) return false;
+    b.base = known;                             // 이제부터 금액이 바뀌면 여기서 환산한다
+    return put(b, known, amount);
+  }
+
+  // ---------- 검색 ----------
+  function search(q, product, group) {
+    const qk = key(q);
+    let list = RIDERS;
+    if (product) list = list.filter((r) => r.pr === product);
+    if (group) list = list.filter((r) => r.g === group);
+    if (!qk) return list.slice(0, 60);
+    const out = [];
+    for (const r of list) {
+      let score = 0;
+      if (r._k === qk) score = 100;
+      else if (r._k.includes(qk)) score = 80 - Math.min(20, r._k.length - qk.length) / 2;
+      else if (qk.length >= 2 && r._k.includes(qk.slice(0, Math.max(2, qk.length - 1)))) score = 40;
+      if (score) out.push([score, r]);
+    }
+    out.sort((a, b) => b[0] - a[0] || a[1].n.localeCompare(b[1].n));
+    return out.slice(0, 60).map((x) => x[1]);
+  }
+
+  function riderCard(r, opts) {
+    const box = el("div", "hit");
+    box.appendChild(el("div", "nm", r.n));
+    box.appendChild(el("div", "meta", [r.g, r.pr].filter(Boolean).join(" · ")));
+    if (r.h) box.appendChild(el("div", "hd", r.h));
+    if (r.codes.length) {
+      const c = el("div");
+      r.codes.forEach((x) => { const s = el("span", "chip", x.c + (x.m ? " " + x.m : "")); c.appendChild(s); });
+      box.appendChild(c);
+    }
+    const det = el("details");
+    det.appendChild(el("summary", null, "자세히 보기"));
+    const body = el("div");
+    const sec = (title, items) => {
+      if (!items || !items.length) return;
+      body.appendChild(el("h3", null, title));
+      const ul = el("ul"); ul.style.paddingLeft = "20px";
+      items.forEach((t) => ul.appendChild(el("li", null, t)));
+      body.appendChild(ul);
+    };
+    if (r.items.length) {
+      body.appendChild(el("h3", null, "어떤 병이 대상인가"));
+      const wrap = el("div", "scroll"); const tb = el("table");
+      tb.innerHTML = "<tr><th>질병</th><th>코드</th><th>쉬운 설명</th></tr>" +
+        r.items.map((i) => `<tr><td>${esc(i.l)}</td><td>${esc(i.c)}</td><td>${esc(i.p || "")}</td></tr>`).join("");
+      wrap.appendChild(tb); body.appendChild(wrap);
+    }
+    sec("언제 보험금이 나오나", r.pay);
+    sec("꼭 확인할 점", r.cau);
+    sec("안 나오는 경우", r.exc);
+    sec("청구 서류", r.doc);
+    if (r.src) body.appendChild(el("p", "muted", "근거 약관: " + r.src));
+    det.appendChild(body);
+    box.appendChild(det);
+
+    if (!opts || !opts.noAdd) {
+      const pick = el("div", "pick");
+      const b = el("button", "act primary", inBag(r.id) ? "담김 ✓" : "담기");
+      b.addEventListener("click", () => { toggle(r); b.textContent = inBag(r.id) ? "담김 ✓" : "담기"; });
+      pick.appendChild(b);
+      const open = el("a", "ob-open", "옵시디언에서 열기");
+      open.href = obsUri("open", { file: FOLDER + "/특약/" + r.t });
+      open.target = "_blank"; open.rel = "noopener";
+      pick.appendChild(open);
+      box.appendChild(pick);
+    }
+    return box;
+  }
+
+  function esc(s) { return String(s == null ? "" : s).replace(/[&<>]/g,
+    (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;" }[c])); }
+
+  // ---------- 옵시디언으로 넘어가는 길 ----------
+  let vault = VAULT0;
+  try { const v = localStorage.getItem("vault"); if (v !== null) vault = v; } catch (e) {}
+
+  function obsUri(action, params) {
+    const parts = [];
+    if (vault.trim()) parts.push("vault=" + encodeURIComponent(vault.trim()));
+    for (const k in params) if (params[k]) parts.push(k + "=" + encodeURIComponent(params[k]));
+    return "obsidian://" + action + "?" + parts.join("&");
+  }
+
+  let seq = Date.now();
+  function inBag(id) { return bag.some((b) => b.id === id); }
+  function toggle(r) {
+    const i = bag.findIndex((b) => b.id === r.id);
+    if (i >= 0) bag = bag.filter((b) => b.id !== r.id);
+    else bag.push({ uid: ++seq, id: r.id, label: "", amount: "", premium: "", period: "" });
+    save(); renderBag(); renderReport();
+  }
+
+  function renderBag() { $("#bag-n").textContent = `담은 특약 ${bag.length}건`; }
+
+  // ---------- 화면 그리기 ----------
+  function renderSearch() {
+    const box = $("#hits"); box.innerHTML = "";
+    const list = search($("#q").value, $("#f-product").value, $("#f-group").value);
+    if (!list.length) { box.appendChild(el("p", "empty", "찾는 특약이 없습니다. 다른 낱말로 찾아보세요.")); return; }
+    list.forEach((r) => box.appendChild(riderCard(r)));
+  }
+
+  function renderCode() {
+    const box = $("#code-hits"); box.innerHTML = "";
+    const q = ($("#qc").value || "").trim().toLowerCase();
+    if (!q) { box.appendChild(el("p", "empty", "코드나 병명을 입력해 주세요.")); return; }
+    const hits = RIDERS.filter((r) => (r._codes + " " + r._items).toLowerCase().includes(q));
+    if (!hits.length) { box.appendChild(el("p", "empty", "해당하는 특약을 찾지 못했습니다.")); return; }
+    box.appendChild(el("p", "muted", `${hits.length}건의 특약이 이 병을 보장합니다.`));
+    hits.slice(0, 40).forEach((r) => box.appendChild(riderCard(r)));
+  }
+
+  // 나이·성별이 바뀔 때 표 전체를 다시 그리면, 그 순간 손대고 있던 칸이 사라진다.
+  // 그래서 줄마다 '다시 채우기'만 따로 불러 준다.
+  let rowHooks = [];
+  function refreshRates() {
+    // 고객이 바뀌면 기억에서 꺼내 온 값은 더 이상 맞지 않는다.
+    // 설계사님이 직접 적은 값(typed)은 절대 지우지 않는다.
+    bag.forEach((b) => {
+      if (!b.typed) { b.premium = ""; b.est = false; b.base = null; }
+    });
+    rowHooks.forEach((fn) => fn());
+    total(); printHead(); refreshObsidian(); save();
+  }
+
+  function renderReport() {
+    printHead();
+    refreshObsidian();
+    rowHooks = [];
+    const box = $("#report-body"); box.innerHTML = "";
+    if (!bag.length) { box.appendChild(el("p", "empty", "‘특약 찾기’에서 특약을 담으면 여기에 표가 만들어집니다.")); return; }
+    const wrap = el("div", "scroll"); const tb = el("table");
+    tb.innerHTML = "<colgroup><col class='c-g'><col class='c-n'><col class='c-a'>" +
+                   "<col class='c-p'><col class='c-f'><col class='c-m'><col class='c-x'></colgroup>" +
+                   "<tr><th>구분</th><th>보장(특약)</th><th>가입금액</th><th>납입·보험기간</th>" +
+                   "<th>보험료</th><th>쉬운 설명 · 보장 대상 · 지급 기준</th><th class='noprint'></th></tr>";
+    bag.forEach((b, idx) => {
+      const r = RIDERS.find((x) => x.id === b.id) || null;
+      const tr = el("tr");
+      tr.appendChild(el("td", null, r ? (r.g || "") : ""));
+      tr.appendChild(el("td", null, b.label || (r ? r.n : "(이름 확인 필요)")));
+
+      // 가입금액
+      const amountTd = el("td");
+      const amountIn = el("input", "noprint");
+      amountIn.value = b.amount || "";
+      amountIn.placeholder = "예) 1,000만원";
+      const amountOut = el("span", "printonly", b.amount || "");
+      amountTd.appendChild(amountIn); amountTd.appendChild(amountOut);
+      tr.appendChild(amountTd);
+
+      // 납입기간 · 만기 (고르기)
+      const periodTd = el("td");
+      const [pay, end] = splitPeriod(b.period);
+      const picks = el("div", "terms noprint");
+      const setPeriod = (nextPay, nextEnd) => {
+        b.period = joinPeriod(nextPay, nextEnd);
+        periodOut.textContent = b.period;
+        applyRate(); total(); save();
+      };
+      picks.appendChild(termSelect(PAY_TERMS, pay, "납입기간",
+        (v) => setPeriod(v, splitPeriod(b.period)[1])));
+      picks.appendChild(termSelect(END_TERMS, end, "만기",
+        (v) => setPeriod(splitPeriod(b.period)[0], v)));
+      const periodOut = el("span", "printonly", b.period || "");
+      periodTd.appendChild(picks); periodTd.appendChild(periodOut);
+      tr.appendChild(periodTd);
+
+      // 보험료
+      const premTd = el("td");
+      const premIn = el("input", "noprint");
+      premIn.value = b.premium || "";
+      premIn.placeholder = "예) 10,000";
+      const premOut = el("span", "printonly", b.premium || "");
+      premTd.appendChild(premIn); premTd.appendChild(premOut);
+      tr.appendChild(premTd);
+
+      function paint() {
+        premIn.value = b.premium || "";
+        premOut.textContent = (b.premium || "") + (b.est ? " *" : "");
+        premIn.classList.toggle("est", !!b.est);
+        premIn.title = b.est ? "지난 설계값을 가입금액에 맞춰 환산한 참고값입니다." : "";
+      }
+      function applyRate() { recall(b); paint(); }
+      rowHooks.push(applyRate);        // 나이·성별이 바뀌면 이 줄만 다시 채운다
+
+      amountIn.addEventListener("input", () => {
+        b.amount = amountIn.value; amountOut.textContent = b.amount;
+        applyRate(); total(); save();
+      });
+      premIn.addEventListener("input", () => {
+        b.premium = premIn.value; b.est = false; b.typed = true;   // 직접 적은 값이 우선
+        // 이 금액에서 이 보험료였다는 것을 적어 둔다. 금액을 바꾸면 여기서 환산한다.
+        b.base = { a: amountNum(b.amount), p: premiumNum(b.premium) };
+        paint(); remember(b); total(); save();
+      });
+      applyRate();
+      const memo = el("td", "memo");
+      memo.innerHTML = r ? [
+        esc(r.h),
+        r.codes.length ? "<b>대상 코드</b> " + r.codes.map((c) => esc(c.c)).join(" · ") : "",
+        r.cau.length ? "<b>확인</b> " + esc(r.cau[0]) : "",
+        b.label && b.label !== r.n ? "<span class='muted'>약관: " + esc(r.n) + "</span>" : "",
+      ].filter(Boolean).join("<br>")
+      : "<span class='muted'>약관에서 같은 이름을 찾지 못했습니다. ‘특약 찾기’에서 담아 주세요.</span>";
+      tr.appendChild(memo);
+      const del = el("td", "noprint");
+      const db = el("button", "act", "빼기");
+      db.addEventListener("click", () => { bag.splice(idx, 1); save(); renderBag(); renderReport(); });
+      del.appendChild(db); tr.appendChild(del);
+      tb.appendChild(tr);
+    });
+    const sumTr = el("tr");
+    sumTr.id = "sum-row";
+    sumTr.innerHTML = "<td colspan='4' style='text-align:right'><b>합계 보험료</b></td>" +
+                      "<td class='sum-v'></td><td></td><td class='noprint'></td>";
+    tb.appendChild(sumTr);
+
+    wrap.appendChild(tb); box.appendChild(wrap);
+
+    const head = el("div", "noprint");
+    box.insertBefore(head, wrap);
+    if (bag.some((b) => b.est)) {
+      box.appendChild(el("p", "muted",
+        "* 표시한 보험료는 지난 설계에서 적어 두신 값을 가입금액에 맞춰 환산한 참고값입니다. "
+        + "고객께 드리기 전에 설계 시스템의 값으로 확인해 주세요."));
+    }
+    box.appendChild(el("p", "muted",
+      "이 표는 약관을 쉽게 풀어 쓴 참고 자료입니다. 실제 보장 여부는 약관 원문과 회사 심사 기준에 따릅니다."));
+    total();
+  }
+
+  function total() {
+    const row = document.querySelector("#sum-row");
+    if (!row) return;
+    let sum = 0, est = false;
+    bag.forEach((b) => { sum += premiumNum(b.premium); if (b.est) est = true; });
+    row.querySelector(".sum-v").textContent = sum ? comma(sum) + (est ? " *" : "") : "";
+  }
+
+  function printHead() {
+    const i = readInfo();
+    const today = new Date().toISOString().slice(0, 10);
+    const parts = [`<p class="print-title">${esc(i.name || "고객")} 님 보장분석</p>`];
+    const line = [i.birth && "생년월일 " + esc(i.birth), i.gender && "성별 " + esc(i.gender),
+                  i.phone && "연락처 " + esc(i.phone),
+                  "작성일 " + today].filter(Boolean).join("  ·  ");
+    parts.push(`<p class="print-info">${line}</p>`);
+    if (i.memo) parts.push(`<p class="print-memo">${esc(i.memo)}</p>`);
+    if (i.pname) parts.push(`<p class="print-info">담당 설계사 ${esc(i.pname)}` +
+      (i.pphone ? "  ·  " + esc(i.pphone) : "") + "</p>");
+    $("#print-head").innerHTML = parts.join("");
+  }
+
+  // ---------- 인쇄 ----------
+  // 파일로 열었을 때는 그냥 인쇄하면 된다. 웹 주소로 열었을 때는 이 화면이 큰
+  // 페이지 안에 들어가 있어 인쇄가 막히거나 바깥 페이지까지 같이 나온다.
+  // 그때는 인쇄용 화면을 새 탭에 따로 만들어 거기서 인쇄한다.
+  function inFrame() {
+    try { return window.self !== window.top; } catch (e) { return true; }
+  }
+
+  const PRINT_CSS = `
+@page{size:A4;margin:13mm}
+*{box-sizing:border-box}
+body{margin:0;font:10.5pt/1.55 "Malgun Gothic","Noto Sans KR",sans-serif;color:#1a2331;
+  word-break:keep-all}
+h2{font-size:12pt;margin:0 0 4mm}
+table{width:100%;border-collapse:collapse;font-size:8.6pt;table-layout:fixed}
+th,td{border:1px solid #dfe4ec;padding:4px 5px;text-align:left;vertical-align:top;
+  word-break:keep-all;overflow-wrap:anywhere}
+th{background:#f7f9fc;font-weight:600;font-size:8.4pt}
+tr{break-inside:avoid}
+col.c-g{width:8%} col.c-n{width:24%} col.c-a{width:10%} col.c-p{width:13%}
+col.c-f{width:8%} col.c-m{width:37%} col.c-x{width:0}
+.print-title{font-size:15pt;font-weight:700;margin:0 0 2mm}
+.print-info{font-size:9.5pt;color:#333;margin:0 0 1.5mm}
+.print-memo{font-size:9.5pt;border-left:3px solid #ccc;padding-left:3mm;margin:0 0 3mm}
+.printonly-block,.printonly{display:block}
+.muted{color:#667085;font-size:8.6pt}
+.memo{font-size:8.6pt;line-height:1.45}
+.memo b{color:#1a2331}
+.scroll{overflow:visible}`;
+
+  function reportHtml() {
+    const card = $("#report-card").cloneNode(true);
+    card.querySelectorAll(".noprint").forEach((e) => e.remove());   // 입력칸·빼기 단추
+    card.querySelectorAll(".printonly").forEach((e) => { e.style.display = "block"; });
+    card.querySelectorAll(".printonly-block").forEach((e) => { e.style.display = "block"; });
+    return card.innerHTML;
+  }
+
+  function fixValues() {
+    // 입력칸에 적은 값을 인쇄용 글자로 옮긴다.
+    document.querySelectorAll("#report-body input").forEach((inp) => {
+      const span = inp.nextSibling;
+      if (span) span.textContent = inp.value;
+    });
+  }
+
+  // 알림창(alert)이 막힌 곳에서는 눌러도 아무 일이 없어 보인다. 안내는 화면에 띄운다.
+  let msgTimer = 0;
+  function notice(html, kind) {
+    const box = $("#msg");
+    box.innerHTML = html;
+    box.className = "msg noprint" + (kind === "warn" ? " warn" : "");
+    box.scrollIntoView({ behavior: "smooth", block: "nearest" });
+    clearTimeout(msgTimer);
+    if (kind !== "warn") msgTimer = setTimeout(() => box.classList.add("hide"), 6000);
+    return box;
+  }
+
+  function doPrint() {
+    goReport("#report-card");
+    if (!bag.length) {
+      notice("담은 특약이 없습니다. <b>특약 찾기</b>에서 먼저 담아 주세요.", "warn");
+      return;
+    }
+    fixValues();
+    // 인쇄가 실제로 시작됐는지 본다. 막혀 있으면 조용히 아무 일도 안 일어난다.
+    let started = false;
+    const mark = () => { started = true; };
+    window.addEventListener("beforeprint", mark);
+    try { window.print(); } catch (e) {}
+    setTimeout(() => {
+      window.removeEventListener("beforeprint", mark);
+      if (!started) printTab();
+    }, 800);
+  }
+
+  function printTab() {
+    const title = ($("#c-name").value || "고객") + " 님 보장분석";
+    let win = null;
+    try { win = window.open("", "_blank"); } catch (e) {}
+    if (!win) {
+      notice("이 화면에서는 브라우저가 인쇄를 막고 있습니다.<br>" +
+             "<b>보장분석_도우미.html</b> 파일을 크롬으로 열면 바로 인쇄·PDF 저장이 됩니다." +
+             "<br>지금은 아래 <b>옵시디언에 저장</b>으로 노트에 담아 두셔도 됩니다.", "warn");
+      return;
+    }
+    win.document.write('<!doctype html><html lang="ko"><head><meta charset="utf-8">' +
+      '<meta name="viewport" content="width=device-width, initial-scale=1"><title>' +
+      esc(title) + "</title><style>" + PRINT_CSS + "</style></head><body>" +
+      reportHtml() + "</bo" + "dy></html>");
+    win.document.close();
+    setTimeout(() => { try { win.focus(); win.print(); } catch (e) {} }, 500);
+    notice("새 탭에 인쇄 화면을 열었습니다. 거기서 <b>인쇄</b> 또는 <b>PDF로 저장</b>을 고르세요.");
+  }
+
+  // ---------- 제안서 붙여넣기 ----------
+  const SKIP = /(합\s*계|총\s*계|계약자|피보험자|납입주기|가입설계|설계서|페이지|www|서명|안내|주의|면책)/;
+  const MONEY = /([0-9,]+\s*(?:만원|억원|원))|주석\s*참조/;
+
+  function parsePaste(text) {
+    let added = 0;
+    for (const raw of text.split("\n")) {
+      if (!raw.trim() || SKIP.test(raw)) continue;
+      if (!MONEY.test(raw)) continue;                 // 금액이 없는 줄(상품명·머리말)은 건너뛴다
+      // 표의 칸 구분(공백 2칸 이상·탭)을 살려서 나눈다. 먼저 공백을 줄이면 칸이 사라진다.
+      const cells = raw.split(/\s{2,}|\t|\|/).map((c) => c.trim()).filter(Boolean);
+      let label = cells[0] || "";
+      let rest = cells.slice(1).join(" ");
+      if (cells.length < 2) {                          // 칸 구분이 없으면 금액 앞까지를 이름으로
+        const m = raw.match(MONEY);
+        label = raw.slice(0, m.index).trim();
+        rest = raw.slice(m.index).trim();
+      }
+      label = label.replace(/^\s*\d{1,2}\s*[.)]\s*/, "").trim();
+      if (label.length < 2) continue;
+
+      const nk = key(label);
+      let best = null, bestScore = 0;
+      for (const r of RIDERS) {
+        let s2 = 0;
+        if (r._k === nk) s2 = 100;
+        else if (nk.length >= 4 && (r._k.includes(nk) || nk.includes(r._k))) s2 = 70;
+        if (s2 > bestScore) { bestScore = s2; best = r; }
+      }
+      const money = rest.match(/([0-9,]+\s*(?:만원|억원))/) || (/주석\s*참조/.test(rest) ? ["주석 참조"] : null);
+      const period = rest.match(/([0-9]+년납\s*\/\s*[0-9]+세만기|[0-9]+년납\s*\/\s*[0-9]+년만기|[0-9]+년\s*\/\s*[0-9]+년갱신|[0-9]+년납|[0-9]+세만기|[0-9]+년갱신)/);
+      const prem = rest.match(/([0-9]{1,3}(?:,[0-9]{3})+|[0-9]{2,4})\s*$/);
+      const row = { uid: ++seq, id: best && bestScore >= 70 ? best.id : null, label: label,
+                    amount: money ? String(money[0]).trim() : "",
+                    period: period ? period[0].replace(/\s+/g, "") : "",
+                    premium: prem ? prem[1] : "" };
+      if (bag.some((x) => x.label === row.label && x.amount === row.amount)) continue;
+      bag.push(row); added++;
+    }
+    save(); renderBag(); renderReport();
+    const miss = bag.filter((b) => !b.id).length;
+    if (!added) {
+      notice("특약을 찾지 못했습니다. <b>특약 찾기</b>에서 직접 담아 주세요.", "warn");
+      return;
+    }
+    notice(`특약 <b>${added}건</b>을 담았습니다. 금액이 맞는지 표에서 확인해 주세요.` +
+           (miss ? `<br>그 중 ${miss}건은 약관에서 이름을 찾지 못했습니다.` : ""),
+           miss ? "warn" : "");
+  }
+
+  // ---------- 마크다운(옵시디언용) ----------
+  function today() { return new Date().toISOString().slice(0, 10); }
+  function noteTitle() { const i = readInfo(); return `${i.name || "고객"} ${today()}`; }
+
+  function markdown() {
+    const i = readInfo();
+    const out = ["---", "분류: 고객보장분석", `고객: "${(i.name || "고객").replace(/"/g, "'")}"`,
+                 `작성일: ${today()}`, "태그: [보장분석]", "---", "",
+                 `# ${i.name || "고객"} 님 보장분석 (${today()})`, ""];
+    const line = [i.birth && `**생년월일** ${i.birth}`, i.gender && `**성별** ${i.gender}`,
+                  i.phone && `**연락처** ${i.phone}`].filter(Boolean).join(" · ");
+    if (line) out.push(line, "");
+    if (i.memo) out.push("> " + i.memo, "");
+    const used = [...new Set(bag.map((b) => (RIDERS.find((x) => x.id === b.id) || {}).pt)
+                                .filter(Boolean))];
+    if (used.length) out.push("**근거 약관** " + used.map((p) => `[[${p}]]`).join(" · "), "");
+    out.push("## 계약사항", "",
+             "| 구분 | 보장(특약) | 가입금액 | 납입·보험기간 | 보험료 | 쉬운 설명 |",
+             "|---|---|---|---|---|---|");
+    bag.forEach((b) => {
+      const r = RIDERS.find((x) => x.id === b.id) || null;
+      // 링크는 반드시 노트 파일 제목(r.t)으로. 표시 이름과 다르면 |별칭 을 붙인다.
+      const name = r ? (b.label && b.label !== r.n ? `[[${r.t}|${b.label}]]` : `[[${r.t}]]`)
+                     : (b.label || "(이름 확인 필요)");
+      const memo = r ? [r.h, r.codes.length ? "대상 코드 " + r.codes.map((c) => `[[${c.c}]]`).join(" · ") : "",
+                        r.cau[0] || ""].filter(Boolean).join("<br>") : "약관에서 이름을 찾지 못했습니다";
+      out.push(`| ${r ? (r.g || "") : ""} | ${name} | ${b.amount || ""} | ${b.period || ""} | `
+               + `${(b.premium || "") + (b.est ? " \\*" : "")} | ${memo} |`);
+    });
+    let sum = 0, est = false;
+    bag.forEach((b) => { sum += premiumNum(b.premium); if (b.est) est = true; });
+    if (sum) out.push(`| | **합계 보험료** | | | **${comma(sum)}${est ? " \\*" : ""}** | |`);
+    const miss = bag.filter((b) => !b.id).length;
+    out.push("", `특약 ${bag.length}건` + (miss ? ` (약관 미확인 ${miss}건)` : ""), "");
+    if (est) out.push("\\* 지난 설계값을 가입금액에 맞춰 환산한 참고값입니다. "
+                      + "설계 시스템의 값으로 확인해 주세요.", "");
+    if (i.pname) out.push(`## 담당 설계사`, "", [i.pname, i.pphone].filter(Boolean).join(" · "), "");
+    out.push("> 약관을 쉽게 풀어 쓴 참고 자료입니다. 실제 보장 여부는 약관 원문과 회사 심사 기준에 따릅니다.",
+             "", "## 내 메모", "");
+    return out.join("\n");
+  }
+
+  async function copyText(text) {
+    try { await navigator.clipboard.writeText(text); return true; } catch (e) {}
+    try {
+      const ta = document.createElement("textarea");
+      ta.value = text; ta.style.position = "fixed"; ta.style.opacity = "0";
+      document.body.appendChild(ta); ta.select();
+      const ok = document.execCommand("copy"); ta.remove(); return ok;
+    } catch (e) { return false; }
+  }
+
+  function refreshObsidian() {
+    const md = markdown();
+    $("#md-out").value = md;
+    const file = FOLDER + "/고객/" + noteTitle();
+    // 주소가 너무 길면 앱이 열리다 잘린다. 그럴 때는 빈 노트만 만들고 붙여넣게 한다.
+    const full = obsUri("new", { file: file, content: md });
+    $("#btn-open").href = full.length <= 6000 ? full : obsUri("new", { file: file });
+    $("#btn-open").textContent = full.length <= 6000
+      ? "옵시디언에 노트 만들기" : "옵시디언에 빈 노트 만들기 (붙여넣기)";
+  }
+
+  // ---------- 시작 ----------
+  const products = [...new Set(RIDERS.map((r) => r.pr).filter(Boolean))].sort();
+  const groups = [...new Set(RIDERS.map((r) => r.g).filter(Boolean))].sort();
+  products.forEach((p) => $("#f-product").appendChild(new Option(p, p)));
+  groups.forEach((g) => $("#f-group").appendChild(new Option(g, g)));
+  $("#count").textContent = `특약 ${RIDERS.length}건`;
+
+  document.querySelectorAll("nav button").forEach((b) => b.addEventListener("click", () => {
+    document.querySelectorAll("nav button").forEach((x) => x.classList.remove("on"));
+    b.classList.add("on");
+    ["search", "code", "report"].forEach((t) =>
+      $("#tab-" + t).classList.toggle("hide", t !== b.dataset.tab));
+    if (b.dataset.tab === "report") renderReport();
+  }));
+
+  $("#q").addEventListener("input", renderSearch);
+  $("#f-product").addEventListener("change", renderSearch);
+  $("#f-group").addEventListener("change", renderSearch);
+  $("#qc").addEventListener("input", renderCode);
+  ["#c-name","#c-phone","#c-memo","#p-name","#p-phone"].forEach((s) =>
+    $(s).addEventListener("input", save));
+  // 나이·성별이 바뀌면 기억해 둔 보험료도 달라진다. 그 줄만 다시 채운다.
+  ["#c-birth", "#c-gender"].forEach((s) =>
+    $(s).addEventListener("input", () => { save(); refreshRates(); }));
+  $("#btn-paste").addEventListener("click", () => parsePaste($("#paste").value));
+
+  function goReport(target) {
+    document.querySelector('nav button[data-tab="report"]').click();
+    ($(target) || $("#report-card")).scrollIntoView({ behavior: "smooth", block: "start" });
+  }
+  $("#btn-go").addEventListener("click", () => goReport("#report-card"));
+  $("#btn-print").addEventListener("click", doPrint);
+  $("#btn-print2").addEventListener("click", doPrint);
+  $("#btn-md").addEventListener("click", () => goReport("#ob-card"));
+  $("#btn-md2").addEventListener("click", () => goReport("#ob-card"));
+  $("#btn-copy").addEventListener("click", async () => {
+    refreshObsidian();
+    const ok = await copyText($("#md-out").value);
+    if (ok) {
+      $("#ob-copied").classList.remove("hide");
+      setTimeout(() => $("#ob-copied").classList.add("hide"), 3000);
+    } else {
+      $("#md-out").classList.remove("hide");
+      $("#md-out").select();
+      notice("자동 복사가 막혀 있습니다. 아래 칸의 내용을 길게 눌러 직접 복사해 주세요.", "warn");
+    }
+  });
+  $("#btn-peek").addEventListener("click", () => {
+    refreshObsidian();
+    $("#md-out").classList.toggle("hide");
+    $("#btn-peek").textContent = $("#md-out").classList.contains("hide") ? "내용 보기" : "접기";
+  });
+  $("#btn-open").addEventListener("click", refreshObsidian);
+  $("#ob-vault").addEventListener("input", () => {
+    vault = $("#ob-vault").value;
+    try { localStorage.setItem("vault", vault); } catch (e) {}
+    refreshObsidian(); renderSearch();
+  });
+  function clearBag() {
+    // 확인창(confirm)도 막힐 수 있어, 되묻기를 화면 안에서 한다.
+    const box = notice("담은 특약을 모두 비울까요? <b>고객 정보는 남습니다.</b>", "warn");
+    const row = el("div", "actions");
+    const yes = el("button", "act primary", "네, 비웁니다");
+    const no = el("button", "act", "아니요");
+    yes.addEventListener("click", () => {
+      bag = []; save(); renderBag(); renderReport(); renderSearch();
+      notice("담은 특약을 비웠습니다.");
+    });
+    no.addEventListener("click", () => box.classList.add("hide"));
+    row.appendChild(yes); row.appendChild(no); box.appendChild(row);
+  }
+  $("#btn-clear").addEventListener("click", clearBag);
+  $("#btn-clear2").addEventListener("click", clearBag);
+
+  $("#ob-vault").value = vault;
+  fillInfo(); renderBag(); renderSearch(); renderReport();
+})();
+</script>
+<style>
+.printonly{display:none}
+@media print{ .printonly{display:inline} }
+</style>
+</body>
+</html>
