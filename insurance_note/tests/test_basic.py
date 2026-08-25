@@ -294,6 +294,23 @@ def test_obsidian_bridge() -> None:
     check("화면이 노트 제목(r.t)으로 링크를 만듦", "[[${r.t}" in html)
     check("화면에서 옵시디언 앱을 여는 길이 있음", 'obsUri("open"' in html and 'obsUri("new"' in html)
 
+    # 웹에 올릴 본문을 뽑을 때 자바스크립트가 통째로 잘려 나간 적이 있다.
+    sample = ('<!doctype html><html><head><title>가</title><style>b{}</style></head>'
+              '<body><div>내용</div><script>var s = "</body></html>";</script>'
+              '<style>i{}</style></body></html>')
+    inner = tablet.artifact_html(sample)
+    check("본문 뽑을 때 자바스크립트가 남아 있음",
+          inner.count("<script>") == 1 and inner.count("</script>") == 1, inner)
+    check("본문 뽑을 때 겉껍데기는 사라짐",
+          "<html>" not in inner and "<body>" not in inner and "<head>" not in inner, inner)
+    check("제목과 모양은 그대로 옮겨짐", "<title>가</title>" in inner and "b{}" in inner)
+    try:
+        tablet.artifact_html("<html><head></head><p>본문만</p></html>")
+        ok = False
+    except RuntimeError:
+        ok = True
+    check("서식이 예상과 다르면 조용히 넘어가지 않고 멈춤", ok)
+
 
 def _vault_name(tablet, path: str) -> str:
     """보관함 경로 설정을 잠시 바꿔 놓고 이름만 읽어 본다."""

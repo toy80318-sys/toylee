@@ -70,11 +70,21 @@ def artifact_html(html: str) -> str:
     import re
 
     head = re.search(r"<head>(.*?)</head>", html, re.S)
-    body = re.search(r"<body>(.*?)</body>", html, re.S)
+    # 본문은 '마지막' </body> 까지다. 화면 안 자바스크립트가 인쇄용 문서를 만들 때
+    # "</body>" 같은 글자를 쓰기 때문에, 처음 만나는 것에서 자르면 화면이 잘린다.
+    body = re.search(r"<body>(.*)</body>", html, re.S)
     if not head or not body:
         raise RuntimeError("화면 서식이 예상과 다릅니다.")
     keep = re.findall(r"<title>.*?</title>|<style>.*?</style>", head.group(1), re.S)
-    return "\n".join(keep) + "\n" + body.group(1).strip() + "\n"
+    out = "\n".join(keep) + "\n" + body.group(1).strip() + "\n"
+
+    # 잘려 나간 곳이 없는지 확인한다. 조용히 반쪽짜리 화면을 올리는 일이 없게.
+    for tag in ("script", "style"):
+        if out.count(f"<{tag}>") != out.count(f"</{tag}>"):
+            raise RuntimeError(f"본문을 뽑는 중 <{tag}> 가 잘렸습니다.")
+    if html.count("<script>") != out.count("<script>"):
+        raise RuntimeError("본문을 뽑는 중 자바스크립트가 빠졌습니다.")
+    return out
 
 
 def default_vault() -> str:

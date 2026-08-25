@@ -168,6 +168,12 @@ a.ob-open{font-size:13px;padding:8px 12px;background:#fff;border:1px solid var(-
       <div id="print-head" class="printonly-block"></div>
       <h2>계약사항</h2>
       <div id="report-body"></div>
+      <!-- 아래 막대가 화면에 안 붙는 곳(웹 화면 안)에서도 누를 수 있게 여기에도 둔다 -->
+      <div class="actions noprint">
+        <button class="act primary" id="btn-print2">인쇄 / PDF 저장</button>
+        <button class="act ob" id="btn-md2">옵시디언에 저장</button>
+        <button class="act" id="btn-clear2">비우기</button>
+      </div>
     </div>
 
     <div class="card ob-card noprint" id="ob-card">
@@ -431,6 +437,74 @@ const VAULT0 = __VAULT__;       // 미리 알아 둔 보관함 이름(없으면 
     $("#print-head").innerHTML = parts.join("");
   }
 
+  // ---------- 인쇄 ----------
+  // 파일로 열었을 때는 그냥 인쇄하면 된다. 웹 주소로 열었을 때는 이 화면이 큰
+  // 페이지 안에 들어가 있어 인쇄가 막히거나 바깥 페이지까지 같이 나온다.
+  // 그때는 인쇄용 화면을 새 탭에 따로 만들어 거기서 인쇄한다.
+  function inFrame() {
+    try { return window.self !== window.top; } catch (e) { return true; }
+  }
+
+  const PRINT_CSS = `
+@page{size:A4;margin:13mm}
+*{box-sizing:border-box}
+body{margin:0;font:10.5pt/1.55 "Malgun Gothic","Noto Sans KR",sans-serif;color:#1a2331;
+  word-break:keep-all}
+h2{font-size:12pt;margin:0 0 4mm}
+table{width:100%;border-collapse:collapse;font-size:8.6pt;table-layout:fixed}
+th,td{border:1px solid #dfe4ec;padding:4px 5px;text-align:left;vertical-align:top;
+  word-break:keep-all;overflow-wrap:anywhere}
+th{background:#f7f9fc;font-weight:600;font-size:8.4pt}
+tr{break-inside:avoid}
+col.c-g{width:8%} col.c-n{width:24%} col.c-a{width:10%} col.c-p{width:13%}
+col.c-f{width:8%} col.c-m{width:37%} col.c-x{width:0}
+.print-title{font-size:15pt;font-weight:700;margin:0 0 2mm}
+.print-info{font-size:9.5pt;color:#333;margin:0 0 1.5mm}
+.print-memo{font-size:9.5pt;border-left:3px solid #ccc;padding-left:3mm;margin:0 0 3mm}
+.printonly-block,.printonly{display:block}
+.muted{color:#667085;font-size:8.6pt}
+.memo{font-size:8.6pt;line-height:1.45}
+.memo b{color:#1a2331}
+.scroll{overflow:visible}`;
+
+  function reportHtml() {
+    const card = $("#report-card").cloneNode(true);
+    card.querySelectorAll(".noprint").forEach((e) => e.remove());   // 입력칸·빼기 단추
+    card.querySelectorAll(".printonly").forEach((e) => { e.style.display = "block"; });
+    card.querySelectorAll(".printonly-block").forEach((e) => { e.style.display = "block"; });
+    return card.innerHTML;
+  }
+
+  function fixValues() {
+    // 입력칸에 적은 값을 인쇄용 글자로 옮긴다.
+    document.querySelectorAll("#report-body input").forEach((inp) => {
+      const span = inp.nextSibling;
+      if (span) span.textContent = inp.value;
+    });
+  }
+
+  function doPrint() {
+    document.querySelector('nav button[data-tab="report"]').click();
+    if (!bag.length) { alert("담은 특약이 없습니다.\n‘특약 찾기’에서 먼저 담아 주세요."); return; }
+    fixValues();
+    if (!inFrame()) { setTimeout(() => window.print(), 120); return; }
+
+    const title = ($("#c-name").value || "고객") + " 님 보장분석";
+    const win = window.open("", "_blank");
+    if (!win) {
+      alert("인쇄 화면을 열지 못했습니다.\n\n" +
+            "브라우저에서 새 탭 열기가 막혀 있습니다.\n" +
+            "‘보장분석_도우미.html’ 파일로 열면 바로 인쇄됩니다.");
+      return;
+    }
+    win.document.write('<!doctype html><html lang="ko"><head><meta charset="utf-8">' +
+      '<meta name="viewport" content="width=device-width, initial-scale=1"><title>' +
+      esc(title) + "</title><style>" + PRINT_CSS + "</style></head><body>" +
+      reportHtml() + "</body></html>");
+    win.document.close();
+    setTimeout(() => { try { win.focus(); win.print(); } catch (e) {} }, 500);
+  }
+
   // ---------- 제안서 붙여넣기 ----------
   const SKIP = /(합\s*계|총\s*계|계약자|피보험자|납입주기|가입설계|설계서|페이지|www|서명|안내|주의|면책)/;
   const MONEY = /([0-9,]+\s*(?:만원|억원|원))|주석\s*참조/;
@@ -557,18 +631,16 @@ const VAULT0 = __VAULT__;       // 미리 알아 둔 보관함 이름(없으면 
   ["#c-name","#c-birth","#c-phone","#c-memo","#p-name","#p-phone"].forEach((s) =>
     $(s).addEventListener("input", save));
   $("#btn-paste").addEventListener("click", () => parsePaste($("#paste").value));
-  $("#btn-go").addEventListener("click", () => document.querySelector('nav button[data-tab="report"]').click());
-  $("#btn-print").addEventListener("click", () => {
+
+  function goReport(target) {
     document.querySelector('nav button[data-tab="report"]').click();
-    document.querySelectorAll("#report-body input").forEach((inp) => {
-      const span = inp.nextSibling; if (span) span.textContent = inp.value;
-    });
-    setTimeout(() => window.print(), 120);
-  });
-  $("#btn-md").addEventListener("click", () => {
-    document.querySelector('nav button[data-tab="report"]').click();
-    $("#ob-card").scrollIntoView({ behavior: "smooth", block: "start" });
-  });
+    ($(target) || $("#report-card")).scrollIntoView({ behavior: "smooth", block: "start" });
+  }
+  $("#btn-go").addEventListener("click", () => goReport("#report-card"));
+  $("#btn-print").addEventListener("click", doPrint);
+  $("#btn-print2").addEventListener("click", doPrint);
+  $("#btn-md").addEventListener("click", () => goReport("#ob-card"));
+  $("#btn-md2").addEventListener("click", () => goReport("#ob-card"));
   $("#btn-copy").addEventListener("click", async () => {
     refreshObsidian();
     const ok = await copyText($("#md-out").value);
@@ -592,10 +664,12 @@ const VAULT0 = __VAULT__;       // 미리 알아 둔 보관함 이름(없으면 
     try { localStorage.setItem("vault", vault); } catch (e) {}
     refreshObsidian(); renderSearch();
   });
-  $("#btn-clear").addEventListener("click", () => {
+  function clearBag() {
     if (!confirm("담은 특약을 모두 비울까요? 고객 정보는 남습니다.")) return;
-    bag = []; save(); renderBag(); renderReport();
-  });
+    bag = []; save(); renderBag(); renderReport(); renderSearch();
+  }
+  $("#btn-clear").addEventListener("click", clearBag);
+  $("#btn-clear2").addEventListener("click", clearBag);
 
   $("#ob-vault").value = vault;
   fillInfo(); renderBag(); renderSearch(); renderReport();
