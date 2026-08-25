@@ -54,6 +54,14 @@ th{background:#f7f9fc;font-weight:600;font-size:13px}
 #report-body th,#report-body td{word-break:keep-all;overflow-wrap:anywhere}
 #report-body input{padding:8px;font-size:14px}
 #report-body input::placeholder{color:#a6adbb;font-style:italic}
+#report-body .terms{display:flex;flex-direction:column;gap:4px}
+#report-body select.term,#report-body input.term{padding:7px 6px;font-size:13px;
+  border:1px solid var(--line);border-radius:8px;background:#fff;color:var(--ink);width:100%}
+#report-body select.term:invalid,#report-body select.term option[value=""]{color:#a6adbb}
+/* 지난 설계값에서 환산한 참고값 — 직접 적은 값과 눈으로 구분되어야 한다 */
+#report-body input.est{background:#fffaf0;border-color:#e6cfa5}
+#sum-row td{background:#f7f9fc;font-size:14px}
+#sum-row .sum-v{font-weight:700}
 #report-body col.c-g{width:64px} #report-body col.c-n{width:210px}
 #report-body col.c-a{width:110px} #report-body col.c-p{width:150px}
 #report-body col.c-f{width:100px} #report-body col.c-m{width:auto}
@@ -157,6 +165,10 @@ a.ob-open{font-size:13px;padding:8px 12px;background:#fff;border:1px solid var(-
       <div class="row">
         <label>성함<input id="c-name" placeholder="홍길동"></label>
         <label>생년월일<input id="c-birth" placeholder="1980-01-01"></label>
+        <label>성별
+          <select id="c-gender">
+            <option value="">-</option><option>남</option><option>여</option>
+          </select></label>
         <label>연락처<input id="c-phone" placeholder="010-0000-0000"></label>
       </div>
       <label>상담 메모<input id="c-memo" placeholder="예: 부친 뇌졸중 병력"></label>
@@ -265,12 +277,125 @@ const VAULT0 = __VAULT__;       // 미리 알아 둔 보관함 이름(없으면 
   }
   function readInfo() {
     return { name: $("#c-name").value, birth: $("#c-birth").value, phone: $("#c-phone").value,
-             memo: $("#c-memo").value, pname: $("#p-name").value, pphone: $("#p-phone").value };
+             gender: $("#c-gender").value, memo: $("#c-memo").value,
+             pname: $("#p-name").value, pphone: $("#p-phone").value };
   }
   function fillInfo() {
     $("#c-name").value = info.name || ""; $("#c-birth").value = info.birth || "";
     $("#c-phone").value = info.phone || ""; $("#c-memo").value = info.memo || "";
+    $("#c-gender").value = info.gender || "";
     $("#p-name").value = info.pname || ""; $("#p-phone").value = info.pphone || "";
+  }
+
+  // ---------- 납입기간 · 만기 고르기 ----------
+  const PAY_TERMS = ["5년납", "7년납", "10년납", "12년납", "15년납", "20년납", "25년납", "30년납",
+                     "전기납", "일시납", "5년", "10년", "15년", "20년"];
+  const END_TERMS = ["80세만기", "90세만기", "100세만기", "110세만기", "종신",
+                     "10년만기", "20년만기", "30년만기",
+                     "1년갱신", "3년갱신", "5년갱신", "10년갱신", "15년갱신", "20년갱신"];
+
+  function splitPeriod(text) {
+    const t = String(text || "").trim();
+    if (!t) return ["", ""];
+    if (t.includes("/")) {
+      const parts = t.split("/");
+      return [parts[0].trim(), parts.slice(1).join("/").trim()];
+    }
+    return /갱신|만기|종신/.test(t) ? ["", t] : [t, ""];
+  }
+  function joinPeriod(pay, end) {
+    return [pay, end].filter(Boolean).join("/");
+  }
+
+  function termSelect(list, current, blank, onPick) {
+    const sel = document.createElement("select");
+    sel.className = "noprint term";
+    sel.appendChild(new Option(blank, ""));
+    const items = list.slice();
+    if (current && items.indexOf(current) < 0) items.unshift(current);   // 제안서에서 온 값
+    items.forEach((v) => sel.appendChild(new Option(v, v)));
+    sel.appendChild(new Option("직접 입력…", "__type__"));
+    sel.value = current || "";
+    sel.addEventListener("change", () => {
+      if (sel.value !== "__type__") { onPick(sel.value); return; }
+      const box = document.createElement("input");        // 목록에 없는 기간을 적을 때
+      box.className = "noprint term";
+      box.placeholder = blank;
+      box.value = current || "";
+      box.addEventListener("input", () => onPick(box.value.trim()));
+      sel.replaceWith(box);
+      box.focus();
+    });
+    return sel;
+  }
+
+  // ---------- 지난 설계에서 적은 보험료 기억하기 ----------
+  // 약관에는 요율표가 없다. 보험료는 회사 설계시스템에서 나온 값을 옮겨 적는 것이고,
+  // 여기서는 그렇게 한 번 적은 값을 나이·성별·기간별로 기억해 두었다가 다시 채워 준다.
+  let rates = {};
+  try { rates = JSON.parse(localStorage.getItem("rates") || "{}"); } catch (e) {}
+  function saveRates() {
+    try { localStorage.setItem("rates", JSON.stringify(rates)); } catch (e) {}
+  }
+
+  function ageOf(birth) {
+    const m = String(birth || "").match(/(\d{4})\D*(\d{1,2})?\D*(\d{1,2})?/);
+    if (!m) return "";
+    const year = +m[1];
+    if (year < 1900 || year > 2200) return "";
+    const now = new Date();
+    let age = now.getFullYear() - year;
+    const mon = +(m[2] || 1), day = +(m[3] || 1);
+    if (now.getMonth() + 1 < mon || (now.getMonth() + 1 === mon && now.getDate() < day)) age--;
+    return age >= 0 && age < 120 ? String(age) : "";
+  }
+
+  function amountNum(text) {           // '1,000만원' -> 1000 (만원 단위)
+    const t = String(text || "").replace(/[,\s]/g, "");
+    let sum = 0, m = t.match(/([0-9.]+)억/);
+    if (m) sum += parseFloat(m[1]) * 10000;
+    m = t.match(/([0-9.]+)만/);
+    if (m) sum += parseFloat(m[1]);
+    if (!sum) { m = t.match(/^([0-9.]+)$/); if (m) sum = parseFloat(m[1]); }
+    return sum > 0 ? sum : 0;
+  }
+  function premiumNum(text) {
+    const t = String(text || "").replace(/[,\s원]/g, "");
+    return /^[0-9]+$/.test(t) ? +t : 0;
+  }
+  function comma(n) {
+    return Math.round(n).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+  }
+
+  function rateKey(b) {
+    const i = readInfo();
+    return [b.id || b.label || "", b.period || "", ageOf(i.birth), i.gender || ""].join("|");
+  }
+  function remember(b) {
+    const amount = amountNum(b.amount), premium = premiumNum(b.premium);
+    if (!amount || !premium || b.est) return;
+    rates[rateKey(b)] = { a: amount, p: premium };
+    saveRates();
+  }
+  function put(b, known, amount) {
+    const want = comma(known.p * amount / known.a);
+    const est = amount !== known.a;             // 금액이 다르면 비례로 환산한 참고값
+    if (b.premium === want && !!b.est === est) return false;
+    b.premium = want; b.est = est;
+    return true;
+  }
+
+  function recall(b) {                 // 값을 채웠거나 고쳤으면 true
+    const amount = amountNum(b.amount);
+    // 이 줄에서 직접 적은 값이 있으면, 가입금액이 바뀐 만큼만 비례로 고친다.
+    if (b.base && b.base.a && b.base.p) {
+      return amount ? put(b, b.base, amount) : false;
+    }
+    if (b.typed) return false;                  // 직접 적은 값은 건드리지 않는다
+    const known = rates[rateKey(b)];
+    if (!known || !known.a || !amount) return false;
+    b.base = known;                             // 이제부터 금액이 바뀌면 여기서 환산한다
+    return put(b, known, amount);
   }
 
   // ---------- 검색 ----------
@@ -384,9 +509,23 @@ const VAULT0 = __VAULT__;       // 미리 알아 둔 보관함 이름(없으면 
     hits.slice(0, 40).forEach((r) => box.appendChild(riderCard(r)));
   }
 
+  // 나이·성별이 바뀔 때 표 전체를 다시 그리면, 그 순간 손대고 있던 칸이 사라진다.
+  // 그래서 줄마다 '다시 채우기'만 따로 불러 준다.
+  let rowHooks = [];
+  function refreshRates() {
+    // 고객이 바뀌면 기억에서 꺼내 온 값은 더 이상 맞지 않는다.
+    // 설계사님이 직접 적은 값(typed)은 절대 지우지 않는다.
+    bag.forEach((b) => {
+      if (!b.typed) { b.premium = ""; b.est = false; b.base = null; }
+    });
+    rowHooks.forEach((fn) => fn());
+    total(); printHead(); refreshObsidian(); save();
+  }
+
   function renderReport() {
     printHead();
     refreshObsidian();
+    rowHooks = [];
     const box = $("#report-body"); box.innerHTML = "";
     if (!bag.length) { box.appendChild(el("p", "empty", "‘특약 찾기’에서 특약을 담으면 여기에 표가 만들어집니다.")); return; }
     const wrap = el("div", "scroll"); const tb = el("table");
@@ -399,18 +538,62 @@ const VAULT0 = __VAULT__;       // 미리 알아 둔 보관함 이름(없으면 
       const tr = el("tr");
       tr.appendChild(el("td", null, r ? (r.g || "") : ""));
       tr.appendChild(el("td", null, b.label || (r ? r.n : "(이름 확인 필요)")));
-      ["amount", "period", "premium"].forEach((f) => {
-        const td = el("td");
-        const inp = el("input"); inp.value = b[f] || "";
-        // 예시라는 게 한눈에 보여야 한다. 숫자만 흐리게 띄우면 값이 들어간 줄 안다.
-        inp.placeholder = { amount: "예) 1,000만원", period: "예) 20년납/100세",
-                            premium: "예) 10,000" }[f];
-        inp.addEventListener("input", () => { b[f] = inp.value; save(); });
-        inp.className = "noprint";
-        const span = el("span", "printonly", b[f] || "");
-        td.appendChild(inp); td.appendChild(span);
-        tr.appendChild(td);
+
+      // 가입금액
+      const amountTd = el("td");
+      const amountIn = el("input", "noprint");
+      amountIn.value = b.amount || "";
+      amountIn.placeholder = "예) 1,000만원";
+      const amountOut = el("span", "printonly", b.amount || "");
+      amountTd.appendChild(amountIn); amountTd.appendChild(amountOut);
+      tr.appendChild(amountTd);
+
+      // 납입기간 · 만기 (고르기)
+      const periodTd = el("td");
+      const [pay, end] = splitPeriod(b.period);
+      const picks = el("div", "terms noprint");
+      const setPeriod = (nextPay, nextEnd) => {
+        b.period = joinPeriod(nextPay, nextEnd);
+        periodOut.textContent = b.period;
+        applyRate(); total(); save();
+      };
+      picks.appendChild(termSelect(PAY_TERMS, pay, "납입기간",
+        (v) => setPeriod(v, splitPeriod(b.period)[1])));
+      picks.appendChild(termSelect(END_TERMS, end, "만기",
+        (v) => setPeriod(splitPeriod(b.period)[0], v)));
+      const periodOut = el("span", "printonly", b.period || "");
+      periodTd.appendChild(picks); periodTd.appendChild(periodOut);
+      tr.appendChild(periodTd);
+
+      // 보험료
+      const premTd = el("td");
+      const premIn = el("input", "noprint");
+      premIn.value = b.premium || "";
+      premIn.placeholder = "예) 10,000";
+      const premOut = el("span", "printonly", b.premium || "");
+      premTd.appendChild(premIn); premTd.appendChild(premOut);
+      tr.appendChild(premTd);
+
+      function paint() {
+        premIn.value = b.premium || "";
+        premOut.textContent = (b.premium || "") + (b.est ? " *" : "");
+        premIn.classList.toggle("est", !!b.est);
+        premIn.title = b.est ? "지난 설계값을 가입금액에 맞춰 환산한 참고값입니다." : "";
+      }
+      function applyRate() { recall(b); paint(); }
+      rowHooks.push(applyRate);        // 나이·성별이 바뀌면 이 줄만 다시 채운다
+
+      amountIn.addEventListener("input", () => {
+        b.amount = amountIn.value; amountOut.textContent = b.amount;
+        applyRate(); total(); save();
       });
+      premIn.addEventListener("input", () => {
+        b.premium = premIn.value; b.est = false; b.typed = true;   // 직접 적은 값이 우선
+        // 이 금액에서 이 보험료였다는 것을 적어 둔다. 금액을 바꾸면 여기서 환산한다.
+        b.base = { a: amountNum(b.amount), p: premiumNum(b.premium) };
+        paint(); remember(b); total(); save();
+      });
+      applyRate();
       const memo = el("td", "memo");
       memo.innerHTML = r ? [
         esc(r.h),
@@ -426,19 +609,40 @@ const VAULT0 = __VAULT__;       // 미리 알아 둔 보관함 이름(없으면 
       del.appendChild(db); tr.appendChild(del);
       tb.appendChild(tr);
     });
+    const sumTr = el("tr");
+    sumTr.id = "sum-row";
+    sumTr.innerHTML = "<td colspan='4' style='text-align:right'><b>합계 보험료</b></td>" +
+                      "<td class='sum-v'></td><td></td><td class='noprint'></td>";
+    tb.appendChild(sumTr);
+
     wrap.appendChild(tb); box.appendChild(wrap);
 
     const head = el("div", "noprint");
     box.insertBefore(head, wrap);
+    if (bag.some((b) => b.est)) {
+      box.appendChild(el("p", "muted",
+        "* 표시한 보험료는 지난 설계에서 적어 두신 값을 가입금액에 맞춰 환산한 참고값입니다. "
+        + "고객께 드리기 전에 설계 시스템의 값으로 확인해 주세요."));
+    }
     box.appendChild(el("p", "muted",
       "이 표는 약관을 쉽게 풀어 쓴 참고 자료입니다. 실제 보장 여부는 약관 원문과 회사 심사 기준에 따릅니다."));
+    total();
+  }
+
+  function total() {
+    const row = document.querySelector("#sum-row");
+    if (!row) return;
+    let sum = 0, est = false;
+    bag.forEach((b) => { sum += premiumNum(b.premium); if (b.est) est = true; });
+    row.querySelector(".sum-v").textContent = sum ? comma(sum) + (est ? " *" : "") : "";
   }
 
   function printHead() {
     const i = readInfo();
     const today = new Date().toISOString().slice(0, 10);
     const parts = [`<p class="print-title">${esc(i.name || "고객")} 님 보장분석</p>`];
-    const line = [i.birth && "생년월일 " + esc(i.birth), i.phone && "연락처 " + esc(i.phone),
+    const line = [i.birth && "생년월일 " + esc(i.birth), i.gender && "성별 " + esc(i.gender),
+                  i.phone && "연락처 " + esc(i.phone),
                   "작성일 " + today].filter(Boolean).join("  ·  ");
     parts.push(`<p class="print-info">${line}</p>`);
     if (i.memo) parts.push(`<p class="print-memo">${esc(i.memo)}</p>`);
@@ -601,8 +805,8 @@ col.c-f{width:8%} col.c-m{width:37%} col.c-x{width:0}
     const out = ["---", "분류: 고객보장분석", `고객: "${(i.name || "고객").replace(/"/g, "'")}"`,
                  `작성일: ${today()}`, "태그: [보장분석]", "---", "",
                  `# ${i.name || "고객"} 님 보장분석 (${today()})`, ""];
-    const line = [i.birth && `**생년월일** ${i.birth}`, i.phone && `**연락처** ${i.phone}`]
-      .filter(Boolean).join(" · ");
+    const line = [i.birth && `**생년월일** ${i.birth}`, i.gender && `**성별** ${i.gender}`,
+                  i.phone && `**연락처** ${i.phone}`].filter(Boolean).join(" · ");
     if (line) out.push(line, "");
     if (i.memo) out.push("> " + i.memo, "");
     const used = [...new Set(bag.map((b) => (RIDERS.find((x) => x.id === b.id) || {}).pt)
@@ -618,10 +822,16 @@ col.c-f{width:8%} col.c-m{width:37%} col.c-x{width:0}
                      : (b.label || "(이름 확인 필요)");
       const memo = r ? [r.h, r.codes.length ? "대상 코드 " + r.codes.map((c) => `[[${c.c}]]`).join(" · ") : "",
                         r.cau[0] || ""].filter(Boolean).join("<br>") : "약관에서 이름을 찾지 못했습니다";
-      out.push(`| ${r ? (r.g || "") : ""} | ${name} | ${b.amount || ""} | ${b.period || ""} | ${b.premium || ""} | ${memo} |`);
+      out.push(`| ${r ? (r.g || "") : ""} | ${name} | ${b.amount || ""} | ${b.period || ""} | `
+               + `${(b.premium || "") + (b.est ? " \\*" : "")} | ${memo} |`);
     });
+    let sum = 0, est = false;
+    bag.forEach((b) => { sum += premiumNum(b.premium); if (b.est) est = true; });
+    if (sum) out.push(`| | **합계 보험료** | | | **${comma(sum)}${est ? " \\*" : ""}** | |`);
     const miss = bag.filter((b) => !b.id).length;
     out.push("", `특약 ${bag.length}건` + (miss ? ` (약관 미확인 ${miss}건)` : ""), "");
+    if (est) out.push("\\* 지난 설계값을 가입금액에 맞춰 환산한 참고값입니다. "
+                      + "설계 시스템의 값으로 확인해 주세요.", "");
     if (i.pname) out.push(`## 담당 설계사`, "", [i.pname, i.pphone].filter(Boolean).join(" · "), "");
     out.push("> 약관을 쉽게 풀어 쓴 참고 자료입니다. 실제 보장 여부는 약관 원문과 회사 심사 기준에 따릅니다.",
              "", "## 내 메모", "");
@@ -668,8 +878,11 @@ col.c-f{width:8%} col.c-m{width:37%} col.c-x{width:0}
   $("#f-product").addEventListener("change", renderSearch);
   $("#f-group").addEventListener("change", renderSearch);
   $("#qc").addEventListener("input", renderCode);
-  ["#c-name","#c-birth","#c-phone","#c-memo","#p-name","#p-phone"].forEach((s) =>
+  ["#c-name","#c-phone","#c-memo","#p-name","#p-phone"].forEach((s) =>
     $(s).addEventListener("input", save));
+  // 나이·성별이 바뀌면 기억해 둔 보험료도 달라진다. 그 줄만 다시 채운다.
+  ["#c-birth", "#c-gender"].forEach((s) =>
+    $(s).addEventListener("input", () => { save(); refreshRates(); }));
   $("#btn-paste").addEventListener("click", () => parsePaste($("#paste").value));
 
   function goReport(target) {
