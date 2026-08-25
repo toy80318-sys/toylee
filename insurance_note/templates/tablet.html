@@ -53,6 +53,7 @@ th{background:#f7f9fc;font-weight:600;font-size:13px}
 #report-body table{table-layout:fixed;min-width:940px}
 #report-body th,#report-body td{word-break:keep-all;overflow-wrap:anywhere}
 #report-body input{padding:8px;font-size:14px}
+#report-body input::placeholder{color:#a6adbb;font-style:italic}
 #report-body col.c-g{width:64px} #report-body col.c-n{width:210px}
 #report-body col.c-a{width:110px} #report-body col.c-p{width:150px}
 #report-body col.c-f{width:100px} #report-body col.c-m{width:auto}
@@ -85,6 +86,12 @@ a.ob-open{font-size:13px;padding:8px 12px;background:#fff;border:1px solid var(-
 #md-out{font:13px/1.5 ui-monospace,SFMono-Regular,Menlo,monospace;height:150px;resize:vertical;
   background:#fbfaff;border-color:var(--ob-line)}
 .done{color:#1d7a4c;font-size:14px;font-weight:600;margin-left:6px}
+/* 알림창(alert)이 막히는 곳이 있어, 안내는 화면 안에 직접 띄운다 */
+.msg{margin-top:12px;padding:12px 14px;border-radius:10px;font-size:14px;line-height:1.55;
+  background:var(--brand-soft);color:var(--brand);border:1px solid #cfe0f5}
+.msg.warn{background:var(--warn-soft);color:var(--warn);border-color:#f0dcc0}
+.msg b{font-weight:700}
+.msg .actions{margin-top:10px}
 @media print{
   header,nav,.bar,.noprint{display:none!important}
   body{background:#fff;font-size:10.5pt;word-break:keep-all}
@@ -174,6 +181,7 @@ a.ob-open{font-size:13px;padding:8px 12px;background:#fff;border:1px solid var(-
         <button class="act ob" id="btn-md2">옵시디언에 저장</button>
         <button class="act" id="btn-clear2">비우기</button>
       </div>
+      <div id="msg" class="msg hide noprint"></div>
     </div>
 
     <div class="card ob-card noprint" id="ob-card">
@@ -394,7 +402,9 @@ const VAULT0 = __VAULT__;       // 미리 알아 둔 보관함 이름(없으면 
       ["amount", "period", "premium"].forEach((f) => {
         const td = el("td");
         const inp = el("input"); inp.value = b[f] || "";
-        inp.placeholder = { amount: "1,000만원", period: "20년납/100세", premium: "10,000" }[f];
+        // 예시라는 게 한눈에 보여야 한다. 숫자만 흐리게 띄우면 값이 들어간 줄 안다.
+        inp.placeholder = { amount: "예) 1,000만원", period: "예) 20년납/100세",
+                            premium: "예) 10,000" }[f];
         inp.addEventListener("input", () => { b[f] = inp.value; save(); });
         inp.className = "noprint";
         const span = el("span", "printonly", b[f] || "");
@@ -483,26 +493,53 @@ col.c-f{width:8%} col.c-m{width:37%} col.c-x{width:0}
     });
   }
 
-  function doPrint() {
-    document.querySelector('nav button[data-tab="report"]').click();
-    if (!bag.length) { alert("담은 특약이 없습니다.\n‘특약 찾기’에서 먼저 담아 주세요."); return; }
-    fixValues();
-    if (!inFrame()) { setTimeout(() => window.print(), 120); return; }
+  // 알림창(alert)이 막힌 곳에서는 눌러도 아무 일이 없어 보인다. 안내는 화면에 띄운다.
+  let msgTimer = 0;
+  function notice(html, kind) {
+    const box = $("#msg");
+    box.innerHTML = html;
+    box.className = "msg noprint" + (kind === "warn" ? " warn" : "");
+    box.scrollIntoView({ behavior: "smooth", block: "nearest" });
+    clearTimeout(msgTimer);
+    if (kind !== "warn") msgTimer = setTimeout(() => box.classList.add("hide"), 6000);
+    return box;
+  }
 
+  function doPrint() {
+    goReport("#report-card");
+    if (!bag.length) {
+      notice("담은 특약이 없습니다. <b>특약 찾기</b>에서 먼저 담아 주세요.", "warn");
+      return;
+    }
+    fixValues();
+    // 인쇄가 실제로 시작됐는지 본다. 막혀 있으면 조용히 아무 일도 안 일어난다.
+    let started = false;
+    const mark = () => { started = true; };
+    window.addEventListener("beforeprint", mark);
+    try { window.print(); } catch (e) {}
+    setTimeout(() => {
+      window.removeEventListener("beforeprint", mark);
+      if (!started) printTab();
+    }, 800);
+  }
+
+  function printTab() {
     const title = ($("#c-name").value || "고객") + " 님 보장분석";
-    const win = window.open("", "_blank");
+    let win = null;
+    try { win = window.open("", "_blank"); } catch (e) {}
     if (!win) {
-      alert("인쇄 화면을 열지 못했습니다.\n\n" +
-            "브라우저에서 새 탭 열기가 막혀 있습니다.\n" +
-            "‘보장분석_도우미.html’ 파일로 열면 바로 인쇄됩니다.");
+      notice("이 화면에서는 브라우저가 인쇄를 막고 있습니다.<br>" +
+             "<b>보장분석_도우미.html</b> 파일을 크롬으로 열면 바로 인쇄·PDF 저장이 됩니다." +
+             "<br>지금은 아래 <b>옵시디언에 저장</b>으로 노트에 담아 두셔도 됩니다.", "warn");
       return;
     }
     win.document.write('<!doctype html><html lang="ko"><head><meta charset="utf-8">' +
       '<meta name="viewport" content="width=device-width, initial-scale=1"><title>' +
       esc(title) + "</title><style>" + PRINT_CSS + "</style></head><body>" +
-      reportHtml() + "</body></html>");
+      reportHtml() + "</bo" + "dy></html>");
     win.document.close();
     setTimeout(() => { try { win.focus(); win.print(); } catch (e) {} }, 500);
+    notice("새 탭에 인쇄 화면을 열었습니다. 거기서 <b>인쇄</b> 또는 <b>PDF로 저장</b>을 고르세요.");
   }
 
   // ---------- 제안서 붙여넣기 ----------
@@ -546,10 +583,13 @@ col.c-f{width:8%} col.c-m{width:37%} col.c-x{width:0}
     }
     save(); renderBag(); renderReport();
     const miss = bag.filter((b) => !b.id).length;
-    alert(added ? `특약 ${added}건을 담았습니다.` +
-                  (miss ? `\n그 중 ${miss}건은 약관에서 이름을 찾지 못했습니다. 표에서 확인해 주세요.` : "") +
-                  "\n금액이 맞는지 표에서 확인해 주세요."
-                : "특약을 찾지 못했습니다.\n‘특약 찾기’에서 직접 담아 주세요.");
+    if (!added) {
+      notice("특약을 찾지 못했습니다. <b>특약 찾기</b>에서 직접 담아 주세요.", "warn");
+      return;
+    }
+    notice(`특약 <b>${added}건</b>을 담았습니다. 금액이 맞는지 표에서 확인해 주세요.` +
+           (miss ? `<br>그 중 ${miss}건은 약관에서 이름을 찾지 못했습니다.` : ""),
+           miss ? "warn" : "");
   }
 
   // ---------- 마크다운(옵시디언용) ----------
@@ -650,7 +690,7 @@ col.c-f{width:8%} col.c-m{width:37%} col.c-x{width:0}
     } else {
       $("#md-out").classList.remove("hide");
       $("#md-out").select();
-      alert("자동 복사가 막혀 있습니다.\n아래 칸의 내용을 길게 눌러 직접 복사해 주세요.");
+      notice("자동 복사가 막혀 있습니다. 아래 칸의 내용을 길게 눌러 직접 복사해 주세요.", "warn");
     }
   });
   $("#btn-peek").addEventListener("click", () => {
@@ -665,8 +705,17 @@ col.c-f{width:8%} col.c-m{width:37%} col.c-x{width:0}
     refreshObsidian(); renderSearch();
   });
   function clearBag() {
-    if (!confirm("담은 특약을 모두 비울까요? 고객 정보는 남습니다.")) return;
-    bag = []; save(); renderBag(); renderReport(); renderSearch();
+    // 확인창(confirm)도 막힐 수 있어, 되묻기를 화면 안에서 한다.
+    const box = notice("담은 특약을 모두 비울까요? <b>고객 정보는 남습니다.</b>", "warn");
+    const row = el("div", "actions");
+    const yes = el("button", "act primary", "네, 비웁니다");
+    const no = el("button", "act", "아니요");
+    yes.addEventListener("click", () => {
+      bag = []; save(); renderBag(); renderReport(); renderSearch();
+      notice("담은 특약을 비웠습니다.");
+    });
+    no.addEventListener("click", () => box.classList.add("hide"));
+    row.appendChild(yes); row.appendChild(no); box.appendChild(row);
   }
   $("#btn-clear").addEventListener("click", clearBag);
   $("#btn-clear2").addEventListener("click", clearBag);
